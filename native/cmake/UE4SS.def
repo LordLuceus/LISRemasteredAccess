@@ -1,0 +1,9 @@
+LIBRARY UE4SS.dll
+EXPORTS
+    ?get_stack_size@Lua@LuaMadeSimple@RC@@QEBAHXZ
+    ?is_string@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?get_string@Lua@LuaMadeSimple@RC@@QEBA?AV?$basic_string_view@DU?$char_traits@D@std@@@std@@H@Z
+    ?is_bool@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?get_bool@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?set_bool@Lua@LuaMadeSimple@RC@@QEBAX_N@Z
+    ?set_string@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z

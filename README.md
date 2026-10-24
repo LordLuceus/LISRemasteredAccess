@@ -1,0 +1,83 @@
+# LIS Remastered Access (early development)
+
+A screen-reader accessibility mod for *Life is Strange Remastered*, ported from
+LISAccess for the original game. The remaster's own navigation system makes
+reliable automatic walking possible, which the original never achieved.
+
+**Current state: foundation only.** Speech and braille work in-game. There is
+no menu narration, object scanner, dialogue reading or general autowalk yet.
+What exists today is a development launcher that loads one of two test scenes
+and can run a short fixed navigation test.
+
+## Planned order
+
+1. Foundation: speech and braille, keys, localization. *(Speech and braille done.)*
+2. Menus: title screen, main menu, save slots and episode selection.
+3. Object scanner and autowalk, using the game's own interaction list and
+   navigation, with automatic detours around closed doors.
+4. Dialogue choices and prompts.
+5. Journal, text messages, rewind and the remaining features.
+
+## Speech and braille
+
+Announcements go through Prism from inside the game, using NVDA, JAWS or another
+running screen reader, with Windows speech as the fallback. Braille is sent to
+the reader's braille display where it supports one. Text is spoken literally.
+Screen-reader calls run on their own thread, so a stalled reader cannot freeze
+the game.
+
+## Development launcher
+
+Close the remaster, then run `Start-NavigationPrototype.cmd`. Choose the house
+or the junkyard with the arrow keys, optionally check **Run the short navigation
+test**, then choose **Start isolated test**. Steam must be available.
+
+Each launch copies your current saves and settings into a fresh throwaway profile
+under `artifacts/`, and checks afterward that your real saves are unchanged.
+Keep the launcher window open while playing; it runs those checks, and it speaks
+announcements itself only if the in-game speech module failed to load.
+
+| Key | Action |
+| --- | --- |
+| Home | Repeat the last announcement. |
+| F8 | Cancel the pending or running navigation test. |
+| F10 | Return to the main menu through the game's own function. |
+
+After the **Main menu** announcement, use Alt+F4 to exit. Closing directly from
+a loaded scene can trigger the game's existing shutdown crash; returning to the
+menu first avoids it. That is a workaround, not a fix.
+
+## Building and deploying
+
+Requirements: Visual Studio 2022 (C++ build tools), CMake 3.24 or later, Python 3.
+
+```
+cmake -S native -B artifacts/build-native -G "Visual Studio 17 2022" -A x64
+cmake --build artifacts/build-native --config Release
+artifacts\build-native\Release\speech_smoke.exe --quiet
+python scripts\deploy_probe.py
+```
+
+The smoke test checks Prism's backends and literal SAPI text without speaking.
+Deployment requires the game to be closed and verifies every installed file's
+hash before replacing it. Announcement text is in
+`probes/EngineTickProbe/strings.lua`.
+
+The installation is pinned to Steam build 11330282 and experimental UE4SS
+3.0.1-1181-g83330635, with a measured virtual-table correction in
+`compatibility/VTableLayout.ini`. The speech module links against that exact
+loader's exported functions. It is not a general installer.
+
+To uninstall, close the game and run `scripts/rollback_ue4ss.ps1`. It checks
+hashes before changing anything and never restores old saves.
+
+## Layout
+
+- `probes/EngineTickProbe/`: the Lua side, loaded by UE4SS.
+- `native/`: the C++ speech and braille module. `third_party/ue4ss/` holds the
+  loader's Lua headers at the pinned commit, with their licences and hashes.
+- `scripts/`: launcher, deployment, test runner, rollback and log tools.
+- `NAVIGATION_FEASIBILITY.md`: the evidence behind choosing the remaster.
+
+Private game data, test profiles, logs, downloaded tools and build output live
+in `artifacts/` and are excluded from Git. This is not a redistributable release.

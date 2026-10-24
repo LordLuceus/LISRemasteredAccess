@@ -1,0 +1,38 @@
+# Local agent/editor state
+.letta/
+.vs/
+.vscode/
+
+# Private evidence, game data, test profiles, downloaded tools and build output.
+# artifacts/ holds extracted game packages, cloned save profiles and logs that
+# must never be committed or redistributed.
+artifacts/
+build/
+build-*/
+out/
+
+# Python
+__pycache__/
+*.pyc
+
+# Binaries and generated files (vendored third-party sources are text only)
+*.dll
+*.exe
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.obj
+*.zip
+*.tar.gz
+
+# Game data and saves
+*.pak
+*.utoc
+*.ucas
+*.sav
+*.uasset
+*.umap
+
+# Runtime output
+*.log

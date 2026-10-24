@@ -1,0 +1,52 @@
+﻿[
+    {
+        "upstream":  "deps/first/LuaRaw/include/lua.h",
+        "local":  "include/lua.h",
+        "sha256":  "048C6574BA5E8D225D47B66E83B479832CE353881F263ECF8389247442921F6C"
+    },
+    {
+        "upstream":  "deps/first/LuaRaw/LICENSE",
+        "local":  "LICENSE-LuaRaw",
+        "sha256":  "DDC030E25D0EA87ACA4AE84C0ED3F868D69273C00C0C12EA1E26F1C6130F5D2E"
+    },
+    {
+        "upstream":  "LICENSE",
+        "local":  "LICENSE-UE4SS",
+        "sha256":  "DDC030E25D0EA87ACA4AE84C0ED3F868D69273C00C0C12EA1E26F1C6130F5D2E"
+    },
+    {
+        "upstream":  "deps/first/LuaRaw/include/luaconf.h",
+        "local":  "include/luaconf.h",
+        "sha256":  "3E8E572899BC4FE1BE486CBF195C91ABC54AB96CAEA735C870C982A6FC00AF80"
+    },
+    {
+        "upstream":  "deps/first/LuaMadeSimple/LICENSE",
+        "local":  "LICENSE-LuaMadeSimple",
+        "sha256":  "DDC030E25D0EA87ACA4AE84C0ED3F868D69273C00C0C12EA1E26F1C6130F5D2E"
+    },
+    {
+        "upstream":  "deps/first/LuaRaw/include/lua.hpp",
+        "local":  "include/lua.hpp",
+        "sha256":  "9F165F5CBBF9150B917008A38D37CF63CA8ED94DC5F9B1DCEA3C281EC76ACE32"
+    },
+    {
+        "upstream":  "deps/first/LuaRaw/include/lualib.h",
+        "local":  "include/lualib.h",
+        "sha256":  "4EA0F67D3E467F5D6A327616E22A3C2DA8E03D47A3C3660916275F2842F521EA"
+    },
+    {
+        "upstream":  "deps/first/LuaMadeSimple/include/LuaMadeSimple/Common.hpp",
+        "local":  "include/LuaMadeSimple/Common.hpp",
+        "sha256":  "31F01ABFCDDDBBB1E82ABA06636F20C8749460276900246799B0D0C0DA13C846"
+    },
+    {
+        "upstream":  "deps/first/LuaMadeSimple/include/LuaMadeSimple/LuaMadeSimple.hpp",
+        "local":  "include/LuaMadeSimple/LuaMadeSimple.hpp",
+        "sha256":  "660C4884C75398E66C250FD28DEAB1FA719E2114B2F6559DE2BA9E9191AEF475"
+    },
+    {
+        "upstream":  "deps/first/LuaRaw/include/lauxlib.h",
+        "local":  "include/lauxlib.h",
+        "sha256":  "2D9E18E577A6062646268E7F7228264C28BD9B972C186E1AF81B8357179C0AB4"
+    }
+]
