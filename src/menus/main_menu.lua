@@ -103,16 +103,48 @@ local function find_popup()
     end
     return nil
 end
+-- How to answer a dialog, e.g. "Enter to confirm, Escape to cancel". The
+-- caller overrides this with localised text and the active device's keys.
+function M.format_choices(confirm,cancel)
+    if confirm and cancel then return "Enter to confirm, Escape to cancel" end
+    if confirm then return "Enter to confirm" end
+    return nil
+end
+-- Identity of a message for change detection: digits removed, so a countdown
+-- ticking inside the message does not count as a new message.
+function M.message_key(s)return (s:gsub("%d+","#")) end
 local function popup_snapshot(p)
     local message=field_text(p,"TextBlock_Message")
     if not message then return nil end
-    local choices={}
-    for _,k in ipairs({"TextBlock_Confirm","TextBlock_Cancel"}) do
-        local s=field_text(p,k);if s then choices[#choices+1]=s end
-    end
+    local confirm=field_text(p,"TextBlock_Confirm")~=nil
+    local cancel=field_text(p,"TextBlock_Cancel")~=nil
     local id="popup@"..string.format("%X",p:GetAddress())
-    return {screen=id,index=0,label=message,value=#choices>0 and table.concat(choices,", ") or nil},
+    return {screen=id,index=0,label=message,key=M.message_key(message),value=M.format_choices(confirm,cancel)},
         "screen=popup"
+end
+-- Gamma calibration (GammaWidget_C), opened with Enter on the Gamma row: the
+-- game's instruction for the device in use plus the slider value. Rich text
+-- markup is removed. Only an instance still attached to the UI counts.
+local function strip_markup(s)return (s:gsub("<[^>]*>",""):gsub("%s+"," "):gsub("^ ",""):gsub(" $",""))end
+M.strip_markup=strip_markup
+M.using_gamepad=function()return false end
+M.gamma_title="Gamma"
+local function find_gamma()
+    for _,g in ipairs(FindAllOf("GammaWidget_C") or {}) do
+        if valid(g) and call_bool(g,"IsVisible") then
+            local pok,parent=pcall(function()return g:GetParent()end)
+            if call_bool(g,"IsInViewport") or (pok and valid(parent)) then return g end
+        end
+    end
+    return nil
+end
+local function gamma_snapshot(g)
+    local text=nil
+    if M.using_gamepad() then text=field_text(g,"GamepadTooltipRich") end
+    text=text or field_text(g,"PCTooltip") or field_text(g,"GamepadTooltipRich")
+    if text then text=strip_markup(text) end
+    local value=slider_value(g)
+    return {screen="gamma@"..string.format("%X",g:GetAddress()),index=0,label=text or M.gamma_title,key="gamma",value=value},"screen=gamma"
 end
 -- Video Settings' built-in Apply confirmation ("Keep these changes?"): a
 -- Confirmation panel inside the screen, visible only while it is asked.
@@ -155,6 +187,8 @@ end
 function M.snapshot()
     local title=find_title()
     if not title then return nil end
+    local gamma=find_gamma()
+    if gamma then return gamma_snapshot(gamma) end
     local popup=find_popup()
     if popup then
         local s,d=popup_snapshot(popup)

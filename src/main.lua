@@ -44,6 +44,13 @@ RegisterKeyBindAsync(Key.HOME,function()speech.say(last_speech,true)end)
 -- spoken whenever it changes. Four reads a second, menu widgets only.
 local menu=require("menus.main_menu")
 menu.format_percent=function(p)return l10n.text("percent",{value=p})end
+menu.format_choices=function(confirm,cancel)
+    local keys={confirm_key=controls.name("confirm"),back_key=controls.name("back")}
+    if confirm and cancel then return l10n.text("dialog_confirm_cancel",keys) end
+    if confirm then return l10n.text("dialog_confirm",keys) end
+end
+menu.using_gamepad=controls.using_gamepad
+menu.gamma_title=l10n.text("gamma_title")
 -- Test sessions can ask for details of options the reader cannot label.
 do
     local ok,req=pcall(require,"LISNavRequest")

@@ -18,4 +18,7 @@ return {
     failed="The navigation test could not start. Check the mod log.",
     menu_unlabelled="Unlabelled option",
     percent="{value} percent",
+    dialog_confirm_cancel="{confirm_key} to confirm, {back_key} to cancel",
+    dialog_confirm="{confirm_key} to confirm",
+    gamma_title="Gamma",
 }

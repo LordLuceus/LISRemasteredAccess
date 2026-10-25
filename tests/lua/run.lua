@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -207,10 +207,10 @@ do
     popups["MainMenu_2Option_PopUp_Widget_C"]={obj({IsInViewport=function()return true end,IsVisible=function()return true end,
         TextBlock_Message=textw("Quit the game?"),TextBlock_Confirm=textw("Confirm"),TextBlock_Cancel=textw("Cancel")})}
     s=mm.snapshot()
-    check("exit popup",s and s.label=="Quit the game?" and s.value=="Confirm, Cancel",s and (tostring(s.label).."/"..tostring(s.value)))
+    check("exit popup",s and s.label=="Quit the game?" and s.value=="Enter to confirm, Escape to cancel",s and (tostring(s.label).."/"..tostring(s.value)))
     package.loaded["menus.tracker"]=nil
     local tr=require("menus.tracker").new()
-    check("popup spoken with choices",tr:update(s)=="Quit the game?, Confirm, Cancel")
+    check("popup spoken with choices",tr:update(s)=="Quit the game?, Enter to confirm, Escape to cancel")
     popups["MainMenu_2Option_PopUp_Widget_C"]=nil
     -- Video Apply confirmation: hidden panel is ignored, visible one is read.
     local panel=obj({IsVisible=function()return false end})
@@ -222,7 +222,51 @@ do
     check("hidden confirmation ignored",s and s.label=="Apply Settings",s and tostring(s.label))
     panel.IsVisible=function()return true end
     s=mm.snapshot()
-    check("apply confirmation read",s and s.label=="Keep these settings?" and s.value=="Confirm, Cancel",s and tostring(s.label))
+    check("apply confirmation read",s and s.label=="Keep these settings?" and s.value=="Enter to confirm, Escape to cancel",s and tostring(s.label))
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
+-- Countdown messages, controller key names and the gamma screen.
+do
+    package.loaded["menus.tracker"]=nil;package.loaded["menus.main_menu"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu")
+    local tr=require("menus.tracker").new()
+    -- Exact text the game showed, ticking down each second.
+    local function apply(n)
+        local m="Do you want to keep your modifications?  Initial settings will be restored in "..n.." second(s)..."
+        return {screen="popup@1",index=0,label=m,key=mm.message_key(m),value="Enter to confirm, Escape to cancel"}
+    end
+    local first=tr:update(apply(22))
+    check("countdown message spoken once",first and first:find("restored in 22 second",1,true)~=nil,first)
+    check("countdown tick silent",tr:update(apply(21))==nil)
+    check("countdown tick silent again",tr:update(apply(9))==nil)
+    check("different message spoken",tr:update({screen="popup@1",index=0,label="Quit the game?",key=mm.message_key("Quit the game?"),value="x"})=="Quit the game?, x")
+    -- Controller names for confirm/back.
+    package.loaded["core.controls"]=nil
+    local c=require("core.controls")
+    c.set_gamepad(true)
+    check("controller confirm",c.name("confirm")=="A" and c.name("back")=="B")
+    c.set_gamepad(false)
+    check("keyboard confirm",c.name("confirm")=="Enter" and c.name("back")=="Escape")
+    check("markup stripped",mm.strip_markup("Press <img id=\"A\"/> to <b>confirm</b>  now")=="Press to confirm now",mm.strip_markup("Press <img id=\"A\"/> to <b>confirm</b>  now"))
+    -- Gamma screen: device-appropriate instruction plus slider value.
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=function()return 3 end;return o end
+    local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end})end
+    local gamma=obj({IsVisible=function()return true end,IsInViewport=function()return true end,PCTooltip=textw("Use A and D to adjust"),
+        GamepadTooltipRich=textw("Use <img id=\"LS\"/> to adjust"),Slider_Slider=obj({GetValue=function()return 0.5 end,MinValue=0,MaxValue=1})})
+    local title=obj({IsInViewport=function()return true end})
+    _G.FindAllOf=function(n)if n=="BP_LiS_Main_Menu_Widget_C" then return {title} elseif n=="GammaWidget_C" then return {gamma} end return {} end
+    local s=mm.snapshot()
+    check("gamma keyboard instruction",s and s.label=="Use A and D to adjust" and s.value=="50%",s and (tostring(s.label).."/"..tostring(s.value)))
+    mm.using_gamepad=function()return true end
+    s=mm.snapshot()
+    check("gamma controller instruction",s and s.label=="Use to adjust",s and tostring(s.label))
+    mm.using_gamepad=function()return false end
+    local t2=require("menus.tracker").new();t2:update(s)
+    gamma.Slider_Slider.GetValue=function()return 0.6 end
+    check("gamma value change speaks value",t2:update(mm.snapshot())=="60%")
+    gamma.IsVisible=function()return false end
+    check("closed gamma screen ignored",mm.snapshot()==nil or mm.snapshot().screen:find("^gamma")==nil)
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
 print(string.format("%d checks, %d failures",count,failures))

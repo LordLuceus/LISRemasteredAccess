@@ -8,6 +8,9 @@ M.commands={
     repeat_announcement={keyboard="Home",controller=nil},
     cancel={keyboard="F8",controller=nil},
     main_menu={keyboard="F10",controller=nil},
+    -- The game's own confirm/cancel bindings (DefaultInput.ini UI_Confirm/UI_Cancel).
+    confirm={keyboard="Enter",controller="A"},
+    back={keyboard="Escape",controller="B"},
 }
 local gamepad=false
 function M.set_gamepad(on)gamepad=on==true end
