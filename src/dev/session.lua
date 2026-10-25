@@ -262,6 +262,10 @@ LoopAsync(5000, function()
                             end
                             local done,goal,player=nav_probe.run(controller,scenes[request.scene].map,emit)
                             nav_checked=done
+                            if done and player and request.scanner_probe then
+                                local sok,serr=pcall(function()require("dev.scanner_probe").run(controller,emit)end)
+                                if not sok then emit("scanner_probe_error="..tostring(serr)) end
+                            end
                             if done and player and request.scene=="nightmare" then
                                 local nok,best=pcall(function()return require("dev.nightmare").survey(controller,player,emit)end)
                                 if not nok then emit("nightmare_error="..tostring(best));best=nil end
