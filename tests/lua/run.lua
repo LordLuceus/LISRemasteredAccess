@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -495,6 +495,45 @@ do
     check("fallback reported",found)
     check("readable fallback simple",src.readable("$GT_Sensen_Int_TV01")=="TV")
     _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil
+end
+-- Scanner readout wording.
+do
+    package.loaded["scanner.readout"]=nil
+    local R=require("scanner.readout")
+    local me={X=0,Y=0,Z=0}
+    check("mail readout",R.describe({name="Mail",pos={X=150,Y=0,Z=0}},3,38,me,0)=="Mail, 1.5 metres, ahead, 3 of 38",R.describe({name="Mail",pos={X=150,Y=0,Z=0}},3,38,me,0))
+    check("one metre singular",R.describe({name="Door, A",pos={X=0,Y=-100,Z=0}},1,2,me,0)=="Door, A, 1 metre, left, 1 of 2")
+    check("whole metres above 10",R.metres(4238)=="42")
+    check("rounds to one decimal",R.metres(87)=="0.9" and R.metres(800)=="8")
+    local s=R.describe({name="Lighthouse",pos={X=3000,Y=-3000,Z=850}},1,1,me,0)
+    check("height when it matters",s=="Lighthouse, 42 metres, ahead left, 8.5 metres up, 1 of 1",s)
+end
+-- Controller scanner input: D-pad commands, hold-repeat, stick-click face vs modifier.
+do
+    package.loaded["scanner.pad"]=nil
+    local P=require("scanner.pad")
+    local p=P.new()
+    local function cmds(t)return table.concat(t,",") end
+    check("right is next",cmds(p:update(8,true,0))=="next")
+    check("held right waits",cmds(p:update(8,true,0.3))=="")
+    check("held right repeats",cmds(p:update(8,true,0.46))=="next")
+    check("repeat rate",cmds(p:update(8,true,0.66))=="next")
+    check("release",cmds(p:update(0,true,0.7))=="")
+    check("up describes",cmds(p:update(1,true,1))=="describe")
+    p:update(0,true,1.1)
+    check("down autowalks",cmds(p:update(2,true,1.2))=="autowalk")
+    p:update(0,true,1.3)
+    check("stick press alone does nothing yet",cmds(p:update(0x40,true,2))=="")
+    check("stick release faces",cmds(p:update(0,true,2.1))=="face")
+    p:update(0x40,true,3)
+    check("stick+up is help",cmds(p:update(0x41,true,3.1))=="help")
+    p:update(0x40,true,3.2)
+    check("modifier use suppresses face",cmds(p:update(0,true,3.3))=="")
+    p:update(0x40,true,4)
+    check("stick+right repeats",cmds(p:update(0x48,true,4.1))=="repeat")
+    p:update(0,true,4.2)
+    check("inactive ignores",cmds(p:update(8,false,5))=="")
+    check("no controller",cmds(p:update(-1,true,6))=="")
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

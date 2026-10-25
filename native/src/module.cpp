@@ -5,6 +5,7 @@
 #include "lua_bridge.h"
 #include "speech.h"
 #include <Windows.h>
+#include <Xinput.h>
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
@@ -101,6 +102,28 @@ __declspec(dllexport) int lisr_speak(lua_State* state) {
 __declspec(dllexport) int lisr_stop(lua_State* state) {
     Enqueue({{}, true, true});
     Lua(state).set_bool(true);
+    return 1;
+}
+// lisr_pad() -> XInput button bits of the first connected controller, or -1
+// when none is connected or XInput is unavailable. Read-only hardware polling,
+// the same way the original mod read controller buttons; the game is unaffected.
+__declspec(dllexport) int lisr_pad(lua_State* state) {
+    using GetState = DWORD(WINAPI*)(DWORD, XINPUT_STATE*);
+    static GetState get = [] {
+        for (const wchar_t* name : {L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll"}) {
+            if (HMODULE m = LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32))
+                if (auto f = reinterpret_cast<GetState>(GetProcAddress(m, "XInputGetState"))) return f;
+        }
+        return static_cast<GetState>(nullptr);
+    }();
+    int64_t buttons = -1;
+    if (get) {
+        for (DWORD i = 0; i < 4; ++i) {
+            XINPUT_STATE pad{};
+            if (get(i, &pad) == ERROR_SUCCESS) { buttons = pad.Gamepad.wButtons; break; }
+        }
+    }
+    Lua(state).set_integer(buttons);
     return 1;
 }
 // lisr_status() -> "backend=<name> spoken=<n> failed=<n>" (diagnostics only).

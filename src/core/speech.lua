@@ -15,6 +15,12 @@ do
     end)
     M.native=ok
     if not ok then M.load_error=tostring(err) end
+    -- Controller buttons (same DLL). Optional: an older DLL without it just
+    -- means no controller scanner input.
+    if ok then
+        local f4=package.loadlib(dll,"lisr_pad")
+        if f4 then M.pad=function()local pok,v=pcall(f4);return pok and v or -1 end end
+    end
 end
 -- Returns true when the native module queued it.
 function M.say(text,interrupt)

@@ -12,6 +12,7 @@ l10n.set_logger(log)
 log("loaded speech_module "..speech.status())
 
 local last_speech=""
+local menu_snapshot=nil
 local function say(text,interrupt)
     if type(text)~="string" or text=="" then return end
     last_speech=text
@@ -37,21 +38,36 @@ local function refresh_settings()
     end
 end
 
--- Home repeats the last announcement.
--- Home rereads what is on screen now: the live menu readout (so a countdown is
--- current), otherwise the last announcement. Reading happens on the game thread.
+-- Keys. Home describes: the live menu readout in menus (so a countdown is
+-- current), the selected scanner object in play. Ctrl+Home repeats the last
+-- announcement. Page Up/Down select scanner objects in play. Each key runs on
+-- the game thread; the loader only fires a binding for its exact modifiers.
 local reread=nil
-RegisterKeyBindAsync(Key.HOME,function()
-    ExecuteInGameThread(function()
+local scanner=require("scanner.scanner")
+local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
+local function on_game(fn)
+    return function()ExecuteInGameThread(function()
+        local ok,err=pcall(fn)
+        if not ok then log("key_error="..tostring(err)) end
+    end,EGameThreadMethod.EngineTick)end
+end
+RegisterKeyBindAsync(Key.HOME,on_game(function()
+    if in_menu() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
         speech.say(text or last_speech,true)
-    end,EGameThreadMethod.EngineTick)
-end)
+    else
+        scanner.command("describe")
+    end
+end))
+RegisterKeyBindAsync(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
+RegisterKeyBindAsync(Key.PAGE_DOWN,on_game(function()if not in_menu() then scanner.command("next") end end))
+RegisterKeyBindAsync(Key.PAGE_UP,on_game(function()if not in_menu() then scanner.command("previous") end end))
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
 local menu=require("menus.main_menu")
+menu_snapshot=menu.snapshot
 menu.format_percent=function(p)return l10n.text("percent",{value=p})end
 menu.format_choices=function(confirm,cancel)
     local keys={confirm_key=controls.name("confirm"),back_key=controls.name("back")}
@@ -96,6 +112,36 @@ LoopAsync(250,function()
             end
         end)
         if not ok and menu_errors<5 then menu_errors=menu_errors+1;log("menu_error="..tostring(err)) end
+    end,EGameThreadMethod.EngineTick)
+    return false
+end)
+
+-- Scanner speech, wording and controller input (gameplay only).
+scanner.say=function(text)say(text,true)end
+scanner.log=log
+do local ok,req=pcall(require,"LISNavRequest");scanner.trace=ok and type(req)=="table" and req.expected_saved_directory~=nil end
+scanner.text=function(key,p)return l10n.text(key,p)end
+require("scanner.readout").text=function(key,p)return l10n.text(key,p)end
+local sources=require("scanner.sources")
+sources.translate_ready=true
+sources.report=log
+sources.text=function(key)return l10n.text(key)end
+sources.language=function()return l10n.language()end
+local pad=require("scanner.pad").new()
+local pad_read=speech.pad
+local pad_errors=0
+LoopAsync(50,function()
+    ExecuteInGameThread(function()
+        local ok,err=pcall(function()
+            local buttons=pad_read and pad_read() or -1
+            local active=buttons>=0 and not in_menu()
+            for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
+                if cmd=="repeat" then speech.say(last_speech,true)
+                elseif cmd=="help" or cmd=="face" or cmd=="autowalk" then log("scanner_command_pending cmd="..cmd)
+                else scanner.command(cmd) end
+            end
+        end)
+        if not ok and pad_errors<5 then pad_errors=pad_errors+1;log("pad_error="..tostring(err)) end
     end,EGameThreadMethod.EngineTick)
     return false
 end)
