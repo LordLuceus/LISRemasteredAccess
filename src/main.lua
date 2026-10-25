@@ -48,6 +48,10 @@ menu.format_percent=function(p)return l10n.text("percent",{value=p})end
 do
     local ok,req=pcall(require,"LISNavRequest")
     if ok and type(req)=="table" and req.expected_saved_directory and req.describe_unlabelled then menu.describe_unlabelled=require("dev.unlabelled").describe(log) end
+    if ok and type(req)=="table" and req.expected_saved_directory and req.trace_dialogs then
+        local trace=require("dev.dialog_trace")
+        LoopAsync(500,function()ExecuteInGameThread(function()pcall(trace.tick,log)end,EGameThreadMethod.EngineTick);return false end)
+    end
 end
 local tracker=require("menus.tracker").new()
 local menu_errors,settings_tick=0,0

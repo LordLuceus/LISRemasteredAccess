@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
+param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
 $ErrorActionPreference='Stop'
 if($SessionName -notmatch '^profile-probe-[a-z0-9-]+$'){throw 'Invalid session name'}
 if(Get-Process 'LiS-Win64-Shipping' -ErrorAction SilentlyContinue){throw 'Close the remaster before a profile probe'}
@@ -61,6 +61,7 @@ function ConvertTo-LuaPoints([string]$Text){
 }
 if($ActionPatterns){$list=(($ActionPatterns -split ',') | Where-Object {$_} | ForEach-Object {"'$_'"}) -join ',';$requestText=(Add-RequestField $requestText)+", action_patterns={$list}}"}
 if($AutoGoal){if(-not $Follow){throw 'AutoGoal requires -Follow'};$g=(ConvertTo-LuaPoints $AutoGoal);$requestText=(Add-RequestField $requestText)+", auto_goal=$($g.Substring(1,$g.Length-2))}"}
+if($DialogProbe){$requestText=(Add-RequestField $requestText)+", live=true, describe_unlabelled=true, trace_dialogs=true}"}
 if($SettingsProbe){$requestText=(Add-RequestField $requestText)+", live=true, describe_unlabelled=true}"}
 if($Menus){$requestText=(Add-RequestField $requestText)+", live=true}"} # narration always runs; this only drives the W/S key sequence
 if($InspectMenus){$requestText=(Add-RequestField $requestText)+", inspect_menus=true, live=true}"}
@@ -85,6 +86,9 @@ $command=(Get-CimInstance Win32_Process -Filter "ProcessId=$($game.Id)").Command
 $profileArgumentPresent=$command -like '*UserDir*'
 if($command.Replace('\','/').IndexOf($profile.Replace('\','/'),[StringComparison]::OrdinalIgnoreCase) -lt 0){throw 'Game does not carry this operator profile; will not control it'}
 $keyVerification='not_requested'
+if($DialogProbe){
+    try{& (Join-Path $PSScriptRoot 'dialog_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
 if($SettingsProbe){
     try{& (Join-Path $PSScriptRoot 'settings_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
 }
