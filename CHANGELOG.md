@@ -4,6 +4,15 @@ Player-facing changes, newest first.
 
 ## 2026-10-25
 
+### In play
+- New scanner: Page Up and Page Down (or D-pad left and right) select objects you
+  can interact with, nearest first, with distance, direction and height, for
+  example "Mail, 1.5 metres, ahead, 3 of 38". In the opening nightmare it lists
+  the lighthouse. Home (or D-pad up) describes the selected object again.
+- Ctrl+Home repeats the last announcement (on a controller, hold the left-stick
+  click and press D-pad right). Home now describes in play and still rereads
+  menus.
+
 ### Menus
 - The pause menu is narrated: its options, its settings screens and its
   confirmations, such as "All unsaved progress will be lost. Do you still want to

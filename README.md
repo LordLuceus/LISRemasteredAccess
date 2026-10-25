@@ -28,6 +28,27 @@ writes to your saves.
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
 - **Home** rereads what is on screen now, for example the current countdown.
 
+## In play: the scanner
+
+The scanner lists the objects you can interact with, plus a scene's goal where
+the game has nothing to interact with (the opening nightmare's lighthouse),
+nearest first.
+
+| Keyboard | Controller | Action |
+| --- | --- | --- |
+| Page Down / Page Up | D-pad right / left | Next / previous object (hold to repeat) |
+| Home | D-pad up | Describe the selected object again, with fresh distance and direction |
+| Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
+
+An object is read with its distance, direction from where you are facing, height
+when it is more than 1.5 metres above or below, and its place in the list, for
+example "Mail, 1.5 metres, ahead, 3 of 38". Objects with the same name get
+letters ("Door, A", "Door, B") that stay with the object as you move. The
+selection stays on the same object when the order changes.
+
+The controller commands work only in play, so the D-pad still works normally in
+menus. Walking to the selected object (autowalk) and facing it are next.
+
 The pause menu, its settings and its confirmations read the same way.
 
 Not narrated yet: Extras and the keybinding editor. In play, nothing beyond the
