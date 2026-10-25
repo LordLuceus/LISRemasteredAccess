@@ -11,7 +11,7 @@ and can run a short fixed navigation test.
 
 ## Planned order
 
-1. Foundation: speech and braille, keys, localization. *(Speech and braille done.)*
+1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
 2. Menus: title screen, main menu, save slots and episode selection.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
@@ -60,8 +60,28 @@ python scripts\deploy_probe.py
 
 The smoke test checks Prism's backends and literal SAPI text without speaking.
 Deployment requires the game to be closed and verifies every installed file's
-hash before replacing it. Announcement text is in
-`probes/EngineTickProbe/strings.lua`.
+hash before replacing it.
+
+## Localisation and key names
+
+The game's own labels are already translated by the game. The mod's own
+announcements live in `probes/EngineTickProbe/lang_en.lua`. To translate them,
+copy it to `lang_<code>.lua` (for example `lang_fr.lua` or `lang_pt_br.lua`)
+and translate the values, keeping the keys and `{placeholders}`. The mod follows
+the game's language setting: it tries the exact language, then the base
+language, then English, so a partial translation still works. A missing
+English string is spoken as a marked placeholder and logged, never guessed.
+
+Key names in announcements are filled in when spoken, for the input device the
+game says is in use: a connected but unused controller still gives keyboard
+names. Controller bindings for the mod's commands are not assigned yet.
+
+Offline tests for this logic, which need no game:
+
+```
+artifacts\lua-5.4.7\lua54.exe tests\lua\run.lua
+```
+
 
 The installation is pinned to Steam build 11330282 and experimental UE4SS
 3.0.1-1181-g83330635, with a measured virtual-table correction in

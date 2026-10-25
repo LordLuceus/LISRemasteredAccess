@@ -1,11 +1,13 @@
--- Prototype English catalog; all player announcements go through these keys.
+-- English mod announcements. Keys are stable identifiers; other languages go in
+-- lang_<code>.lua with the same keys. {placeholders} are filled in by the mod,
+-- for example with the spoken name of a key for the input device in use.
 return {
     checking="Checking the isolated navigation test.",
     waiting="Waiting for the opening scene to release movement.",
     waiting_control="Waiting for player movement to become available.",
-    garage="Chloe's house loaded. Downstairs and garage. F10 returns to the main menu.",
-    junkyard="Junkyard loaded. F10 returns to the main menu.",
-    starting="Starting the navigation test. F8 stops it.",
+    garage="Chloe's house loaded. Downstairs and garage. {menu_key} returns to the main menu.",
+    junkyard="Junkyard loaded. {menu_key} returns to the main menu.",
+    starting="Starting the navigation test. {cancel_key} stops it.",
     arrived="Test destination reached.",
     stalled="Navigation test stopped. No progress.",
     stopped="Navigation test stopped.",
@@ -13,5 +15,5 @@ return {
     none="No navigation test is running.",
     returning="Returning to the main menu.",
     menu="Main menu. Alt F4 exits the game.",
-    failed="The navigation test could not start. Check the prototype log.",
+    failed="The navigation test could not start. Check the mod log.",
 }

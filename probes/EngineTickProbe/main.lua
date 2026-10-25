@@ -12,14 +12,32 @@ if not request.expected_saved_directory then
     print(prefix.."dormant: no explicit isolated-profile request\n")
     return
 end
-local strings=require("strings")
+local l10n=require("localization")
+local controls=require("controls")
 local speech=require("speech")
 print(prefix.."speech_module "..speech.status().."\n")
-local last_speech=strings.checking
+local last_speech=""
 local last_follow_result=nil
+-- Key names are filled in at speech time, so they match the device in use now.
 local function say(key)
-    last_speech=assert(strings[key],"Missing announcement key")
+    last_speech=l10n.text(key,{menu_key=controls.name("main_menu"),cancel_key=controls.name("cancel")})
     speech.say(last_speech,true)
+end
+-- Follow the game's language and input mode. Both getters are side-effect free.
+local settings_reported=false
+local function refresh_settings(controller)
+    local ok,lang=pcall(function()return controller:GetCurrentLanguage()end)
+    if ok then lang=type(lang)=="string" and lang or lang:ToString();l10n.set_language(lang) end
+    if not settings_reported then
+        -- One line proving both reads ran, since later lines appear only on change.
+        settings_reported=true
+        controls.refresh(controller)
+        print(prefix.."settings language_read="..tostring(ok).." game_language="..tostring(lang)
+            .." catalog="..l10n.language().." gamepad="..tostring(controls.using_gamepad()).."\n")
+    end
+    if controls.refresh(controller) then
+        print(prefix.."input_mode gamepad="..tostring(controls.using_gamepad()).."\n")
+    end
 end
 local function emit(line)
     print(prefix..line.."\n")
@@ -199,6 +217,7 @@ LoopAsync(5000, function()
                 if controller:IsValid() and not controller:HasAnyFlags(EObjectFlags.RF_BeginDestroyed | EObjectFlags.RF_FinishDestroyed) then
                     local world = controller:GetWorld()
                     print(prefix .. "poll=" .. poll .. " controller=" .. text(controller) .. " world=" .. text(world) .. "\n")
+                    refresh_settings(controller)
                     if scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
                         and not scene_announced and controller.Pawn:IsValid() then scene_announced=true;say(request.scene) end
                     if return_requested and not menu_announced and world:GetFName():ToString()=="WhatIf_Menu" then menu_announced=true;say("menu") end
