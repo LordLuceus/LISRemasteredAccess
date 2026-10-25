@@ -358,5 +358,49 @@ do
     check("closed episodes screen, no stale title prompt",mm.snapshot()==nil)
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
+-- Chapter list (captured values): selected chapter read over the Episodes screen.
+do
+    package.loaded["menus.main_menu"]=nil;package.loaded["menus.tracker"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu");local tr=require("menus.tracker").new()
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=function()return 5 end;return o end
+    local function textw(s,hidden)return obj({GetText=function()return {ToString=function()return s end}end,IsVisible=function()return not hidden end})end
+    local cls=function(n)return function()return {GetFName=function()return {ToString=function()return n end}end}end end
+    local opts={obj({Button_Text=textw("Collectible Mode")})}
+    local ep=obj({IsVisible=function()return true end,IsInViewport=function()return true end,GetClass=cls("BP_LiS_ChangeEpisode_Widget_C"),EpisodeNumber=0,
+        EpisodeTitle=textw("Episode 1: Chrysalis"),CurrentInteractableIndex=0,CurrentInteractable=opts[1],InteractablesArray=opts})
+    local ch=obj({IsVisible=function()return true end,IsInViewport=function()return true end,GetClass=cls("BP_LiS_ChangeLevelMenu_Widget_C"),
+        EpisodeName_TextBlock=textw("Episode 1: Nightmare"),TextBlock_Collected=textw("1/1 Collected",true),LevelIndex=0,SelectedButtonIndex=1,SelectedEpisode=0})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=obj({IsVisible=function()return false end,GetClass=cls("X")})})
+    local live={BP_LiS_Main_Menu_Widget_C={title},BP_LiS_ChangeEpisode_Widget_C={ep},BP_LiS_ChangeLevelMenu_Widget_C={ch}}
+    _G.FindAllOf=function(n)return live[n] or {} end
+    check("chapter list read over Episodes",tr:update(mm.snapshot())=="Episode 1: Nightmare")
+    ch.TextBlock_Collected=textw("1/1 Collected")
+    check("collected count added when shown",tr:update(mm.snapshot())=="1/1 Collected")
+    ch.LevelIndex=1;ch.EpisodeName_TextBlock=textw("Episode 1: High School")
+    check("next chapter spoken",tr:update(mm.snapshot())=="Episode 1: High School, 1/1 Collected")
+    live.BP_LiS_ChangeLevelMenu_Widget_C=nil
+    check("back to Episodes after closing",tr:update(mm.snapshot())=="Episode 1: Chrysalis, Collectible Mode")
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
+-- Locked-episode heading (game's own English text, user-verified in play).
+do
+    package.loaded["menus.main_menu"]=nil;package.loaded["menus.tracker"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu");local tr=require("menus.tracker").new()
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=function()return 6 end;return o end
+    local function textw(s,hidden)return obj({GetText=function()return {ToString=function()return s end}end,IsVisible=function()return not hidden end})end
+    local cls=function(n)return function()return {GetFName=function()return {ToString=function()return n end}end}end end
+    local opts={obj({Button_Text=textw("Continue")})}
+    local ep=obj({IsVisible=function()return true end,IsInViewport=function()return true end,GetClass=cls("BP_LiS_ChangeEpisode_Widget_C"),EpisodeNumber=1,
+        EpisodeTitle=textw("Episode 2: Out of Time"),FinishPrevEp=textw("Finish Previous Episode to Play"),CurrentInteractableIndex=0,CurrentInteractable=opts[1],InteractablesArray=opts})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=obj({IsVisible=function()return false end,GetClass=cls("X")})})
+    local live={BP_LiS_Main_Menu_Widget_C={title},BP_LiS_ChangeEpisode_Widget_C={ep}}
+    _G.FindAllOf=function(n)return live[n] or {} end
+    check("locked episode says why",tr:update(mm.snapshot())=="Episode 2: Out of Time, Finish Previous Episode to Play, Continue",tostring(tr:current()))
+    ep.FinishPrevEp=textw("Finish Previous Episode to Play",true);ep.EpisodeNumber=0;ep.EpisodeTitle=textw("Episode 1: Chrysalis")
+    check("hidden notice line not read",tr:update(mm.snapshot())=="Episode 1: Chrysalis, Continue",tostring(tr:current()))
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

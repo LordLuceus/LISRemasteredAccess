@@ -206,6 +206,13 @@ local function interactable_snapshot(screen)
     local heading=M.headings[class]
     if heading then
         context=field_text(screen,heading.text)
+        if heading.extra then
+            local xok,xw=pcall(function()return screen[heading.extra] end)
+            if context and xok and valid(xw) and call_bool(xw,"IsVisible") then
+                local x=field_text(screen,heading.extra)
+                if x then context=require("core.text").join(context,x) end
+            end
+        end
         local hok,part=pcall(function()return screen[heading.id]end)
         if hok and part~=nil then id=id.."#"..tostring(part) end
     end
@@ -214,10 +221,29 @@ local function interactable_snapshot(screen)
     return {screen=id,index=index,label=label,value=value,context=context},
         "screen="..class.." index="..index.." source="..source
 end
+-- Chapter list (BP_LiS_ChangeLevelMenu_Widget_C, opened from Episodes via
+-- Collectible Mode). Not a menu-parent screen: the game shows the selected
+-- chapter in EpisodeName_TextBlock ("Episode 1: Nightmare") and tracks it with
+-- LevelIndex/SelectedButtonIndex. The collected count is added when shown.
+local function chapter_snapshot(w)
+    local name=field_text(w,"EpisodeName_TextBlock")
+    if not name then return nil end
+    local collected=nil
+    local ok,c=pcall(function()return w.TextBlock_Collected end)
+    if ok and valid(c) and call_bool(c,"IsVisible") then collected=field_text(w,"TextBlock_Collected") end
+    local lok,li=pcall(function()return w.LevelIndex end)
+    local bok,bi=pcall(function()return w.SelectedButtonIndex end)
+    local eok,ep=pcall(function()return w.SelectedEpisode end)
+    local id="chapters@"..string.format("%X",w:GetAddress()).."#"..tostring(eok and ep)
+    return {screen=id,index=tostring(lok and li)..":"..tostring(bok and bi),label=name,value=collected},"screen=chapters"
+end
+M.special={BP_LiS_ChangeLevelMenu_Widget_C=chapter_snapshot}
 -- Screens shown on their own rather than as the title's LastCreatedWidget.
-M.standalone={"BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C","BP_LiS_ChangeEpisode_Widget_C"}
+-- Topmost first: the chapter list is shown over the Episodes screen, and the
+-- replay popup over the chapter list.
+M.standalone={"BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C","BP_LiS_ChangeLevelMenu_Widget_C","BP_LiS_ChangeEpisode_Widget_C"}
 -- Heading text field and the field identifying its subject, per screen class.
-M.headings={BP_LiS_ChangeEpisode_Widget_C={text="EpisodeTitle",id="EpisodeNumber"}}
+M.headings={BP_LiS_ChangeEpisode_Widget_C={text="EpisodeTitle",id="EpisodeNumber",extra="FinishPrevEp"}}
 local function find_live(class)
     for _,w in ipairs(FindAllOf(class) or {}) do
         if valid(w) and call_bool(w,"IsVisible") then
@@ -243,7 +269,8 @@ function M.snapshot()
     for _,class in ipairs(M.standalone) do
         local w=find_live(class)
         if w then
-            local s,d=interactable_snapshot(w)
+            local reader=M.special[class] or interactable_snapshot
+            local s,d=reader(w)
             if s then return s,d end
         end
     end    local ok,screen=pcall(function()return title.LastCreatedWidget end)
