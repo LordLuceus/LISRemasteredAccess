@@ -12,6 +12,11 @@ M.commands={
     confirm={keyboard="Enter",controller="A"},
     back={keyboard="Escape",controller="B"},
 }
+-- Controller buttons for the interaction pop-up's four slots. From the pop-up's
+-- own code: slot 1 is its Left action, 2 Top, 3 Right, 4 Bottom; the game maps
+-- those to the face buttons X, Y, B and A. (Inferred from the widget code and
+-- the captured layouts, e.g. Look in slot 2 and Open/Read in slot 4.)
+M.slot_buttons={"X","Y","B","A"}
 local gamepad=false
 function M.set_gamepad(on)gamepad=on==true end
 function M.using_gamepad()return gamepad end

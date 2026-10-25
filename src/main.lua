@@ -108,6 +108,14 @@ local function run_delayed()
 end
 local function next_preview()preview.next(function(play)after_beats(18,play)end)end
 RegisterKeyBindAsync(Key.F,on_game(face_selected))
+-- 1-4 use the actions of the object the game has focused.
+local actions=require("scanner.actions")
+for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
+    RegisterKeyBindAsync(k,on_game(function()
+        if not playable() then return end
+        local c=scanner.controller();if c then actions.trigger(c,n) end
+    end))
+end
 RegisterKeyBindAsync(Key.F1,on_game(show_help))
 RegisterKeyBindAsync(Key.F2,on_game(next_preview))
 
@@ -164,6 +172,15 @@ end
 scanner.say=function(text)say(text,true)end
 autowalk.say=function(text)say(text,true)end
 face.say=function(text)say(text,true)end
+actions.say=function(text)say(text,true)end
+actions.log=log
+actions.text=function(key,p)return l10n.text(key,p)end
+actions.key_name=function(position,slot)
+    if controls.using_gamepad() and slot then return controls.slot_buttons[slot] end
+    return tostring(position)
+end
+actions.translate=function(key)return require("scanner.sources").translate(key)end
+face.focused_announce=function(c)actions.announce(c)end
 face.log=log
 -- Test sessions: record what the game does after each face request.
 do local ok,req=pcall(require,"LISNavRequest")
@@ -171,6 +188,7 @@ do local ok,req=pcall(require,"LISNavRequest")
         local probe=require("dev.focus_probe")
         face.watch=function(c,e)probe.watch(c,e,log)end
         face_probe_tick=probe.tick
+        actions.trace_popup=true
     end
 end
 face.text=function(key,p)return l10n.text(key,p)end
@@ -204,6 +222,7 @@ local function main_step()
             end
             autowalk.tick()
             face.tick()
+            if c and control:has_control() and not in_menu() then actions.tick(c) end
             if face_probe_tick then face_probe_tick() end
         end)
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end

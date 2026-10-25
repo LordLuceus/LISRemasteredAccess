@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -757,7 +757,7 @@ end
 do
     package.loaded["core.help"]=nil;package.loaded["core.preview"]=nil
     local H=require("core.help");H.text=function(k)return k end
-    check("keyboard help",H.lines(false)[1]=="help_keys_select" and #H.lines(false)==6)
+    check("keyboard help",H.lines(false)[1]=="help_keys_select" and #H.lines(false)==7)
     check("controller help",H.lines(true)[3]=="help_pad_walk")
     local en=require("lang.en")
     local all=true;for _,g in ipairs({false,true}) do for _,k in ipairs(H.lines(g)) do if not en[k] then all=false end end end
@@ -776,6 +776,58 @@ do
     local p=require("scanner.pad").new()
     p:update(0x40,true,1)
     check("stick+left previews",table.concat(p:update(0x44,true,1.1),",")=="preview")
+end
+-- Interactions: labels, announcement wording, trigger on the game-focused object.
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    check("label from action name",A.label_key("Look01")=="$GT_Sensen_Action_Look")
+    check("label override",A.label_key("Interact01","Open")=="$GT_Sensen_Action_Open")
+    check("override already a full key",A.label_key("Interact02","$GT_Sensen_Action_Read")=="$GT_Sensen_Action_Read")
+    local en=require("lang.en")
+    A.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    check("announcement",A.announce_text("Mail",{"Look","Take"})=="Mail. 1, Look, 2, Take.",A.announce_text("Mail",{"Look","Take"}))
+    check("no actions",A.announce_text("Car",{})=="Car. No actions available.")
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local triggered=nil
+    local function act(name,on)return {ActionName={ToString=function()return name end},bEnabled=on,OverrideDisplayName={ToString=function()return "None" end}} end
+    local list={act("Look01",true),act("Take01",false),act("Speak01",false),act("Photo01",false),act("Interact01",true)}
+    local door=o({GetAddress=function()return 5 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "$GT_Sensen_Int_Door01" end},
+        Actions={ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end},
+        TriggerActionBP=function(_,i)triggered=i;return true end})
+    local c=o({GetAddress=function()return 1 end})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=door})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    local spoken={};A.say=function(t)spoken[#spoken+1]=t end;A.translate=function(k)return ({["$GT_Sensen_Action_Look"]="Look",["$GT_Sensen_Action_Interact"]="Open",["$GT_Sensen_Int_Door01"]="Door"})[k] or k end
+    A.reset();A.tick(c)
+    check("focus announced once",spoken[1]=="Door. 1, Look, 2, Open.",tostring(spoken[1]))
+    A.tick(c);check("not repeated",#spoken==1)
+    check("slot 2 triggers full-list index 4",A.trigger(c,2)==true and triggered==4)
+    check("slot 1 triggers index 0",A.trigger(c,1)==true and triggered==0)
+    check("missing slot refused",A.trigger(c,3)==false and spoken[#spoken]=="No action 3.")
+    door.bIsInteractionUIOpened=false;triggered=nil
+    check("closed interaction refused",A.trigger(c,1)==false and triggered==nil and spoken[#spoken]=="Nothing to interact with here.")
+    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+end
+-- Focus flicker: the same object is not re-announced within 3 s.
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local now=0;A.clock=function()return now end
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local mail=o({GetAddress=function()return 9 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "Mail" end},Actions={ForEach=function()end}})
+    local c=o({GetAddress=function()return 1 end})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=mail})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    local n=0;A.say=function()n=n+1 end;A.text=function(k)return k end
+    A.reset();A.tick(c);check("first announced",n==1)
+    comp.ActorInteractionFocused=nil;now=1;A.tick(c)
+    comp.ActorInteractionFocused=mail;now=2;A.tick(c)
+    check("flicker within 3 s silent",n==1)
+    comp.ActorInteractionFocused=nil;now=4;A.tick(c)
+    comp.ActorInteractionFocused=mail;now=5;A.tick(c)
+    check("back after 3 s announced",n==2)
+    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
 end
 -- Correction maths (ported from the original): error feedback converges on a
 -- camera that lands offset from each request; repeating the same request does not.
@@ -812,6 +864,53 @@ do
     comp.ActorInteractionFocused=obj;now=now+0.25;F.tick()
     check("late focus counts",announced and #spoken==0)
     _G.FindAllOf=nil;_G.StaticFindObject=nil;package.loaded["scanner.face"]=nil
+end
+-- Actions come from the pop-up's visible buttons (captured classroom values).
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local look={index=0,name="Look01",key="$GT_Sensen_Action_Look",label="Look"}
+    local look2={index=8,name="Look02",key="$GT_Sensen_Action_Look",label="Look"}
+    local read={index=4,name="Interact01",key="$GT_Sensen_Action_Read",label="Read"}
+    -- Photo: pop-up " |Look| | |Photo", button 2 visible; raw has Look01+Look02.
+    local p=A.from_popup({" ","$GT_Sensen_Action_Look"," "," ","Photo"},{false,true,false,false},{look,look2})
+    check("one Look, not two",#p==1 and p[1].label=="Look" and p[1].index==0)
+    -- Journal: " |Look| |Read|Journal", buttons 2 and 4.
+    local j=A.from_popup({" ","$GT_Sensen_Action_Look"," ","$GT_Sensen_Action_Read","Journal"},{false,true,false,true},{look,read,look2})
+    check("journal Look and Read",#j==2 and j[1].label=="Look" and j[2].label=="Read" and j[2].index==4)
+    check("hidden buttons ignored",#A.from_popup({"$GT_Sensen_Action_Look"},{false,false,false,false},{look})==0)
+    package.loaded["scanner.actions"]=nil
+end
+-- Facing's announcement and the automatic one don't both speak the same object.
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local now=0;A.clock=function()return now end
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local pc=o({GetAddress=function()return 9 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "Pencil" end},Actions={ForEach=function()end},GetInteractionWidget=function()return nil end})
+    local c=o({GetAddress=function()return 1 end})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=nil})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    local n=0;A.say=function()n=n+1 end;A.text=function(k)return k end
+    A.reset();A.tick(c)
+    comp.ActorInteractionFocused=pc;A.announce(c) -- facing announces
+    now=0.4;A.tick(c)                            -- automatic check sees the change
+    check("facing then automatic: spoken once",n==1)
+    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+end
+-- Controller: actions are named by the pop-up slot's face button.
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local en=require("lang.en")
+    A.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    local journal={{label="Look",slot=2},{label="Read",slot=4}}
+    check("keyboard numbers",A.announce_text("Journal",journal)=="Journal. 1, Look, 2, Read.")
+    local buttons={"X","Y","B","A"}
+    A.key_name=function(pos,slot)return slot and buttons[slot] or tostring(pos) end
+    check("controller face buttons",A.announce_text("Journal",journal)=="Journal. Y, Look, A, Read.",A.announce_text("Journal",journal))
+    check("controller without slot falls back to number",A.announce_text("Car",{"Look"})=="Car. 1, Look.")
+    package.loaded["scanner.actions"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

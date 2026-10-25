@@ -11,6 +11,7 @@ function M.lines(gamepad)
         M.text(d.."_describe"),
         M.text(d.."_walk"),
         M.text(d.."_face"),
+        M.text(d.."_actions"),
         M.text(d.."_repeat"),
         M.text(d.."_preview"),
     }
