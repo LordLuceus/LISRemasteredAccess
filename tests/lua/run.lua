@@ -435,5 +435,66 @@ do
     check("gameplay with nothing open is silent",mm.snapshot()==nil)
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
+-- Scanner list: nearest first, stable letters for duplicates, sticky selection,
+-- wrapping, direction words and height.
+do
+    package.loaded["scanner.list"]=nil
+    local L=require("scanner.list")
+    local s=L.new()
+    local function e(id,label,x,y,z)return {id=id,label=label,pos={X=x,Y=y,Z=z or 0}} end
+    local me={X=0,Y=0,Z=0}
+    local list=s:update({e("b2","Bottle",300,0),e("car","Car",100,0),e("b1","Bottle",200,0)},me)
+    check("nearest first",list[1].id=="car" and list[2].id=="b1" and list[3].id=="b2")
+    check("duplicate letters by identity",list[2].name=="Bottle, A" and list[3].name=="Bottle, B" and list[1].name=="Car")
+    check("first next picks nearest",s:move(1).id=="car")
+    check("next",s:move(1).id=="b1")
+    -- Walk past: b2 becomes nearest. Letters stay; selection stays on b1.
+    list=s:update({e("b2","Bottle",300,0),e("car","Car",100,0),e("b1","Bottle",200,0)},{X=320,Y=0,Z=0})
+    check("order follows distance",list[1].id=="b2")
+    check("letters follow identity",list[1].name=="Bottle, B")
+    local cur,i=s:current()
+    check("selection sticks to the object",cur.id=="b1" and i==2)
+    check("wraps forward",(function()s:move(1);return s:move(1).id=="b2" end)())
+    check("wraps backward",s:move(-1).id=="car")
+    s:update({e("car","Car",100,0)},me)
+    check("selection dropped when object gone",s:current().id=="car")
+    s:update({e("b1","Bottle",200,0)},me)
+    check("vanished selection cleared",s:current()==nil)
+    check("first previous picks farthest",(function()s:update({e("a","A",100,0),e("b","B",500,0)},me);return s:move(-1).id=="b" end)())
+    check("empty list",(function()local t=L.new();t:update({},me);return t:move(1)==nil end)())
+    -- Direction relative to facing (yaw 0 = +X).
+    check("ahead",L.direction(me,0,{X=100,Y=0})=="ahead")
+    check("right",L.direction(me,0,{X=0,Y=100})=="right")
+    check("behind",L.direction(me,0,{X=-100,Y=0})=="behind")
+    check("left",L.direction(me,0,{X=0,Y=-100})=="left")
+    check("facing rotates",L.direction(me,90,{X=0,Y=100})=="ahead")
+    check("ahead left",L.direction(me,0,{X=100,Y=-100})=="ahead left")
+    local h,m=L.height(me,{X=0,Y=0,Z=850})
+    check("height up in metres",h=="up" and math.abs(m-8.5)<0.01)
+    check("small height ignored",L.height(me,{X=0,Y=0,Z=100})==nil)
+end
+-- Scanner names: game translator, cached per language, readable fallback.
+do
+    package.loaded["scanner.sources"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local calls=0
+    local widget={IsValid=function()return true end,HasAnyFlags=function()return false end,GetFullName=function()return "LiSWidget /Game/x.y" end,
+        GetLocalizedString=function(_,k)calls=calls+1;return ({["$GT_Sensen_Int_Bottle01"]="Bottle"})[k] or k end}
+    _G.FindAllOf=function(n)return n=="LiSWidget" and {widget} or {} end
+    _G.StaticFindObject=function()return nil end
+    local src=require("scanner.sources")
+    local reports={};src.report=function(l)reports[#reports+1]=l end
+    local lang="en";src.language=function()return lang end
+    check("translated by the game",src.translate("$GT_Sensen_Int_Bottle01")=="Bottle")
+    src.translate("$GT_Sensen_Int_Bottle01")
+    check("cached",calls==1)
+    lang="fr";src.translate("$GT_Sensen_Int_Bottle01")
+    check("cache cleared on language change",calls==2)
+    check("readable fallback",src.translate("$GT_Sensen_Int_AnsweringMachine01")=="Answering Machine")
+    local found=false;for _,l in ipairs(reports) do if l:find("untranslated key=$GT_Sensen_Int_AnsweringMachine01",1,true) then found=true end end
+    check("fallback reported",found)
+    check("readable fallback simple",src.readable("$GT_Sensen_Int_TV01")=="TV")
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

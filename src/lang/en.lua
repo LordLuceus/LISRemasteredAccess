@@ -22,4 +22,5 @@ return {
     dialog_confirm_cancel="{confirm_key} to confirm, {back_key} to cancel",
     dialog_confirm="{confirm_key} to confirm",
     gamma_title="Gamma",
+    goal_lighthouse="Lighthouse",
 }
