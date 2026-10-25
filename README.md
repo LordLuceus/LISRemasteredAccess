@@ -28,14 +28,16 @@ writes to your saves.
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
 - **Home** rereads what is on screen now, for example the current countdown.
 
-Not narrated yet: chapter selection, Extras, the keybinding editor
-and the pause menu.
+The pause menu, its settings and its confirmations read the same way.
+
+Not narrated yet: Extras and the keybinding editor. In play, nothing beyond the
+pause menu is narrated yet.
 
 
 ## Planned order
 
 1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
-2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; chapter selection, Extras and the pause menu next.
+2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; pause menu *(done)*; Extras and the keybinding editor later.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
 4. Dialogue choices and prompts.

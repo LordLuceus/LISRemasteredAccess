@@ -5,6 +5,9 @@ Player-facing changes, newest first.
 ## 2026-10-25
 
 ### Menus
+- The pause menu is narrated: its options, its settings screens and its
+  confirmations, such as "All unsaved progress will be lost. Do you still want to
+  exit? Enter to confirm, Escape to cancel".
 - The arrow keys now move through menus like W, A, S and D. Before, they did
   nothing there.
 - The Episodes screen reads the episode and the highlighted option, for example
