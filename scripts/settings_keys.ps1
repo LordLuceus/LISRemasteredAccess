@@ -25,18 +25,18 @@ function Press([uint16]$Key,[string]$Name){
 function Require([string]$Pattern,[string]$What){
     if(-not (Await $Pattern 10)){Mark "STOP: $What not announced";throw "$What not announced; stopping"}
 }
-$list='Settings_Widget_C .*label='
+$list='Settings_Widget_C .*spoken='
 if(-not (Await 'screen=title' 90)){throw 'Title screen never announced; no keys sent'}
 Start-Sleep -Seconds 2
 Press 0x53 'S (leave Click To Start)'
-Require 'label=Episodes$' 'Episodes'
+Require 'spoken=Episodes$' 'Episodes'
 Press 0x53 'S'
-Require 'label=Settings$' 'Settings'
+Require 'spoken=Settings$' 'Settings'
 Press 0x0D 'Enter (open Settings)'
 Require ($list+'Saved games$') 'Settings list'
-$categories=@(@{label='Video Settings';rows=@('S','S','S','S','S','S','S','S','W','W')},
-              @{label='Audio & Language Settings';rows=@('S','S','S','S','S','S')},
-              @{label='Game Settings';rows=@('S','S','S','S','S','S')})
+$categories=@(@{spoken='Video Settings';rows=@('S','S','S','S','S','S','S','S','W','W')},
+              @{spoken='Audio & Language Settings';rows=@('S','S','S','S','S','S')},
+              @{spoken='Game Settings';rows=@('S','S','S','S','S','S')})
 $first=$true
 foreach($c in $categories){
     if(-not $first){

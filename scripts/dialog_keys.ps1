@@ -27,24 +27,24 @@ function SeekDown([string]$Pattern,[string]$What,[int]$Max){
 }
 $S=0x53;$W=0x57;$Enter=0x0D;$Esc=0x1B
 Require 'screen=title' 'title' 90; Start-Sleep -Seconds 2
-Press $S 'S (leave Click To Start)'; Require 'label=Episodes$' 'Episodes'
-Press $S 'S'; Require 'label=Settings$' 'Settings'
-Press $Enter 'Enter (Settings)'; Require 'Settings_Widget_C .*label=Saved games$' 'Saved games'
+Press $S 'S (leave Click To Start)'; Require 'spoken=Episodes$' 'Episodes'
+Press $S 'S'; Require 'spoken=Settings$' 'Settings'
+Press $Enter 'Enter (Settings)'; Require 'Settings_Widget_C .*spoken=Saved games$' 'Saved games'
 # 1. Saved games: move through the slots.
 Press $Enter 'Enter (Saved games)'; Start-Sleep -Seconds 1
 Press $S 'S'; Press $S 'S'; Press $S 'S'; Press $W 'W'
-Press $Esc 'Escape (back to Settings list)'; Require 'Settings_Widget_C .*label=' 'Settings list'
+Press $Esc 'Escape (back to Settings list)'; Require 'Settings_Widget_C .*spoken=' 'Settings list'
 # 2. Video settings: Apply Settings, then the confirmation.
-SeekDown 'Settings_Widget_C .*label=Video Settings$' 'Video Settings' 4
+SeekDown 'Settings_Widget_C .*spoken=Video Settings$' 'Video Settings' 4
 Press $Enter 'Enter (Video Settings)'; Start-Sleep -Seconds 1
-SeekDown 'label=Apply Settings$' 'Apply Settings' 16
+SeekDown 'spoken=Apply Settings$' 'Apply Settings' 16
 Press $Enter 'Enter (Apply Settings, unchanged values)'; Start-Sleep -Seconds 1
 Press $S 'S (in confirmation)'; Press $W 'W (in confirmation)'
 Press $Esc 'Escape (dismiss confirmation)'; Start-Sleep -Seconds 1
 Press $Esc 'Escape (back to Settings list)'; Start-Sleep -Seconds 1
 Press $Esc 'Escape (back to main menu)'
 # 3. Exit confirmation, never confirmed.
-SeekDown 'Start_Widget_C .*label=Exit$' 'Exit' 6
+SeekDown 'Start_Widget_C .*spoken=Exit$' 'Exit' 6
 Press $Enter 'Enter (Exit: opens confirmation only)'; Start-Sleep -Seconds 1
 Press $S 'S (in confirmation)'; Press $W 'W (in confirmation)'
 Press $Esc 'Escape (cancel Exit confirmation)'

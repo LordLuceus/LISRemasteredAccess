@@ -73,7 +73,38 @@ function M.tick(log)
         local s=field(title,"LastCreatedWidget")
         if valid(s) then parts[#parts+1]=describe_screen(s) end
     end
-    for _,c in ipairs({"MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}) do
+    -- Episode and chapter screens, found by class (narrow; no global widget scan).
+    for _,c in ipairs({"BP_LiS_ChangeEpisode_Widget_C","BP_LiS_ChangeLevelMenu_Widget_C","BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C"}) do
+        for _,w in ipairs(FindAllOf(c) or {}) do
+            local ok,live=pcall(function()return valid(w) and (w:IsInViewport() or valid(w:GetParent())) and w:IsVisible()end)
+            if ok and live then
+                local p={"EPISODES "..c}
+                for _,k in ipairs({"EpisodeNumber","IsOnPage1","CanPlay","IsCollectorMode","SlotIndex","SelectedButtonIndex","SelectedEpisode","LevelIndex","Level"}) do
+                    local v=field(w,k);if type(v)=="number" or type(v)=="boolean" then p[#p+1]=k.."="..tostring(v) end
+                end
+                for _,k in ipairs({"EpisodeTitle","FinishPrevEp","TimeUntilNextEpText","LevelText","StatusText","TextBlock_Collected","EpisodeName_TextBlock","EnvStatusText","TextBlock_Continue","TextBlock_WarningMessage","TextBlock_CollectibleMode_info","TextBlock_Reset_info","TextBlock_5","TextBlock_0","TextBlock_23","TextBlock_83"}) do
+                    local o=field(w,k);if valid(o) then p[#p+1]=k.."=\""..tostring(txt(o)).."\""..(vis(o) and "" or "(hidden)") end
+                end
+                p[#p+1]=describe_screen(w)
+                for i=1,5 do
+                    local s=field(w,"E"..i.."_Selector")
+                    if valid(s) then p[#p+1]="E"..i.."=["..tostring(txt(field(s,"EpNum"))).." | "..tostring(txt(field(s,"EpTitle"))).."] vis="..tostring(vis(s)).." focus="..focus(s).." btn="..focus(field(s,"Button")) end
+                end
+                for i=1,3 do
+                    local b=field(w,"LevelButton"..i)
+                    if valid(b) then
+                        local tx=nil;pcall(function()tx=b.Texts:ToString()end)
+                        local ln=nil;pcall(function()ln=b.LevelName:ToString()end)
+                        p[#p+1]="Level"..i.."=[texts="..tostring(tx).." name="..tostring(ln).." sub="..tostring(field(b,"SubEpisodeIndex")).."] focus="..focus(b).." btn="..focus(field(b,"LevelSelectButton"))
+                    end
+                end
+                for _,k in ipairs({"PlayButton","RestartButton","CollectorModeButton","Slot1Button","Slot2Button","Slot3Button","StartEpEOEButton","EpisodesEOEButton","Button_Continue","Button_Reset","Button_CollectibleMode"}) do
+                    local o=field(w,k);if valid(o) then p[#p+1]=k.."=\""..tostring(txt(field(o,"Button_Text")) or txt(o)).."\" vis="..tostring(vis(o)).." focus="..focus(o) end
+                end
+                parts[#parts+1]=table.concat(p," ")
+            end
+        end
+    end    for _,c in ipairs({"MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}) do
         for _,p in ipairs(FindAllOf(c) or {}) do
             local ok,inview=pcall(function()return valid(p) and p:IsInViewport()end)
             if ok and inview then

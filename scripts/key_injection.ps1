@@ -17,7 +17,10 @@ public static class LISKeyTest {
   foreach(int mod in new int[]{0x10,0x11,0x12}){short state=GetAsyncKeyState(mod);Console.WriteLine("Modifier {0:X}: {1:X4}",mod,state);if((state & 0x8000)!=0)return false;}
   INPUT[] inputs=new INPUT[2];inputs[0].type=inputs[1].type=1;
   inputs[0].value.key.vk=inputs[1].value.key.vk=key;inputs[1].value.key.flags=2;
-  if(key==0x24){inputs[0].value.key.flags|=1;inputs[1].value.key.flags|=1;}
+  // Extended keys (arrows, Insert/Delete, Home/End, Page Up/Down) need KEYEVENTF_EXTENDEDKEY.
+  // Without it Windows delivers the numeric keypad key instead (NVDA then runs its numpad
+  // review commands and the game never sees an arrow).
+  if(key>=0x21&&key<=0x28||key==0x2D||key==0x2E){inputs[0].value.key.flags|=1;inputs[1].value.key.flags|=1;}
   bool down=SendInput(1,new INPUT[]{inputs[0]},Marshal.SizeOf(typeof(INPUT)))==1;
   try{System.Threading.Thread.Sleep(80);Console.WriteLine("Injected key {0:X}: count={1} state={2:X4} size={3}",key,down,GetAsyncKeyState(key),Marshal.SizeOf(typeof(INPUT)));System.Threading.Thread.Sleep(420);}finally{SendInput(1,new INPUT[]{inputs[1]},Marshal.SizeOf(typeof(INPUT)));}
   return down;
