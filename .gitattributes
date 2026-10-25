@@ -1,0 +1,23 @@
+# Line endings. Everything is stored with LF in the repository. The working copy
+# uses LF too, except Windows-only scripts that Windows tools read: those are
+# checked out with CRLF. This keeps diffs to the real change whatever editor or
+# script rewrote the file.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Pinned files: byte-for-byte as recorded, never converted.
+# Vendored UE4SS headers and licences are hash-checked against SOURCE.json;
+# VTableLayout.ini is installed into the game and hash-checked by deployment.
+native/third_party/** -text
+compatibility/VTableLayout.ini -text
+
+# Binary content that must never be treated as text.
+*.dll binary
+*.exe binary
+*.png binary
+*.pak binary
+*.uasset binary
+*.umap binary
