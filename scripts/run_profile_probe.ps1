@@ -61,7 +61,7 @@ function ConvertTo-LuaPoints([string]$Text){
 }
 if($ActionPatterns){$list=(($ActionPatterns -split ',') | Where-Object {$_} | ForEach-Object {"'$_'"}) -join ',';$requestText=(Add-RequestField $requestText)+", action_patterns={$list}}"}
 if($AutoGoal){if(-not $Follow){throw 'AutoGoal requires -Follow'};$g=(ConvertTo-LuaPoints $AutoGoal);$requestText=(Add-RequestField $requestText)+", auto_goal=$($g.Substring(1,$g.Length-2))}"}
-if($Menus){$requestText=(Add-RequestField $requestText)+", menus=true, live=true}"}
+if($Menus){$requestText=(Add-RequestField $requestText)+", live=true}"} # narration always runs; this only drives the W/S key sequence
 if($InspectMenus){$requestText=(Add-RequestField $requestText)+", inspect_menus=true, live=true}"}
 if($InspectWidgets){$requestText=(Add-RequestField $requestText)+", inspect_widgets=true}"}
 if($RouteCandidates){$requestText=(Add-RequestField $requestText)+", route_candidates=$(ConvertTo-LuaPoints $RouteCandidates)}"}

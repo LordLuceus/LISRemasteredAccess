@@ -38,7 +38,7 @@ try{
             while($null -ne ($line=$reader.ReadLine())){
                 # In-process speech takes over once the module reports it loaded;
                 # the watcher then only stays as the fallback for a failed load.
-                if($line -match 'speech_module native=true'){$script:native=$true;Write-Host 'In-game speech module active.'}
+                if($line -match 'speech_module native=true|loaded speech_module native=true'){$script:native=$true;Write-Host 'In-game speech module active.'}
                 elseif($line -match '\[Lua\] \[LISNavSay\] (.+)$'){if($script:native){Write-Host $Matches[1]}else{Speak $Matches[1]}}
             }
         }

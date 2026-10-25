@@ -4,15 +4,27 @@ A screen-reader accessibility mod for *Life is Strange Remastered*, ported from
 LISAccess for the original game. The remaster's own navigation system makes
 reliable automatic walking possible, which the original never achieved.
 
-**Current state: foundation only.** Speech and braille work in-game. There is
-no menu narration, object scanner, dialogue reading or general autowalk yet.
-What exists today is a development launcher that loads one of two test scenes
-and can run a short fixed navigation test.
+**Current state: early.** Speech and braille work in-game, and the title screen
+and main menu are narrated. There is no object scanner, dialogue reading or
+general autowalk yet.
+
+## Playing with the mod
+
+Launch the game from Steam as usual. Once the mod is installed it is active on
+every launch. It only reads the screen: it never moves Max, loads scenes or
+writes to your saves.
+
+- At the title screen it says **Click To Start** once the game accepts a key.
+- In the main menu it reads the highlighted option as you move. Menus move with
+  **W** and **S** (or the D-pad or left stick); the arrow keys do nothing there.
+- **Home** repeats the last announcement.
+
+Other menu screens (episodes, saves, settings) are not narrated yet.
 
 ## Planned order
 
 1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
-2. Menus: title screen, main menu, save slots and episode selection.
+2. Menus: title screen and main menu *(done)*; save slots, episode selection and settings next.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
 4. Dialogue choices and prompts.
@@ -27,6 +39,9 @@ Screen-reader calls run on their own thread, so a stalled reader cannot freeze
 the game.
 
 ## Development launcher
+
+This is for testing, not for playing. It loads a test scene directly in a
+throwaway copy of your saves.
 
 Close the remaster, then run `Start-NavigationPrototype.cmd`. Choose the house
 or the junkyard with the arrow keys, optionally check **Run the short navigation
