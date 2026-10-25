@@ -76,6 +76,9 @@ local function label_of(option)
     if not valid(option) then return nil end
     local s=field_text(option,"Button_Text")
     if s then return s end
+    -- Episode selector (BP_EpisodeSelector_Button): number and title.
+    local num,title=field_text(option,"EpNum"),field_text(option,"EpTitle")
+    if num or title then return require("core.text").join(num,title) end
     local name=field_text(option,"Selector_Name")
     if name then return name,selector_value(option) end
     name=field_text(option,"Slider_Text")
@@ -182,6 +185,48 @@ local function save_menu_snapshot(screen)
     local id="saves@"..string.format("%X",screen:GetAddress())
     return {screen=id,index=i,label=M.save_slot_text(slot)},"screen=saves slot="..(i+1)
 end
+-- A screen of the game's menu parent type: the highlighted option is
+-- CurrentInteractable (or InteractablesArray[CurrentInteractableIndex]).
+local function interactable_snapshot(screen)
+    local iok,index=pcall(function()return screen.CurrentInteractableIndex end)
+    if not (iok and type(index)=="number") then return nil end
+    local cok,current=pcall(function()return screen.CurrentInteractable end)
+    local source="current"
+    if not (cok and valid(current)) then
+        -- Fall back to the option list, which the index points into.
+        source="array"
+        local aok,item=pcall(function()return screen.InteractablesArray[index+1]end)
+        current=aok and item or nil
+    end
+    local class=screen:GetClass():GetFName():ToString()
+    local id=class.."@"..string.format("%X",screen:GetAddress())
+    -- Screen heading spoken when the screen (or its subject) changes, for
+    -- example the episode shown on the Episodes screen.
+    local context=nil
+    local heading=M.headings[class]
+    if heading then
+        context=field_text(screen,heading.text)
+        local hok,part=pcall(function()return screen[heading.id]end)
+        if hok and part~=nil then id=id.."#"..tostring(part) end
+    end
+    local label,value=label_of(current)
+    if label==nil and M.describe_unlabelled and valid(current) then M.describe_unlabelled(screen,current,index) end
+    return {screen=id,index=index,label=label,value=value,context=context},
+        "screen="..class.." index="..index.." source="..source
+end
+-- Screens shown on their own rather than as the title's LastCreatedWidget.
+M.standalone={"BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C","BP_LiS_ChangeEpisode_Widget_C"}
+-- Heading text field and the field identifying its subject, per screen class.
+M.headings={BP_LiS_ChangeEpisode_Widget_C={text="EpisodeTitle",id="EpisodeNumber"}}
+local function find_live(class)
+    for _,w in ipairs(FindAllOf(class) or {}) do
+        if valid(w) and call_bool(w,"IsVisible") then
+            local pok,parent=pcall(function()return w:GetParent()end)
+            if call_bool(w,"IsInViewport") or (pok and valid(parent)) then return w end
+        end
+    end
+    return nil
+end
 -- Returns a tracker snapshot plus a short diagnostic, or nil when no menu.
 function M.snapshot()
     local title=find_title()
@@ -193,7 +238,13 @@ function M.snapshot()
         local s,d=popup_snapshot(popup)
         if s then return s,d end
     end
-    local ok,screen=pcall(function()return title.LastCreatedWidget end)
+    for _,class in ipairs(M.standalone) do
+        local w=find_live(class)
+        if w then
+            local s,d=interactable_snapshot(w)
+            if s then return s,d end
+        end
+    end    local ok,screen=pcall(function()return title.LastCreatedWidget end)
     if ok and valid(screen) and call_bool(screen,"IsVisible") then
         local c=embedded_confirmation(screen)
         if c then return c,"screen=confirmation" end
@@ -203,24 +254,17 @@ function M.snapshot()
         end
     end
     if ok and valid(screen) and call_bool(screen,"IsVisible") then
-        local iok,index=pcall(function()return screen.CurrentInteractableIndex end)
-        if iok and type(index)=="number" then
-            local cok,current=pcall(function()return screen.CurrentInteractable end)
-            local source="current"
-            if not (cok and valid(current)) then
-                -- Fall back to the option list, which the index points into.
-                source="array"
-                local aok,item=pcall(function()return screen.InteractablesArray[index+1]end)
-                current=aok and item or nil
-            end
-            local id=screen:GetClass():GetFName():ToString().."@"..string.format("%X",screen:GetAddress())
-            local label,value=label_of(current)
-            if label==nil and M.describe_unlabelled and valid(current) then M.describe_unlabelled(screen,current,index) end
-            return {screen=id,index=index,label=label,value=value},
-                "screen="..screen:GetClass():GetFName():ToString().." index="..index.." source="..source
-        end
+        local s,d=interactable_snapshot(screen)
+        if s then return s,d end
     end
-    -- Title prompt, once the game accepts input (CanAdvance).
+    -- Title prompt, once the game accepts input (CanAdvance), and only before
+    -- any menu screen exists: the title widget keeps reporting its prompt as
+    -- visible underneath later screens, which once announced "Click To Start"
+    -- on the Episodes screen. An unrecognised screen says nothing instead.
+    if ok and valid(screen) then
+        if M.report_unknown then M.report_unknown(screen) end
+        return nil
+    end
     local aok,can=pcall(function()return title.CanAdvance end)
     if aok and can==true then
         local tok,tap=pcall(function()return title.TapToStart end)

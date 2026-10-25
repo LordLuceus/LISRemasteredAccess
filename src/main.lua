@@ -87,7 +87,8 @@ LoopAsync(250,function()
             if fallback then text=l10n.text("menu_unlabelled") end
             if text then
                 say(text,true)
-                log("menu_readout "..tostring(detail).." label="..tostring(snap and snap.label))
+                -- Log exactly what was spoken, so a readout can be checked from the log.
+                log("menu_readout "..tostring(detail).." spoken="..text)
             end
         end)
         if not ok and menu_errors<5 then menu_errors=menu_errors+1;log("menu_error="..tostring(err)) end

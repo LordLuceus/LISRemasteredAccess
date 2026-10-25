@@ -1,6 +1,6 @@
 -- Decides what to speak from successive menu snapshots. Game-independent, so it
 -- is covered by the offline tests. A snapshot is {screen=id, index=n, label=s,
--- value=s or nil, key=s or nil}, or nil when no readable menu is on screen.
+-- value=s or nil, key=s or nil, context=s or nil}, or nil when no readable menu is on screen.
 -- * Moving to another screen or option speaks "label, value" (or just label).
 -- * The same option's value changing (for example A/D on a setting) speaks
 --   only the new value, so changing a setting doesn't repeat its name.
@@ -33,8 +33,12 @@ function M:update(s)
         self.label=s.label -- keep the latest wording without speaking it
         return nil
     end
+    local new_screen=s.screen~=self.screen
     self.screen,self.index,self.label,self.value,self.key=s.screen,s.index,s.label,s.value,s.key
     if s.label==nil or s.label=="" then return nil,true end
+    -- A screen heading (such as the episode shown) leads the readout when the
+    -- screen or its subject changes.
+    if new_screen and s.context and s.context~="" then return join(s.context,join(s.label,s.value)),false end
     if same_label then
         if s.value==nil or s.value=="" then return s.label,false end
         return s.value,false

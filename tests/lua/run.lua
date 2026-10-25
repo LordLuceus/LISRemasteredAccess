@@ -127,9 +127,14 @@ do
     screen.CurrentInteractable=nil;screen.CurrentInteractableIndex=2
     s=mm.snapshot()
     check("falls back to option list",s and s.label=="Extras",s and tostring(s.label))
+    -- Regression: a menu screen exists but is not shown (Episodes open in its
+    -- place). The title still reports its prompt visible; it must NOT be read.
     screen.IsVisible=function()return false end
+    check("no stale title prompt over another screen",mm.snapshot()==nil)
+    -- Real title screen: no menu screen created yet.
+    title.LastCreatedWidget=nil
     s=mm.snapshot()
-    check("title prompt when no screen",s and s.screen=="title" and s.label=="Click To Start")
+    check("title prompt before any menu screen",s and s.screen=="title" and s.label=="Click To Start")
     title.CanAdvance=false
     check("nothing before title accepts input",mm.snapshot()==nil)
     title.IsInViewport=function()return false end
@@ -300,6 +305,32 @@ do
     tr:update(apply(29));tr:update(apply(17))
     check("reread has current countdown",tr:current()=="Initial settings will be restored in 17 second(s)... Enter to confirm",tr:current())
     _G.EObjectFlags=nil
+end
+-- Episodes screen (standalone widget): heading, options and episode switching,
+-- with the values captured in the game.
+do
+    package.loaded["menus.main_menu"]=nil;package.loaded["menus.tracker"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu");local tr=require("menus.tracker").new()
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=o.GetAddress or function()return 9 end;return o end
+    local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end,IsVisible=function()return true end})end
+    local function button(s)return obj({Button_Text=textw(s)})end
+    local opts={button("Continue"),button("Restart"),button("Collectible Mode")}
+    local ep=obj({IsVisible=function()return true end,IsInViewport=function()return true end,EpisodeNumber=0,EpisodeTitle=textw("Episode 1: Chrysalis"),
+        CurrentInteractableIndex=0,CurrentInteractable=opts[1],InteractablesArray=opts,
+        GetClass=function()return {GetFName=function()return {ToString=function()return "BP_LiS_ChangeEpisode_Widget_C" end}end}end})
+    local start=obj({IsVisible=function()return false end,GetClass=function()return {GetFName=function()return {ToString=function()return "BP_LiS_MainMenu_Start_Widget_C" end}end}end})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=start,CanAdvance=true,
+        TapToStart=obj({IsVisible=function()return true end,GetText=function()return {ToString=function()return "Click To Start" end}end})})
+    _G.FindAllOf=function(n)if n=="BP_LiS_Main_Menu_Widget_C" then return {title} elseif n=="BP_LiS_ChangeEpisode_Widget_C" then return {ep} end return {} end
+    check("episodes screen opens with heading",tr:update(mm.snapshot())=="Episode 1: Chrysalis, Continue")
+    ep.CurrentInteractableIndex=1;ep.CurrentInteractable=opts[2]
+    check("option change speaks option only",tr:update(mm.snapshot())=="Restart")
+    ep.EpisodeNumber=1;ep.EpisodeTitle=textw("Episode 2: Out of Time")
+    check("episode change speaks new heading",tr:update(mm.snapshot())=="Episode 2: Out of Time, Restart")
+    ep.IsVisible=function()return false end
+    check("closed episodes screen, no stale title prompt",mm.snapshot()==nil)
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
