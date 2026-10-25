@@ -38,7 +38,16 @@ local function refresh_settings()
 end
 
 -- Home repeats the last announcement.
-RegisterKeyBindAsync(Key.HOME,function()speech.say(last_speech,true)end)
+-- Home rereads what is on screen now: the live menu readout (so a countdown is
+-- current), otherwise the last announcement. Reading happens on the game thread.
+local reread=nil
+RegisterKeyBindAsync(Key.HOME,function()
+    ExecuteInGameThread(function()
+        local text=nil
+        if reread then local ok,t=pcall(reread);if ok then text=t end end
+        speech.say(text or last_speech,true)
+    end,EGameThreadMethod.EngineTick)
+end)
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -61,6 +70,12 @@ do
     end
 end
 local tracker=require("menus.tracker").new()
+require("core.text").report=log
+reread=function()
+    local snap=menu.snapshot()
+    if not snap or not snap.label or snap.label=="" then return nil end
+    return require("core.text").join(snap.label,snap.value)
+end
 local menu_errors,settings_tick=0,0
 LoopAsync(250,function()
     ExecuteInGameThread(function()

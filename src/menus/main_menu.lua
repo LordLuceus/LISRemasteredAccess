@@ -11,9 +11,10 @@ local function call_bool(o,fn)
     local ok,v=pcall(function()return o[fn](o)end)
     return ok and v==true
 end
+local clean=require("core.text").clean
 local function plain_text(widget)
     local ok,s=pcall(function()return widget:GetText():ToString()end)
-    if ok and type(s)=="string" then return s end
+    if ok and type(s)=="string" then return clean(s) end
     return nil
 end
 -- Text shown by a widget. Settings rows use the game's LocalizedString_Widget,
@@ -125,8 +126,7 @@ end
 -- Gamma calibration (GammaWidget_C), opened with Enter on the Gamma row: the
 -- game's instruction for the device in use plus the slider value. Rich text
 -- markup is removed. Only an instance still attached to the UI counts.
-local function strip_markup(s)return (s:gsub("<[^>]*>",""):gsub("%s+"," "):gsub("^ ",""):gsub(" $",""))end
-M.strip_markup=strip_markup
+M.strip_markup=clean
 M.using_gamepad=function()return false end
 M.gamma_title="Gamma"
 local function find_gamma()
@@ -142,7 +142,6 @@ local function gamma_snapshot(g)
     local text=nil
     if M.using_gamepad() then text=field_text(g,"GamepadTooltipRich") end
     text=text or field_text(g,"PCTooltip") or field_text(g,"GamepadTooltipRich")
-    if text then text=strip_markup(text) end
     local value=slider_value(g)
     return {screen="gamma@"..string.format("%X",g:GetAddress()),index=0,label=text or M.gamma_title,key="gamma",value=value},"screen=gamma"
 end

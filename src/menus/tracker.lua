@@ -13,13 +13,15 @@ M.__index=M
 function M.new()
     return setmetatable({screen=nil,index=nil,label=nil,value=nil,key=nil},M)
 end
-local function join(label,value)
-    if value==nil or value=="" then return label end
-    return label..", "..value
-end
+local join=require("core.text").join
 local function ident(s)return s.key or s.label end
 -- Returns text,is_fallback when something should be spoken, otherwise nil.
 -- is_fallback means the option had no readable label.
+-- Full readout of the current state, for rereading on request.
+function M:current()
+    if not self.screen or self.label==nil or self.label=="" then return nil end
+    return join(self.label,self.value)
+end
 function M:update(s)
     if not s or not s.screen then
         self.screen,self.index,self.label,self.value,self.key=nil,nil,nil,nil,nil

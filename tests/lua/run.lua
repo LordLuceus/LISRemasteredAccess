@@ -210,7 +210,7 @@ do
     check("exit popup",s and s.label=="Quit the game?" and s.value=="Enter to confirm, Escape to cancel",s and (tostring(s.label).."/"..tostring(s.value)))
     package.loaded["menus.tracker"]=nil
     local tr=require("menus.tracker").new()
-    check("popup spoken with choices",tr:update(s)=="Quit the game?, Enter to confirm, Escape to cancel")
+    check("popup spoken with choices",tr:update(s)=="Quit the game? Enter to confirm, Escape to cancel")
     popups["MainMenu_2Option_PopUp_Widget_C"]=nil
     -- Video Apply confirmation: hidden panel is ignored, visible one is read.
     local panel=obj({IsVisible=function()return false end})
@@ -240,7 +240,7 @@ do
     check("countdown message spoken once",first and first:find("restored in 22 second",1,true)~=nil,first)
     check("countdown tick silent",tr:update(apply(21))==nil)
     check("countdown tick silent again",tr:update(apply(9))==nil)
-    check("different message spoken",tr:update({screen="popup@1",index=0,label="Quit the game?",key=mm.message_key("Quit the game?"),value="x"})=="Quit the game?, x")
+    check("different message spoken",tr:update({screen="popup@1",index=0,label="Quit the game?",key=mm.message_key("Quit the game?"),value="x"})=="Quit the game? x")
     -- Controller names for confirm/back.
     package.loaded["core.controls"]=nil
     local c=require("core.controls")
@@ -248,19 +248,19 @@ do
     check("controller confirm",c.name("confirm")=="A" and c.name("back")=="B")
     c.set_gamepad(false)
     check("keyboard confirm",c.name("confirm")=="Enter" and c.name("back")=="Escape")
-    check("markup stripped",mm.strip_markup("Press <img id=\"A\"/> to <b>confirm</b>  now")=="Press to confirm now",mm.strip_markup("Press <img id=\"A\"/> to <b>confirm</b>  now"))
+    check("markup stripped",mm.strip_markup("Press <b>this</b>  now")=="Press this now",mm.strip_markup("Press <b>this</b>  now"))
     -- Gamma screen: device-appropriate instruction plus slider value.
     local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=function()return 3 end;return o end
     local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end})end
     local gamma=obj({IsVisible=function()return true end,IsInViewport=function()return true end,PCTooltip=textw("Use A and D to adjust"),
-        GamepadTooltipRich=textw("Use <img id=\"LS\"/> to adjust"),Slider_Slider=obj({GetValue=function()return 0.5 end,MinValue=0,MaxValue=1})})
+        GamepadTooltipRich=textw("Use <img id=\"LStick36\"/> to adjust"),Slider_Slider=obj({GetValue=function()return 0.5 end,MinValue=0,MaxValue=1})})
     local title=obj({IsInViewport=function()return true end})
     _G.FindAllOf=function(n)if n=="BP_LiS_Main_Menu_Widget_C" then return {title} elseif n=="GammaWidget_C" then return {gamma} end return {} end
     local s=mm.snapshot()
     check("gamma keyboard instruction",s and s.label=="Use A and D to adjust" and s.value=="50%",s and (tostring(s.label).."/"..tostring(s.value)))
     mm.using_gamepad=function()return true end
     s=mm.snapshot()
-    check("gamma controller instruction",s and s.label=="Use to adjust",s and tostring(s.label))
+    check("gamma controller instruction",s and s.label=="Use left stick to adjust",s and tostring(s.label))
     mm.using_gamepad=function()return false end
     local t2=require("menus.tracker").new();t2:update(s)
     gamma.Slider_Slider.GetValue=function()return 0.6 end
@@ -268,6 +268,38 @@ do
     gamma.IsVisible=function()return false end
     check("closed gamma screen ignored",mm.snapshot()==nil or mm.snapshot().screen:find("^gamma")==nil)
     _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
+-- Text cleanup and joining, with exact strings from the game's Menus.ini/HUD.ini.
+do
+    package.loaded["core.text"]=nil
+    local tx=require("core.text")
+    local reports={};tx.report=function(l)reports[#reports+1]=l end
+    local gamma='Adjust the gamma cursor with <img id="LStick36"/> until the first logo is barely visible.\nMake sure your screen is set up properly before changing the gamma.'
+    local cleaned=tx.clean(gamma)
+    check("icon named",cleaned:find("with left stick until",1,true)~=nil,cleaned)
+    check("line break kept as sentence break",cleaned:find("barely visible. Make sure",1,true)~=nil,cleaned)
+    check("no double punctuation on join",tx.join(cleaned,"42 percent"):find("the gamma. 42 percent$")~=nil,tx.join(cleaned,"42 percent"))
+    check("comma join after plain label",tx.join("Master","80 percent")=="Master, 80 percent")
+    local pc='Adjust the gamma by clicking on the cursor until the first logo is barely visible.\nMake sure your monitor is properly set before changing the gamma.'
+    check("pc text unchanged apart from break",tx.clean(pc)=="Adjust the gamma by clicking on the cursor until the first logo is barely visible. Make sure your monitor is properly set before changing the gamma.")
+    check("missing full stop added at break",tx.clean("First line\nSecond line")=="First line. Second line")
+    check("escaped quotes from ini",tx.clean('Use <img id=\\"RStick36\\"/> to aim')=="Use right stick to aim",tx.clean('Use <img id=\\"RStick36\\"/> to aim'))
+    check("all scanned icons known",tx.clean('<img id="LStick36B"/><img id="RStick36B"/><img id="LStick36Bordered"/><img id="RStick36Bordered"/><img id="Mouse"/><img id="MouseB"/>'):find("%[icon")==nil)
+    local unknown=tx.clean('Press <img id="NewThing"/> now')
+    check("unknown icon marked not dropped",unknown=="Press [icon NewThing] now",unknown)
+    check("unknown icon reported",reports[1]=="unknown_icon id=NewThing",tostring(reports[1]))
+    check("ellipsis ends sentence",tx.join("Restored in 29 second(s)...","Enter to confirm")=="Restored in 29 second(s)... Enter to confirm")
+    tx.report=function()end
+end
+-- Live reread: tracker:current reflects the newest countdown though it was not spoken.
+do
+    package.loaded["menus.tracker"]=nil;package.loaded["menus.main_menu"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu");local tr=require("menus.tracker").new()
+    local function apply(n)local m="Initial settings will be restored in "..n.." second(s)...";return {screen="p",index=0,label=m,key=mm.message_key(m),value="Enter to confirm"}end
+    tr:update(apply(29));tr:update(apply(17))
+    check("reread has current countdown",tr:current()=="Initial settings will be restored in 17 second(s)... Enter to confirm",tr:current())
+    _G.EObjectFlags=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
