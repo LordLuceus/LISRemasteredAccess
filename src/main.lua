@@ -85,6 +85,31 @@ local function walk_toggle()
     if c then autowalk.start(c,scanner.selected()) end
 end
 RegisterKeyBindAsync(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
+-- F faces the selected object; F1 help; F2 sound preview (help and preview
+-- also work in menus and while the game has control).
+local face=require("scanner.face")
+local face_probe_tick=nil
+local help=require("core.help")
+local preview=require("core.preview")
+local function face_selected()
+    if not playable() then return end
+    local c=scanner.controller()
+    if c then face.start(c,scanner.selected()) end
+end
+local function show_help()say(help.speech(controls.using_gamepad()),true)end
+-- The cue plays ~0.9 s after its name (18 loop beats), on the game-thread loop.
+local delayed={}
+local function after_beats(n,fn)delayed[#delayed+1]={n=n,fn=fn} end
+local function run_delayed()
+    for i=#delayed,1,-1 do
+        local d=delayed[i];d.n=d.n-1
+        if d.n<=0 then table.remove(delayed,i);pcall(d.fn) end
+    end
+end
+local function next_preview()preview.next(function(play)after_beats(18,play)end)end
+RegisterKeyBindAsync(Key.F,on_game(face_selected))
+RegisterKeyBindAsync(Key.F1,on_game(show_help))
+RegisterKeyBindAsync(Key.F2,on_game(next_preview))
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -138,6 +163,21 @@ end
 -- Scanner speech, wording and controller input (gameplay only).
 scanner.say=function(text)say(text,true)end
 autowalk.say=function(text)say(text,true)end
+face.say=function(text)say(text,true)end
+face.log=log
+-- Test sessions: record what the game does after each face request.
+do local ok,req=pcall(require,"LISNavRequest")
+    if ok and type(req)=="table" and req.expected_saved_directory and req.trace_focus then
+        local probe=require("dev.focus_probe")
+        face.watch=function(c,e)probe.watch(c,e,log)end
+        face_probe_tick=probe.tick
+    end
+end
+face.text=function(key,p)return l10n.text(key,p)end
+help.text=function(key,p)return l10n.text(key,p)end
+preview.text=function(key)return l10n.text(key)end
+preview.say=function(text)say(text,true)end
+preview.play=function(file)return speech.play and speech.play(speech.audio_dir..file) end
 autowalk.log=log
 autowalk.moving=function()return speech.moving and speech.moving() or false end
 autowalk.text=function(key,p)return l10n.text(key,p)end
@@ -163,6 +203,8 @@ local function main_step()
                 if speech.play then speech.play(speech.audio_dir..(event=="lost" and "control_lost.wav" or "control_back.wav")) end
             end
             autowalk.tick()
+            face.tick()
+            if face_probe_tick then face_probe_tick() end
         end)
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
 end
@@ -185,7 +227,9 @@ local function pad_step()
             for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
                 if cmd=="repeat" then speech.say(last_speech,true)
                 elseif cmd=="autowalk" then walk_toggle()
-                elseif cmd=="help" or cmd=="face" then log("scanner_command_pending cmd="..cmd)
+                elseif cmd=="face" then face_selected()
+                elseif cmd=="help" then show_help()
+                elseif cmd=="preview" then next_preview()
                 else scanner.command(cmd) end
             end
         end)
@@ -204,9 +248,12 @@ LoopInGameThreadWithDelay(50,function()
     beat=beat+1
     local ok,err=pcall(function()
         run_keys()
+        run_delayed()
         pad_step()
         if beat%5==0 then
             if (beat//5)%2==0 then menu_step() else main_step() end
+            -- Facing corrections need a fresh camera reading every 250 ms.
+            if (beat//5)%2==0 then face.tick() end
         end
     end)
     if not ok then log("loop_error="..tostring(err)) end

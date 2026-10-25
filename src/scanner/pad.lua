@@ -4,7 +4,8 @@
 --   D-pad up          describe
 --   D-pad down        autowalk
 --   Left-stick click  face, on release, unless used as a modifier:
---   held + D-pad up   help;  held + D-pad right  repeat last announcement.
+--   held + D-pad up   help;  held + D-pad right  repeat last announcement;
+--   held + D-pad left sound preview.
 -- Active only in gameplay (the caller passes active=false in menus).
 local M={}
 M.__index=M
@@ -29,6 +30,7 @@ function M:update(buttons,active,now)
     if thumb then
         if (edge&UP)~=0 then out[#out+1]="help" end
         if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
+        if (edge&LEFT)~=0 then out[#out+1]="preview" end
         self.repeat_at={}
     else
         if (edge&UP)~=0 then out[#out+1]="describe" end

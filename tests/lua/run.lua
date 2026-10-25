@@ -704,5 +704,114 @@ do
     check("cutscene lists never walked",walked==false)
     _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
 end
+-- Facing: the camera's one-shot request, focus read back afterwards.
+do
+    package.loaded["scanner.face"]=nil
+    local F=require("scanner.face")
+    local spoken={};F.say=function(t)spoken[#spoken+1]=t end;F.text=function(k,p)return k..(p and p.name and (":"..p.name) or "") end
+    check("goal turn",select(1,F.outcome({name="Lighthouse",kind="goal"},false,true))=="face_turned")
+    check("object focused leaves speech to focus announcement",F.outcome({name="Mail",kind="interaction"},true,true)==nil)
+    check("never claims a cause it cannot know",select(1,F.outcome({name="Mail",kind="interaction"},false,true,false))=="face_turned_unfocused")
+    check("object in reach but not focused",select(1,F.outcome({name="Mail",kind="interaction"},false,true,true))=="face_turned_unfocused")
+    check("unsupported camera",select(1,F.outcome({name="Mail"},false,false))=="face_unsupported")
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local behaviour=o({IsA=function(_,c)return c=="/Script/LiS.CBA_3RD_Basic" end})
+    local mail=o({GetAddress=function()return 42 end})
+    -- Fake camera that lands short of each request in pitch (offset -10, like
+    -- the real seated camera), so only error feedback converges.
+    local cam_actual={Pitch=0,Yaw=0}
+    local c=o({GetAddress=function()return 1 end,PlayerCameraManager={CamBhv_Current=behaviour,GetCameraLocation=function()return {X=0,Y=0,Z=0}end,
+        GetCameraRotation=function()local r=(c and c.PlayerCameraManager.CamBhv_Current or behaviour).NextWantedCameraRotationForced;if r then cam_actual={Pitch=r.Pitch+10,Yaw=r.Yaw} end;return cam_actual end}})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=mail,InnerZoneActorsCurrentlyActionable={ForEach=function(_,cb)cb(1,{get=function()return mail end})end}})
+    local announced=false;F.focused_announce=function()announced=true end
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    _G.StaticFindObject=function()return {FindLookAtRotation=function()return {Pitch=-5,Yaw=90,Roll=0}end} end
+    local focus_after=3 -- the game focuses the object after the 3rd request
+    local requests=0
+    -- A proxy camera behaviour: count every one-shot request the mod makes.
+    local store={}
+    local orig=setmetatable({},{__index=function(_,k)if k=="IsA" then return behaviour.IsA elseif k=="IsValid" then return behaviour.IsValid end return store[k] end,
+        __newindex=function(_,k,v)store[k]=v;if k=="bWantNextCameraRotationForced" then requests=requests+1;if requests>=focus_after then comp.ActorInteractionFocused=mail end end end})
+    c.PlayerCameraManager.CamBhv_Current=orig
+    comp.ActorInteractionFocused=nil
+    local now=0;F.clock=function()return now end
+    check("request sent",F.start(c,{name="Mail",kind="interaction",pos={X=0,Y=100,Z=0},actor=mail})==true)
+    check("one-shot set",orig.WantNextCameraRotationRemainingTick==1 and orig.NextWantedCameraRotationForced.Yaw==90)
+    for i=1,10 do now=now+0.1;F.tick() end
+    check("corrected until focused",requests==3 and announced and #spoken==0,tostring(requests))
+    -- Never focused: stops after 8 corrections and says so.
+    requests=0;focus_after=99;comp.ActorInteractionFocused=nil;announced=false
+    F.start(c,{name="Mail",kind="interaction",pos={X=0,Y=100,Z=0},actor=mail})
+    for i=1,40 do now=now+0.01;F.tick() end
+    check("gives up after 8 corrections",requests==9 and spoken[#spoken]=="face_turned_unfocused:Mail",tostring(requests))
+    -- Time limit.
+    requests=0;F.start(c,{name="Mail",kind="interaction",pos={X=0,Y=100,Z=0},actor=mail})
+    now=now+3;F.tick();F.tick()
+    check("stops at the time limit",requests==1)
+    setmetatable(orig,nil)    behaviour.IsA=function()return false end
+    check("cutscene camera refused",F.start(c,{name="Mail",pos={X=0,Y=0,Z=0}})==false and spoken[#spoken]=="face_unsupported:Mail")
+    check("nothing selected",F.start(c,nil)==false and spoken[#spoken]=="walk_no_target")
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;package.loaded["scanner.face"]=nil
+end
+-- Help follows the device; preview cycles cues and names each.
+do
+    package.loaded["core.help"]=nil;package.loaded["core.preview"]=nil
+    local H=require("core.help");H.text=function(k)return k end
+    check("keyboard help",H.lines(false)[1]=="help_keys_select" and #H.lines(false)==6)
+    check("controller help",H.lines(true)[3]=="help_pad_walk")
+    local en=require("lang.en")
+    local all=true;for _,g in ipairs({false,true}) do for _,k in ipairs(H.lines(g)) do if not en[k] then all=false end end end
+    check("every help line has English text",all)
+    local P=require("core.preview");local said,played={},{}
+    P.say=function(t)said[#said+1]=t end;P.play=function(f)played[#played+1]=f end;P.text=function(k)return k end
+    P.next();P.next();P.next()
+    check("preview cycles",played[1]=="control_lost.wav" and played[2]=="control_back.wav" and played[3]=="control_lost.wav")
+    check("preview names each",said[2]=="cue_control_back" and en.cue_control_back~=nil)
+    local delayed=nil;P.next(function(f)delayed=f end)
+    check("sound waits for the name",#played==3 and delayed~=nil)
+end
+-- Controller: L3+left is preview.
+do
+    package.loaded["scanner.pad"]=nil
+    local p=require("scanner.pad").new()
+    p:update(0x40,true,1)
+    check("stick+left previews",table.concat(p:update(0x44,true,1.1),",")=="preview")
+end
+-- Correction maths (ported from the original): error feedback converges on a
+-- camera that lands offset from each request; repeating the same request does not.
+do
+    package.loaded["scanner.face"]=nil
+    local F=require("scanner.face")
+    local desired={Pitch=-52,Yaw=112}
+    local function camera(req)return {Pitch=req.Pitch+7,Yaw=req.Yaw} end -- lands 7 deg high
+    local req={Pitch=-52,Yaw=112}
+    for i=1,3 do local a=camera(req);req=F.correct(req,a,desired) end
+    local final=camera(req)
+    check("error feedback converges",math.abs(final.Pitch-desired.Pitch)<0.01 and math.abs(final.Yaw-desired.Yaw)<0.01,string.format("%.2f",final.Pitch))
+    check("yaw wraps across 180",math.abs(F.wrap(190)-(-170))<0.001 and math.abs(select(2,F.correct({Pitch=0,Yaw=170},{Pitch=0,Yaw=170},{Pitch=0,Yaw=-170}))-20)<0.001)
+    check("pitch request clamped",F.correct({Pitch=-85,Yaw=0},{Pitch=0,Yaw=0},{Pitch=-60,Yaw=0}).Pitch==-89)
+    package.loaded["scanner.face"]=nil
+end
+-- Focus that lands after aiming (seen: 0.5 s later) still counts within the limit.
+do
+    package.loaded["scanner.face"]=nil
+    local F=require("scanner.face")
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local obj=o({GetAddress=function()return 77 end})
+    local beh=o({IsA=function()return true end})
+    local cam={CamBhv_Current=beh,GetCameraLocation=function()return {X=0,Y=0,Z=0}end,GetCameraRotation=function()local r=beh.NextWantedCameraRotationForced or {Pitch=0,Yaw=0};return {Pitch=r.Pitch,Yaw=r.Yaw}end}
+    local c=o({GetAddress=function()return 1 end,PlayerCameraManager=cam})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=nil,InnerZoneActorsCurrentlyActionable={ForEach=function()end}})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    _G.StaticFindObject=function()return {FindLookAtRotation=function()return {Pitch=-30,Yaw=40,Roll=0}end} end
+    local now=0;F.clock=function()return now end
+    local spoken,announced={},false;F.say=function(t)spoken[#spoken+1]=t end;F.text=function(k)return k end;F.focused_announce=function()announced=true end
+    F.start(c,{name="Bag",kind="interaction",pos={X=1,Y=1,Z=0},actor=obj})
+    for i=1,4 do now=now+0.25;F.tick() end -- aimed, holding
+    check("holds after aiming",#spoken==0 and not announced)
+    comp.ActorInteractionFocused=obj;now=now+0.25;F.tick()
+    check("late focus counts",announced and #spoken==0)
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;package.loaded["scanner.face"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
