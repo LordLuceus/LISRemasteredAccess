@@ -8,6 +8,7 @@ return {
     garage="Chloe's house loaded. Downstairs and garage. {menu_key} returns to the main menu.",
     junkyard="Junkyard loaded. {menu_key} returns to the main menu.",
     nightmare="Opening nightmare loaded. {menu_key} returns to the main menu.",
+    classroom="Classroom loaded. {menu_key} returns to the main menu.",
     starting="Starting the navigation test. {cancel_key} stops it.",
     arrived="Test destination reached.",
     stalled="Navigation test stopped. No progress.",

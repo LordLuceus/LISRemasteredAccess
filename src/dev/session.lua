@@ -42,7 +42,8 @@ end
 local scenes = {
     garage={title="$GT_Menus_Journal_Episode1Sub10",map="E1_5B",path="/Game/Maps/Episode01/Sequence05/E1_5B"},
     junkyard={title="$GT_Menus_Journal_Episode2Sub6",map="E2_3A",path="/Game/Maps/Episode02/Sequence03/E2_3A"},
-    nightmare={title="$GT_Menus_Journal_Episode1Sub1",map="E1_1A",path="/Game/Maps/Episode01/Sequence01/E1_1A"}
+    nightmare={title="$GT_Menus_Journal_Episode1Sub1",map="E1_1A",path="/Game/Maps/Episode01/Sequence01/E1_1A"},
+    classroom={title="$GT_Menus_Journal_Episode1Sub2",map="E1_2A",path="/Game/Maps/Episode01/Sequence02/E1_2A"}
 }
 local native_controls_passed = false
 local travel_requested = false
