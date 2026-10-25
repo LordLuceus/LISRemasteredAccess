@@ -15,16 +15,26 @@ every launch. It only reads the screen: it never moves Max, loads scenes or
 writes to your saves.
 
 - At the title screen it says **Click To Start** once the game accepts a key.
-- In the main menu it reads the highlighted option as you move. Menus move with
-  **W** and **S** (or the D-pad or left stick); the arrow keys do nothing there.
-- **Home** repeats the last announcement.
+- In the main menu and settings it reads the highlighted option as you move.
+  Menus move with **W** and **S** (or the D-pad or left stick); the arrow keys
+  do nothing there.
+- Settings read their name and current value, such as "Vsync, On" or
+  "Master, 80 percent". Changing a value with **A** and **D** reads just the
+  new value. **Enter** on Gamma opens the gamma screen, which reads the game's
+  instruction and the current level.
+- Saved games read each slot's name, episode, chapter and date, or "New game".
+- Confirmation dialogs read their question and how to answer, such as "Quit the
+  game? Enter to confirm, Escape to cancel" (A and B on a controller).
+- **Home** rereads what is on screen now, for example the current countdown.
 
-Other menu screens (episodes, saves, settings) are not narrated yet.
+Not narrated yet: episode and chapter selection, Extras, the keybinding editor
+and the pause menu.
+
 
 ## Planned order
 
 1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
-2. Menus: title screen and main menu *(done)*; save slots, episode selection and settings next.
+2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; episode selection, Extras and the pause menu next.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
 4. Dialogue choices and prompts.
@@ -117,6 +127,7 @@ hashes before changing anything and never restores old saves.
   loader's Lua headers at the pinned commit, with their licences and hashes.
 - `scripts/`: launcher, deployment, test runner, rollback and log tools.
 - `NAVIGATION_FEASIBILITY.md`: the evidence behind choosing the remaster.
+- `CHANGELOG.md`: player-facing changes.
 
 Private game data, test profiles, logs, downloaded tools and build output live
 in `artifacts/` and are excluded from Git. This is not a redistributable release.
