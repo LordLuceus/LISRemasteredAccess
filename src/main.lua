@@ -43,6 +43,11 @@ RegisterKeyBindAsync(Key.HOME,function()speech.say(last_speech,true)end)
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
 local menu=require("menus.main_menu")
+-- Test sessions can ask for details of options the reader cannot label.
+do
+    local ok,req=pcall(require,"LISNavRequest")
+    if ok and type(req)=="table" and req.expected_saved_directory and req.describe_unlabelled then menu.describe_unlabelled=require("dev.unlabelled").describe(log) end
+end
 local tracker=require("menus.tracker").new()
 local menu_errors,settings_tick=0,0
 LoopAsync(250,function()

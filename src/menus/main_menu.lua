@@ -52,7 +52,9 @@ function M.snapshot()
                 current=aok and item or nil
             end
             local id=screen:GetClass():GetFName():ToString().."@"..string.format("%X",screen:GetAddress())
-            return {screen=id,index=index,label=label_of(current)},
+            local label=label_of(current)
+            if label==nil and M.describe_unlabelled and valid(current) then M.describe_unlabelled(screen,current,index) end
+            return {screen=id,index=index,label=label},
                 "screen="..screen:GetClass():GetFName():ToString().." index="..index.." source="..source
         end
     end
