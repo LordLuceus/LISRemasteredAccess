@@ -41,7 +41,8 @@ local function emit(line)
 end
 local scenes = {
     garage={title="$GT_Menus_Journal_Episode1Sub10",map="E1_5B",path="/Game/Maps/Episode01/Sequence05/E1_5B"},
-    junkyard={title="$GT_Menus_Journal_Episode2Sub6",map="E2_3A",path="/Game/Maps/Episode02/Sequence03/E2_3A"}
+    junkyard={title="$GT_Menus_Journal_Episode2Sub6",map="E2_3A",path="/Game/Maps/Episode02/Sequence03/E2_3A"},
+    nightmare={title="$GT_Menus_Journal_Episode1Sub1",map="E1_1A",path="/Game/Maps/Episode01/Sequence01/E1_1A"}
 }
 local native_controls_passed = false
 local travel_requested = false
@@ -261,6 +262,12 @@ LoopAsync(5000, function()
                             end
                             local done,goal,player=nav_probe.run(controller,scenes[request.scene].map,emit)
                             nav_checked=done
+                            if done and player and request.scene=="nightmare" then
+                                local nok,best=pcall(function()return require("dev.nightmare").survey(controller,player,emit)end)
+                                if not nok then emit("nightmare_error="..tostring(best));best=nil end
+                                -- A walk only when explicitly requested, toward the farthest reachable marker.
+                                goal=(request.nightmare_walk and best) and best.goal or nil
+                            end
                             if done and player and request.route_candidates then
                                 local sok,serr=pcall(function()require("nav.route").survey(controller,player,request.route_candidates,emit)end)
                                 if not sok then emit("route_survey_error="..tostring(serr)) end
