@@ -3,23 +3,19 @@ local M={active=nil}
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function point(p)return {X=p.X,Y=p.Y,Z=p.Z}end
 local function horizontal(a,b)return math.sqrt((a.X-b.X)^2+(a.Y-b.Y)^2)end
+-- Whether a cutscene holds Max. Reads only single values; never walks the
+-- cutscene's internal lists. Walking ControllingMatineeActors -> GroupInst ->
+-- InterpTracks several times a second crashed the loader during cutscenes
+-- (bisected Oct 2026). Measured through the nightmare's opening cutscene: the
+-- camera views a CameraActor instead of Max, she is in custom movement mode
+-- (5), and one cutscene controls her; all three flip back when control returns.
 function M.cinematic_control(pawn)
-    -- Mirror AActor::IsMatineeControlled: ownership alone is insufficient;
-    -- the matching group must contain a movement track. Do not override it.
     local controlled=false
-    pawn.ControllingMatineeActors:ForEach(function(_,a)
-        local actor=a:get()
-        if valid(actor) then
-            actor.GroupInst:ForEach(function(_,g)
-                local instance=g:get()
-                if valid(instance) and valid(instance.GroupActor) and instance.GroupActor:GetAddress()==pawn:GetAddress() and valid(instance.Group) then
-                    instance.Group.InterpTracks:ForEach(function(_,t)
-                        local track=t:get()
-                        if valid(track) and track:IsA("/Script/Engine.InterpTrackMove") then controlled=true end
-                    end)
-                end
-            end)
-        end
+    pcall(function()if pawn.ControllingMatineeActors:GetArrayNum()>0 then controlled=true end end)
+    if controlled then return true end
+    pcall(function()
+        local c=pawn.Controller
+        if valid(c) and c:GetViewTarget():GetAddress()~=pawn:GetAddress() then controlled=true end
     end)
     return controlled
 end

@@ -535,5 +535,25 @@ do
     check("inactive ignores",cmds(p:update(8,false,5))=="")
     check("no controller",cmds(p:update(-1,true,6))=="")
 end
+-- Cutscene check reads single values only (never walks the cutscene's lists).
+do
+    package.loaded["nav.follow"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local f=require("nav.follow")
+    local walked=false
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local function arr(n)return {GetArrayNum=function()return n end,ForEach=function()walked=true end} end
+    local pawn=o({GetAddress=function()return 7 end})
+    local view=pawn
+    pawn.Controller=o({GetViewTarget=function()return view end})
+    pawn.ControllingMatineeActors=arr(0)
+    check("free when camera on Max and no cutscene",f.cinematic_control(pawn)==false)
+    pawn.ControllingMatineeActors=arr(1)
+    check("cutscene count holds",f.cinematic_control(pawn)==true)
+    pawn.ControllingMatineeActors=arr(0);view=o({GetAddress=function()return 99 end})
+    check("camera elsewhere holds",f.cinematic_control(pawn)==true)
+    check("cutscene lists never walked",walked==false)
+    _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
