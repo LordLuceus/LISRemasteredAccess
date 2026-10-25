@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
+param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[switch]$ScannerKeys,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
 $ErrorActionPreference='Stop'
 if($SessionName -notmatch '^profile-probe-[a-z0-9-]+$'){throw 'Invalid session name'}
 if(Get-Process 'LiS-Win64-Shipping' -ErrorAction SilentlyContinue){throw 'Close the remaster before a profile probe'}
@@ -61,6 +61,7 @@ function ConvertTo-LuaPoints([string]$Text){
 }
 if($ActionPatterns){$list=(($ActionPatterns -split ',') | Where-Object {$_} | ForEach-Object {"'$_'"}) -join ',';$requestText=(Add-RequestField $requestText)+", action_patterns={$list}}"}
 if($AutoGoal){if(-not $Follow){throw 'AutoGoal requires -Follow'};$g=(ConvertTo-LuaPoints $AutoGoal);$requestText=(Add-RequestField $requestText)+", auto_goal=$($g.Substring(1,$g.Length-2))}"}
+if($ScannerKeys){if($Scene -eq 'inspect'){throw 'ScannerKeys needs a scene'};$requestText=(Add-RequestField $requestText)+", live=true}"}
 if($ScannerProbe){$requestText=(Add-RequestField $requestText)+", scanner_probe=true}"}
 if($NightmareWalk){if($Scene -ne 'nightmare' -or -not $Follow){throw 'NightmareWalk needs -Scene nightmare -Follow'};$requestText=(Add-RequestField $requestText)+", nightmare_walk=true}"}
 if($PauseProbe){if($Scene -eq 'inspect'){throw 'PauseProbe needs a scene'};$requestText=(Add-RequestField $requestText)+", live=true, describe_unlabelled=true}"}
@@ -91,6 +92,9 @@ $command=(Get-CimInstance Win32_Process -Filter "ProcessId=$($game.Id)").Command
 $profileArgumentPresent=$command -like '*UserDir*'
 if($command.Replace('\','/').IndexOf($profile.Replace('\','/'),[StringComparison]::OrdinalIgnoreCase) -lt 0){throw 'Game does not carry this operator profile; will not control it'}
 $keyVerification='not_requested'
+if($ScannerKeys){
+    try{& (Join-Path $PSScriptRoot 'scanner_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
 if($PauseProbe){
     try{& (Join-Path $PSScriptRoot 'pause_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
 }
