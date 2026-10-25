@@ -337,3 +337,18 @@ if request.follow==true then
         return expired
     end)
 end
+if request.inspect_menus==true then
+    local menu_errors=0
+    LoopAsync(1000,function()
+        ExecuteInGameThread(function()
+            if not native_controls_passed then return end
+            local ok,err=pcall(function()
+                for _,c in ipairs(FindAllOf("LiSPlayerController") or {}) do
+                    if c:IsValid() then require("dev.menu").tick(c:GetWorld():GetFName():ToString(),emit);return end
+                end
+            end)
+            if not ok and menu_errors<5 then menu_errors=menu_errors+1;emit("menu_probe_error="..tostring(err)) end
+        end,EGameThreadMethod.EngineTick)
+        return false
+    end)
+end
