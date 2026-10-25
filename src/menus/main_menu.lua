@@ -98,11 +98,15 @@ end
 -- Shared two-button confirmation popup (MainMenu_2Option_PopUp_Widget, e.g.
 -- "Quit the game?"). Its buttons don't report a highlight to the game's menu
 -- parent, so only the question and its two choices are read.
-local POPUPS={"MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}
+local POPUPS={"PauseMenu_PopUp_Widget_C","MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}
 local function find_popup()
     for _,c in ipairs(POPUPS) do
         for _,p in ipairs(FindAllOf(c) or {}) do
-            if valid(p) and call_bool(p,"IsInViewport") and call_bool(p,"IsVisible") then return p end
+            -- Popups may be added to the viewport or as a child of their menu.
+            if valid(p) and call_bool(p,"IsVisible") then
+                local pok,parent=pcall(function()return p:GetParent()end)
+                if call_bool(p,"IsInViewport") or (pok and valid(parent)) then return p end
+            end
         end
     end
     return nil
@@ -241,7 +245,11 @@ M.special={BP_LiS_ChangeLevelMenu_Widget_C=chapter_snapshot}
 -- Screens shown on their own rather than as the title's LastCreatedWidget.
 -- Topmost first: the chapter list is shown over the Episodes screen, and the
 -- replay popup over the chapter list.
-M.standalone={"BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C","BP_LiS_ChangeLevelMenu_Widget_C","BP_LiS_ChangeEpisode_Widget_C"}
+M.standalone={"BP_LiS_ChangeLevel_PopUp_Widget_C","BP_LiS_ChangeEpisode_PopUp_Widget_C","BP_LiS_ChangeLevelMenu_Widget_C","BP_LiS_ChangeEpisode_Widget_C",
+    -- Settings screens (also used from the main menu, where they are the same
+    -- widgets), then the pause menu's settings list, then the pause menu.
+    "Settings_Video_Widget_C","Settings_Audio_Widget_C","Settings_Controls_Widget_C","Settings_Language_Widget_C",
+    "Settings_Streaming_Widget_C","Settings_Widget_C","PauseMenu_Widget_C"}
 -- Heading text field and the field identifying its subject, per screen class.
 M.headings={BP_LiS_ChangeEpisode_Widget_C={text="EpisodeTitle",id="EpisodeNumber",extra="FinishPrevEp"}}
 local function find_live(class)
@@ -253,12 +261,24 @@ local function find_live(class)
     end
     return nil
 end
+-- Reads one screen widget, whichever kind it is.
+local function read_screen(w)
+    local c=embedded_confirmation(w)
+    if c then return c,"screen=confirmation" end
+    local class=w:GetClass():GetFName():ToString()
+    if class=="BP_LiS_Main_Menu_SaveMenu_C" then
+        local s,d=save_menu_snapshot(w)
+        if s then return s,d end
+    end
+    local reader=M.special[class] or interactable_snapshot
+    return reader(w)
+end
 -- True once the title screen exists (input is set up by then).
 function M.title_ready()return find_title()~=nil end
 -- Returns a tracker snapshot plus a short diagnostic, or nil when no menu.
 function M.snapshot()
-    local title=find_title()
-    if not title then return nil end
+    -- Overlays and in-game screens first: they need no title screen (in play
+    -- there is none), and they sit on top of whatever is underneath.
     local gamma=find_gamma()
     if gamma then return gamma_snapshot(gamma) end
     local popup=find_popup()
@@ -269,21 +289,15 @@ function M.snapshot()
     for _,class in ipairs(M.standalone) do
         local w=find_live(class)
         if w then
-            local reader=M.special[class] or interactable_snapshot
-            local s,d=reader(w)
-            if s then return s,d end
-        end
-    end    local ok,screen=pcall(function()return title.LastCreatedWidget end)
-    if ok and valid(screen) and call_bool(screen,"IsVisible") then
-        local c=embedded_confirmation(screen)
-        if c then return c,"screen=confirmation" end
-        if screen:GetClass():GetFName():ToString()=="BP_LiS_Main_Menu_SaveMenu_C" then
-            local s,d=save_menu_snapshot(screen)
+            local s,d=read_screen(w)
             if s then return s,d end
         end
     end
+    local title=find_title()
+    if not title then return nil end
+    local ok,screen=pcall(function()return title.LastCreatedWidget end)
     if ok and valid(screen) and call_bool(screen,"IsVisible") then
-        local s,d=interactable_snapshot(screen)
+        local s,d=read_screen(screen)
         if s then return s,d end
     end
     -- Title prompt, once the game accepts input (CanAdvance), and only before

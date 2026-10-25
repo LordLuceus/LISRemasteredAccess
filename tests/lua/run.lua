@@ -402,5 +402,38 @@ do
     check("hidden notice line not read",tr:update(mm.snapshot())=="Episode 1: Chrysalis, Continue",tostring(tr:current()))
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
+-- Pause menu in play: no title screen exists; pause options, its settings list
+-- and its confirmation popup (game's own English text).
+do
+    package.loaded["menus.main_menu"]=nil;package.loaded["menus.tracker"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu");local tr=require("menus.tracker").new()
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=function()return 8 end;return o end
+    local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end,IsVisible=function()return true end})end
+    local cls=function(n)return function()return {GetFName=function()return {ToString=function()return n end}end}end end
+    local function button(s)return obj({Button_Text=textw(s)})end
+    local opts={button("Resume game"),button("Reload last checkpoint"),button("Settings"),button("How to play"),button("Exit to main menu")}
+    local pause=obj({IsVisible=function()return true end,IsInViewport=function()return true end,GetClass=cls("PauseMenu_Widget_C"),
+        CurrentInteractableIndex=0,CurrentInteractable=opts[1],InteractablesArray=opts})
+    local live={PauseMenu_Widget_C={pause}}
+    _G.FindAllOf=function(n)return live[n] or {} end
+    check("pause menu read without a title screen",tr:update(mm.snapshot())=="Resume game")
+    pause.CurrentInteractableIndex=4;pause.CurrentInteractable=opts[5]
+    check("pause option change",tr:update(mm.snapshot())=="Exit to main menu")
+    local msg="All unsaved progress will be lost. Do you still want to exit?"
+    live.PauseMenu_PopUp_Widget_C={obj({IsVisible=function()return true end,IsInViewport=function()return false end,GetParent=function()return obj() end,
+        TextBlock_Message=textw(msg),TextBlock_Confirm=textw("Confirm"),TextBlock_Cancel=textw("Cancel")})}
+    check("pause confirmation (child widget) read",tr:update(mm.snapshot())==msg.." Enter to confirm, Escape to cancel",tostring(tr:current()))
+    live.PauseMenu_PopUp_Widget_C=nil
+    local cats={button("Video Settings"),button("Audio & Language Settings")}
+    live.Settings_Widget_C={obj({IsVisible=function()return true end,IsInViewport=function()return true end,GetClass=cls("Settings_Widget_C"),
+        CurrentInteractableIndex=0,CurrentInteractable=cats[1],InteractablesArray=cats})}
+    check("pause settings list over the pause menu",tr:update(mm.snapshot())=="Video Settings")
+    live.Settings_Widget_C=nil
+    check("back to the pause menu",tr:update(mm.snapshot())=="Exit to main menu")
+    live.PauseMenu_Widget_C=nil
+    check("gameplay with nothing open is silent",mm.snapshot()==nil)
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
