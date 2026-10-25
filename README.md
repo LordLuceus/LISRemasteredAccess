@@ -40,6 +40,10 @@ nearest first.
 | Home | D-pad up | Describe the selected object again, with fresh distance and direction |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 | Shift+Home | D-pad down | Walk to the selected object; press again to stop |
+| F | Left-stick click | Turn toward the selected object |
+| 1 to 4 | Face buttons | Use the focused object's actions, as announced |
+| F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
+| F2 | Hold left-stick click, then D-pad left | Play the next sound cue and say what it means |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -68,7 +72,24 @@ A soft descending tone plays when a cutscene takes control of Max, and an
 ascending one when you get control back. While the game has control, the scanner
 and autowalk do nothing. Ctrl+Home still repeats the last announcement.
 
-Facing the selected object and help are next.
+### Facing and interacting
+
+F (or clicking the left stick) turns the camera toward the selected object. It
+corrects its aim a few times, as the camera moves, until the game focuses the
+object or about two and a half seconds pass.
+
+Whenever the game focuses an object, whether you faced it, walked up to it or
+aimed yourself, the mod says its name and the actions the game offers, with the
+keys for them: "Journal. 1, Look, 2, Read." on the keyboard, or "Journal. Y, Look,
+A, Read." on a controller. Press the number (or face button) to do it. The same
+object is not announced again for three seconds.
+
+If facing ends with "Not focused", the game is not offering that object right
+now. It can be too low for the camera to reach, or not available yet in the
+story: in the opening classroom, the other objects on your desk only open up
+after you look at the photo.
+
+Reading screens (letters, the journal) are not narrated yet.
 
 The pause menu, its settings and its confirmations read the same way.
 

@@ -5,6 +5,16 @@ Player-facing changes, newest first.
 ## 2026-10-25
 
 ### In play
+- Facing: F (or the left-stick click) turns toward the selected object and
+  corrects its aim until the game focuses it.
+- Interactions: whenever the game focuses an object you hear its name and its
+  actions, for example "Journal. 1, Look, 2, Read." Press 1 to 4 to use them, or
+  the face buttons on a controller, which are named instead of numbers.
+- F1 (hold the left-stick click and press D-pad up) gives help with the mod's
+  keys for the device you are using.
+- F2 (hold the left-stick click and press D-pad left) plays the next sound cue
+  and says what it means.
+- Fixed: the game could crash at random while the mod was running.
 - Autowalk: Shift+Home (or D-pad down) walks to the selected object, going around
   closed doors, and says when you arrive. Moving yourself or pressing it again
   stops it. In the opening nightmare it takes you to the lighthouse.
