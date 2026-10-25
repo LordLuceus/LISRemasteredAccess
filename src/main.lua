@@ -77,10 +77,14 @@ reread=function()
     return require("core.text").join(snap.label,snap.value)
 end
 local menu_errors,settings_tick=0,0
+local arrows_done=false
 LoopAsync(250,function()
     ExecuteInGameThread(function()
         local ok,err=pcall(function()
             settings_tick=settings_tick+1
+            -- Arrow keys mirror WASD. Applied once the title screen exists, so the
+            -- player's input has been created and can rebuild its key maps.
+            if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
             local text,fallback=tracker:update(snap)

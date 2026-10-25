@@ -227,6 +227,8 @@ local function find_live(class)
     end
     return nil
 end
+-- True once the title screen exists (input is set up by then).
+function M.title_ready()return find_title()~=nil end
 -- Returns a tracker snapshot plus a short diagnostic, or nil when no menu.
 function M.snapshot()
     local title=find_title()

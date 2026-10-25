@@ -306,6 +306,32 @@ do
     check("reread has current countdown",tr:current()=="Initial settings will be restored in 17 second(s)... Enter to confirm",tr:current())
     _G.EObjectFlags=nil
 end
+-- Arrow keys: each arrow is added to the matching WASD direction action, once,
+-- rebuilding keymaps only on the last add, and never saving to Input.ini.
+do
+    package.loaded["core.arrow_keys"]=nil
+    local calls,saved,rebuilt={},false,false
+    local settings={IsValid=function()return true end,
+        AddActionMapping=function(_,m,rebuild)calls[#calls+1]={action=m.ActionName.n,key=m.Key.KeyName.n,rebuild=rebuild}end,
+        GetActionMappingByName=function(_,name,out)for _,c in ipairs(calls) do if c.action==name.n then out[#out+1]={Key={KeyName={ToString=function()return c.key end}}} end end end,
+        SaveKeyMappings=function()saved=true end,ForceRebuildKeymaps=function()rebuilt=true end}
+    _G.FName=function(n)return {n=n}end
+    _G.StaticFindObject=function(p)return p=="/Script/Engine.Default__InputSettings" and settings or nil end
+    local logs={}
+    local ak=require("core.arrow_keys")
+    check("arrow mappings applied",ak.apply(function(l)logs[#logs+1]=l end)==true)
+    local want={DPadUp="Up",DPadDown="Down",DPadLeft="Left",DPadRight="Right"}
+    local ok=#calls==4
+    for i,c in ipairs(calls) do ok=ok and want[c.action]==c.key and (c.rebuild==(i==4)) end
+    check("each arrow on its WASD action, one rebuild",ok)
+    check("bindings not saved to Input.ini",saved==false)
+    check("live key maps rebuilt like the game editor",rebuilt==true)
+    local readback=false;for _,l in ipairs(logs) do if l=="arrow_keys bound action=DPadUp keys=Up" then readback=true end end
+    check("binding read back and logged",readback)
+    _G.StaticFindObject=function()return nil end
+    check("missing settings reported",ak.apply(function(l)logs[#logs+1]=l end)==false and logs[#logs]:find("no_input_settings",1,true)~=nil)
+    _G.FName=nil;_G.StaticFindObject=nil
+end
 -- Episodes screen (standalone widget): heading, options and episode switching,
 -- with the values captured in the game.
 do
