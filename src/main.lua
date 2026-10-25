@@ -43,6 +43,7 @@ RegisterKeyBindAsync(Key.HOME,function()speech.say(last_speech,true)end)
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
 local menu=require("menus.main_menu")
+menu.format_percent=function(p)return l10n.text("percent",{value=p})end
 -- Test sessions can ask for details of options the reader cannot label.
 do
     local ok,req=pcall(require,"LISNavRequest")

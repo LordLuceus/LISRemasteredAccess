@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true}
+    local known={menu_key=true,cancel_key=true,value=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -134,6 +134,49 @@ do
     check("nothing before title accepts input",mm.snapshot()==nil)
     title.IsInViewport=function()return false end
     check("nothing when title gone",mm.snapshot()==nil)
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
+-- Settings rows: name plus value, value-only on change, percent formatting.
+do
+    package.loaded["menus.tracker"]=nil
+    local t=require("menus.tracker").new()
+    check("row with value",t:update({screen="video",index=1,label="Screen resolution",value="1920x1080"})=="Screen resolution, 1920x1080")
+    check("value change speaks value only",t:update({screen="video",index=1,label="Screen resolution",value="1280x720"})=="1280x720")
+    check("unchanged value silent",t:update({screen="video",index=1,label="Screen resolution",value="1280x720"})==nil)
+    check("next row speaks name and value",t:update({screen="video",index=2,label="V-Sync",value="On"})=="V-Sync, On")
+    check("value lost speaks label",t:update({screen="video",index=2,label="V-Sync",value=nil})=="V-Sync")
+    check("row without value",t:update({screen="video",index=3,label="Reset To Defaults"})=="Reset To Defaults")
+    package.loaded["menus.main_menu"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu")
+    check("percent mid",mm.percent(0.5,0,1)==50)
+    check("percent rounds",mm.percent(0.666,0,1)==67)
+    check("percent custom range",mm.percent(2.2,1.6,2.8)==50)
+    check("percent clamps",mm.percent(-1,0,1)==0 and mm.percent(5,0,1)==100)
+    -- Selector and slider rows from fake widgets.
+    local function obj(fields)local o=fields or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;return o end
+    local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end})end
+    -- Real structure (from the game's widget files): names and values sit in
+    -- LocalizedString_Widget wrappers that have NO GetText of their own.
+    local function wrapped(s)return obj({TextBlock_0=textw(s)})end
+    local selector=obj({Selector_Name=wrapped("V-Sync"),Selector_Option=obj({Text=wrapped("On")})})
+    local slider=obj({Slider_Text=wrapped("Master"),Slider_Slider=obj({GetValue=function()return 0.8 end,MinValue=0,MaxValue=1})})
+    local opts={selector,slider}
+    local screen=obj({IsVisible=function()return true end,CurrentInteractableIndex=0,CurrentInteractable=selector,InteractablesArray=opts,
+        GetClass=function()return {GetFName=function()return {ToString=function()return "Settings_Video_Widget_C" end}end}end,GetAddress=function()return 1 end})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=screen})
+    _G.FindAllOf=function(n)return n=="BP_LiS_Main_Menu_Widget_C" and {title} or {} end
+    local s=mm.snapshot()
+    check("selector name and option",s and s.label=="V-Sync" and s.value=="On",s and (tostring(s.label)..","..tostring(s.value)))
+    screen.CurrentInteractable=slider;screen.CurrentInteractableIndex=1
+    s=mm.snapshot()
+    check("slider name and percent",s and s.label=="Master" and s.value=="80%",s and (tostring(s.label)..","..tostring(s.value)))
+    -- Selector whose shown text is empty falls back to Options[SelectedOption].
+    local sel2=obj({Selector_Name=wrapped("Subtitles"),Selector_Option=obj({Text=wrapped(""),SelectedOption=1,
+        Options={{get=function()return {ToString=function()return "Off" end}end},{get=function()return {ToString=function()return "On" end}end}}})})
+    screen.CurrentInteractable=sel2;screen.CurrentInteractableIndex=2
+    s=mm.snapshot()
+    check("selector falls back to option list",s and s.label=="Subtitles" and s.value=="On",s and (tostring(s.label)..","..tostring(s.value)))
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
 print(string.format("%d checks, %d failures",count,failures))

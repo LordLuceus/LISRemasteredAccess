@@ -11,20 +11,76 @@ local function call_bool(o,fn)
     local ok,v=pcall(function()return o[fn](o)end)
     return ok and v==true
 end
-local function text_of(widget)
-    if not valid(widget) then return nil end
+local function plain_text(widget)
     local ok,s=pcall(function()return widget:GetText():ToString()end)
     if ok and type(s)=="string" then return s end
     return nil
 end
--- Label of a menu option: the button's own text widget, else its Text field.
-local function label_of(option)
-    if not valid(option) then return nil end
-    local ok,w=pcall(function()return option.Button_Text end)
+-- Text shown by a widget. Settings rows use the game's LocalizedString_Widget,
+-- a wrapper with no GetText of its own: its visible text is in TextBlock_0.
+local function text_of(widget)
+    if not valid(widget) then return nil end
+    local s=plain_text(widget)
+    if s then return s end
+    local ok,inner=pcall(function()return widget.TextBlock_0 end)
+    if ok and valid(inner) then return plain_text(inner) end
+    return nil
+end
+local function field_text(option,field)
+    local ok,w=pcall(function()return option[field] end)
     local s=ok and text_of(w) or nil
     if s and s~="" then return s end
-    ok,s=pcall(function()return option.Text:ToString()end)
-    if ok and type(s)=="string" and s~="" and not s:find("^%$") then return s end
+    return nil
+end
+-- Current value of a selector's Settings_SelectButton_Widget: the text it
+-- shows, else the Options entry its SelectedOption points at.
+local function selector_value(option)
+    local ok,sel=pcall(function()return option.Selector_Option end)
+    if not (ok and valid(sel)) then return nil end
+    local s=field_text(sel,"Text")
+    if s then return s end
+    local iok,i=pcall(function()return sel.SelectedOption end)
+    if iok and type(i)=="number" then
+        local str=nil
+        pcall(function()
+            local e=sel.Options[i+1]
+            str=type(e)=="string" and e or e:get():ToString()
+        end)
+        if type(str)=="string" and str~="" then return str end
+    end
+    return nil
+end
+function M.percent(v,lo,hi)
+    local p=(v-lo)/(hi-lo)*100
+    if p<0 then p=0 elseif p>100 then p=100 end
+    return math.floor(p+0.5)
+end
+-- Overridable so the percent wording can be localised by the caller.
+function M.format_percent(p)return tostring(p).."%" end
+-- Slider value as the player sees it: a whole percentage of its range.
+local function slider_value(option)
+    local ok,slider=pcall(function()return option.Slider_Slider end)
+    if not (ok and valid(slider)) then return nil end
+    local vok,v=pcall(function()return slider:GetValue()end)
+    if not (vok and type(v)=="number") then return nil end
+    local lo,hi=0,1
+    pcall(function()lo=slider.MinValue;hi=slider.MaxValue end)
+    if type(lo)~="number" or type(hi)~="number" or hi<=lo then lo,hi=0,1 end
+    return M.format_percent(M.percent(v,lo,hi))
+end
+-- Label and current value of a menu option, from the fields each widget type
+-- actually uses: ordinary buttons (Button_Text), selectors (Selector_Name and
+-- the shown option) and sliders (Slider_Text and the slider value).
+local function label_of(option)
+    if not valid(option) then return nil end
+    local s=field_text(option,"Button_Text")
+    if s then return s end
+    local name=field_text(option,"Selector_Name")
+    if name then return name,selector_value(option) end
+    name=field_text(option,"Slider_Text")
+    if name then return name,slider_value(option) end
+    local ok,txt=pcall(function()return option.Text:ToString()end)
+    if ok and type(txt)=="string" and txt~="" and not txt:find("^%$") then return txt end
     return nil
 end
 local function find_title()
@@ -52,9 +108,9 @@ function M.snapshot()
                 current=aok and item or nil
             end
             local id=screen:GetClass():GetFName():ToString().."@"..string.format("%X",screen:GetAddress())
-            local label=label_of(current)
+            local label,value=label_of(current)
             if label==nil and M.describe_unlabelled and valid(current) then M.describe_unlabelled(screen,current,index) end
-            return {screen=id,index=index,label=label},
+            return {screen=id,index=index,label=label,value=value},
                 "screen="..screen:GetClass():GetFName():ToString().." index="..index.." source="..source
         end
     end
