@@ -35,14 +35,14 @@ for name in ('mods.txt','mods.json'):
     p=mods/name
     if name.endswith('.txt'):
         s=re.sub(r'(?m)^([ \t]*[^;\r\n]+:[ \t]*)[01][ \t]*$',r'\g<1>0',p.read_text())
-        p.write_text(s+'\nEngineTickProbe : 1\n',encoding='utf-8')
+        p.write_text(s+'\nLISRemasteredAccess : 1\n',encoding='utf-8')
     else:
         data=json.loads(p.read_text())
         for mod in data:mod['mod_enabled']=False
-        data.append({'mod_name':'EngineTickProbe','mod_enabled':True})
+        data.append({'mod_name':'LISRemasteredAccess','mod_enabled':True})
         p.write_text(json.dumps(data,indent=2),encoding='utf-8')
-probe=mods/'EngineTickProbe/Scripts/main.lua';probe.parent.mkdir(parents=True,exist_ok=True)
-shutil.copy2(ROOT/'probes/EngineTickProbe/main.lua',probe)
+probe=mods/'LISRemasteredAccess/Scripts/main.lua';probe.parent.mkdir(parents=True,exist_ok=True)
+shutil.copy2(ROOT/'src/main.lua',probe)
 assert not list(mods.rglob('enabled.txt'))
 old_names={item['relative'] for item in old['files']}
 new=[]

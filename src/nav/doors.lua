@@ -5,7 +5,7 @@ local M={}
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function name(o)return valid(o) and o:GetFullName() or "none" end
 local function d2(a,b)return math.sqrt((a.X-b.X)^2+(a.Y-b.Y)^2)end
-local route=require("route_probe")
+local route=require("nav.route")
 
 local function bounds(actor)
     local o,e={X=0,Y=0,Z=0},{X=0,Y=0,Z=0}

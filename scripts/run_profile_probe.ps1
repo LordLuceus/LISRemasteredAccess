@@ -36,7 +36,7 @@ foreach($folder in @('SaveGames','Config/WindowsNoEditor')){
 $before | ConvertTo-Json | Set-Content (Join-Path $session 'real-profile-before.json') -Encoding UTF8
 $saved=(Join-Path $profile 'Saved').Replace('\','/')
 if($saved.Contains(']====]')){throw 'Unexpected delimiter in profile path'}
-$requestPath=Join-Path $gameDir 'ue4ss/Mods/EngineTickProbe/Scripts/LISNavRequest.lua'
+$requestPath=Join-Path $gameDir 'ue4ss/Mods/LISRemasteredAccess/Scripts/LISNavRequest.lua'
 $followText=if($Follow){'true'}else{'false'}
 $liveText=if($KeepOpen -or $VerifyKeys){'true'}else{'false'}
 $returnText=if($KeepOpen){'false'}else{'true'}
@@ -113,7 +113,7 @@ $log=Join-Path $gameDir $manifest.loader_log
 if(Test-Path -LiteralPath $log){Copy-Item -LiteralPath $log -Destination (Join-Path $session 'UE4SS.log')}
 'RELEASED' | Set-Content (Join-Path $session 'operator-owner/result.txt')
 [IO.File]::WriteAllText($requestPath,"return {scene='inspect'}",[Text.UTF8Encoding]::new($false))
-$requestRelative='ue4ss\Mods\EngineTickProbe\Scripts\LISNavRequest.lua'
+$requestRelative='ue4ss\Mods\LISRemasteredAccess\Scripts\LISNavRequest.lua'
 $requestHash=(Get-FileHash -LiteralPath $requestPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $entry=$manifest.files | Where-Object {$_.relative -eq $requestRelative}
 if($entry){$entry.installed_sha256=$requestHash}else{$manifest.files+=@{relative=$requestRelative;installed_sha256=$requestHash;previous_sha256=$null}}

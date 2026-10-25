@@ -2,8 +2,9 @@
 -- load, announcements still reach the log, where the launcher's watcher speaks
 -- them. The log line is kept in both cases so Home/reread and diagnostics work.
 local M={native=false,load_error=nil}
+-- This file is Scripts/core/speech.lua; the DLL is installed in Scripts/.
 local here=debug.getinfo(1,"S").source:gsub("^@",""):gsub("[^/\\]+$","")
-local dll=here.."lisr_speech.dll"
+local dll=here:gsub("core[/\\]$","").."lisr_speech.dll"
 local speak_fn,stop_fn,status_fn
 do
     local ok,err=pcall(function()

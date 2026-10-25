@@ -12,9 +12,9 @@ if not request.expected_saved_directory then
     print(prefix.."dormant: no explicit isolated-profile request\n")
     return
 end
-local l10n=require("localization")
-local controls=require("controls")
-local speech=require("speech")
+local l10n=require("core.localization")
+local controls=require("core.controls")
+local speech=require("core.speech")
 print(prefix.."speech_module "..speech.status().."\n")
 local last_speech=""
 local last_follow_result=nil
@@ -62,8 +62,8 @@ local follow_cancelled=false
 local actions_checked=false
 local route_active=false
 local target_test=nil
-local nav_probe = require("native_nav_probe")
-local follow_probe = require("native_follow_probe")
+local nav_probe = require("dev.nav_sample")
+local follow_probe = require("nav.follow")
 local function normal_path(value)
     return string.lower((value:gsub("\\", "/"):gsub("/+$", "")))
 end
@@ -232,7 +232,7 @@ LoopAsync(5000, function()
                     if request.inspect_widgets then
                         local phase=world:GetFName():ToString().."_poll"..poll
                         if poll==1 or poll==6 or poll==10 then
-                            local wok,werr=pcall(function()require("widget_probe").run(phase,emit)end)
+                            local wok,werr=pcall(function()require("dev.widgets").run(phase,emit)end)
                             if not wok then emit("widget_error="..tostring(werr)) end
                         end
                     end
@@ -264,7 +264,7 @@ LoopAsync(5000, function()
                             if request.action_patterns and not actions_checked then
                                 actions_checked=true
                                 local aok,aerr=pcall(function()
-                                    local probe=require("action_probe")
+                                    local probe=require("dev.actions")
                                     probe.schema(emit);probe.dump_targets(controller,request.action_patterns,emit)
                                 end)
                                 if not aok then emit("action_probe_error="..tostring(aerr)) end
@@ -272,17 +272,17 @@ LoopAsync(5000, function()
                             local done,goal,player=nav_probe.run(controller,scenes[request.scene].map,emit)
                             nav_checked=done
                             if done and player and request.route_candidates then
-                                local sok,serr=pcall(function()require("route_probe").survey(controller,player,request.route_candidates,emit)end)
+                                local sok,serr=pcall(function()require("nav.route").survey(controller,player,request.route_candidates,emit)end)
                                 if not sok then emit("route_survey_error="..tostring(serr)) end
                             end
                             if done and player and request.auto_goal and request.follow==true and not follow_cancelled then
                                 local pok,perr=pcall(function()
-                                    local r=require("route_probe")
+                                    local r=require("nav.route")
                                     local c=player.CapsuleComponent;local f=c:K2_GetComponentLocation();f={X=f.X,Y=f.Y,Z=f.Z-c:GetScaledCapsuleHalfHeight()}
                                     local sok,start=r.project(controller,f)
                                     local g=request.auto_goal;local gok,goal=r.project(controller,{X=g[1],Y=g[2],Z=g[3]})
                                     if not sok or not gok then emit("door_plan=unprojected");return end
-                                    local plan=require("door_probe").plan(controller,player,start,goal,emit)
+                                    local plan=require("nav.doors").plan(controller,player,start,goal,emit)
                                     if plan==false then return end
                                     route_active=true
                                     r.begin(controller,player,plan or {{goal.X,goal.Y,goal.Z}},emit)
@@ -293,24 +293,24 @@ LoopAsync(5000, function()
                             end
                             if done and player and request.route_waypoints and request.follow==true and not follow_cancelled then
                                 route_active=true
-                                require("route_probe").begin(controller,player,request.route_waypoints,emit)
-                                require("route_probe").next(follow_probe,nil)
+                                require("nav.route").begin(controller,player,request.route_waypoints,emit)
+                                require("nav.route").next(follow_probe,nil)
                                 goal=nil
                             end
                             if done and player and request.target_actor then
-                                goal,target_test=require("target_probe").resolve(controller,player,request.target_actor,emit)
+                                goal,target_test=require("nav.target").resolve(controller,player,request.target_actor,emit)
                             end
                             if done and goal and request.follow==true and not follow_cancelled then follow_probe.start(controller,player,goal,emit,request.target_actor~=nil) end
                         end
                     end
                     if route_active and last_follow_result and not follow_probe.active and not return_requested and not follow_cancelled then
                         local result=last_follow_result;last_follow_result=nil
-                        local rok,rerr=pcall(function()require("route_probe").next(follow_probe,result)end)
+                        local rok,rerr=pcall(function()require("nav.route").next(follow_probe,result)end)
                         if not rok then emit("route_error="..tostring(rerr));route_active=false end
-                        if require("route_probe").done then route_active=false end
+                        if require("nav.route").done then route_active=false end
                     end
                     if target_test and last_follow_result and not follow_probe.active and not return_requested and target_test.stage<2 then
-                        require("target_probe").observe(target_test,last_follow_result,request.face_target==true,emit)
+                        require("nav.target").observe(target_test,last_follow_result,request.face_target==true,emit)
                     end
                 end
             end

@@ -1,6 +1,6 @@
 -- Offline Lua tests for game-independent mod logic. Run from the repository root:
 --   artifacts\lua-5.4.7\lua54.exe tests\lua\run.lua
-package.path="probes/EngineTickProbe/?.lua;tests/lua/?.lua;"..package.path
+package.path="src/?.lua;tests/lua/?.lua;"..package.path
 local failures,count=0,0
 local function check(name,cond,detail)
     count=count+1
@@ -8,8 +8,8 @@ local function check(name,cond,detail)
 end
 local logged={}
 local function fresh_l10n()
-    package.loaded["localization"]=nil
-    local l=require("localization")
+    package.loaded["core.localization"]=nil
+    local l=require("core.localization")
     logged={}
     l.set_logger(function(line)logged[#logged+1]=line end)
     return l
@@ -39,8 +39,8 @@ do
 end
 -- Language fallback: exact, base language, then English; English fills gaps.
 do
-    package.loaded["lang_fr"]={arrived="Destination de test atteinte."}
-    package.loaded["lang_pt_br"]={arrived="Destino alcançado."}
+    package.loaded["lang.fr"]={arrived="Destination de test atteinte."}
+    package.loaded["lang.pt_br"]={arrived="Destino alcançado."}
     local l=fresh_l10n()
     check("exact language",l.set_language("fr")=="fr")
     check("translated key",l.text("arrived")=="Destination de test atteinte.")
@@ -51,12 +51,12 @@ do
     check("unknown language is English",l.set_language("xx")=="en")
     check("nil language is English",l.set_language(nil)=="en")
     check("English after fallback",l.text("arrived")=="Test destination reached.")
-    package.loaded["lang_fr"]=nil;package.loaded["lang_pt_br"]=nil
+    package.loaded["lang.fr"]=nil;package.loaded["lang.pt_br"]=nil
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
     local known={menu_key=true,cancel_key=true}
-    local en=require("lang_en")
+    local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
         for name in s:gmatch("{([%w_]+)}") do check("known placeholder "..key.."."..name,known[name]==true) end
@@ -65,8 +65,8 @@ end
 -- Controls: keyboard by default, controller names only in controller mode,
 -- keyboard fallback when a command has no controller binding.
 do
-    package.loaded["controls"]=nil
-    local c=require("controls")
+    package.loaded["core.controls"]=nil
+    local c=require("core.controls")
     check("keyboard default",c.name("cancel")=="F8")
     c.commands.test_cmd={keyboard="Page Up",controller="D-pad left"}
     c.set_gamepad(true)

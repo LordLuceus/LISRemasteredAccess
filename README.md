@@ -59,14 +59,15 @@ python scripts\deploy_probe.py
 ```
 
 The smoke test checks Prism's backends and literal SAPI text without speaking.
-Deployment requires the game to be closed and verifies every installed file's
-hash before replacing it.
+Deployment copies `src/` and the speech DLL into the game's UE4SS Mods folder.
+It requires the game to be closed, verifies every installed file's hash before
+replacing it, and removes installed modules whose source was renamed or deleted.
 
 ## Localisation and key names
 
 The game's own labels are already translated by the game. The mod's own
-announcements live in `probes/EngineTickProbe/lang_en.lua`. To translate them,
-copy it to `lang_<code>.lua` (for example `lang_fr.lua` or `lang_pt_br.lua`)
+announcements live in `src/lang/en.lua`. To translate them,
+copy it to `src/lang/<code>.lua` (for example `fr.lua`, or `pt_br.lua` for pt-BR)
 and translate the values, keeping the keys and `{placeholders}`. The mod follows
 the game's language setting: it tries the exact language, then the base
 language, then English, so a partial translation still works. A missing
@@ -82,7 +83,6 @@ Offline tests for this logic, which need no game:
 artifacts\lua-5.4.7\lua54.exe tests\lua\run.lua
 ```
 
-
 The installation is pinned to Steam build 11330282 and experimental UE4SS
 3.0.1-1181-g83330635, with a measured virtual-table correction in
 `compatibility/VTableLayout.ini`. The speech module links against that exact
@@ -93,7 +93,11 @@ hashes before changing anything and never restores old saves.
 
 ## Layout
 
-- `probes/EngineTickProbe/`: the Lua side, loaded by UE4SS.
+- `src/`: the Lua side, installed as the UE4SS mod `LISRemasteredAccess`.
+  - `main.lua`: entry point. `core/`: speech, localisation, key names.
+  - `lang/`: announcement catalogs. `nav/`: autowalk and door-aware routing.
+  - `dev/`: read-only development probes, not player features.
+- `tests/lua/`: offline tests for game-independent logic.
 - `native/`: the C++ speech and braille module. `third_party/ue4ss/` holds the
   loader's Lua headers at the pinned commit, with their licences and hashes.
 - `scripts/`: launcher, deployment, test runner, rollback and log tools.

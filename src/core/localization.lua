@@ -1,17 +1,17 @@
 -- Mod announcement text. The game's own labels arrive already translated; this
--- only covers text the mod itself adds. Catalogs are lang_<code>.lua files.
+-- only covers text the mod itself adds. Catalogs are lang/<code>.lua files (lang/pt_br.lua for pt-BR).
 -- Lookup: exact game language (e.g. pt-br), then its base (pt), then English.
 -- A key missing even from English is a bug: it is logged and spoken as a
 -- clearly marked placeholder, never silently replaced with other text.
 local M={}
-local english=require("lang_en")
+local english=require("lang.en")
 local active,active_code=english,"en"
 local reported={}
 local log=function(line)print("[LISNavTick] "..line.."\n")end
 
 local function load(code)
     if code=="en" then return english end
-    local ok,catalog=pcall(require,"lang_"..code)
+    local ok,catalog=pcall(require,"lang."..code)
     if ok and type(catalog)=="table" then return catalog end
     return nil
 end
