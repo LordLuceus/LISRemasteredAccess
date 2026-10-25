@@ -49,11 +49,20 @@ local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
 local control=require("core.control").new()
 local control_world=nil
 local function playable()return not in_menu() and control:has_control() end
+-- Key presses are queued and run by the game-thread loop below, never handed to
+-- the game thread from the loader's input thread (that hand-off is what the
+-- loader dropped and crashed in). The input thread only appends to a table.
+local key_queue={}
 local function on_game(fn)
-    return function()ExecuteInGameThread(function()
+    return function()key_queue[#key_queue+1]=fn end
+end
+local function run_keys()
+    if #key_queue==0 then return end
+    local pending=key_queue;key_queue={}
+    for _,fn in ipairs(pending) do
         local ok,err=pcall(fn)
         if not ok then log("key_error="..tostring(err)) end
-    end,EGameThreadMethod.EngineTick)end
+    end
 end
 RegisterKeyBindAsync(Key.HOME,on_game(function()
     if not playable() then
@@ -107,8 +116,7 @@ reread=function()
 end
 local menu_errors,settings_tick=0,0
 local arrows_done=false
-LoopAsync(250,function()
-    ExecuteInGameThread(function()
+local function menu_step()
         local ok,err=pcall(function()
             settings_tick=settings_tick+1
             -- Arrow keys mirror WASD. Applied once the title screen exists, so the
@@ -125,9 +133,7 @@ LoopAsync(250,function()
             end
         end)
         if not ok and menu_errors<5 then menu_errors=menu_errors+1;log("menu_error="..tostring(err)) end
-    end,EGameThreadMethod.EngineTick)
-    return false
-end)
+end
 
 -- Scanner speech, wording and controller input (gameplay only).
 scanner.say=function(text)say(text,true)end
@@ -135,10 +141,9 @@ autowalk.say=function(text)say(text,true)end
 autowalk.log=log
 autowalk.moving=function()return speech.moving and speech.moving() or false end
 autowalk.text=function(key,p)return l10n.text(key,p)end
--- Autowalk runs four times a second on the game thread.
+-- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
-LoopAsync(250,function()
-    ExecuteInGameThread(function()
+local function main_step()
         local ok,err=pcall(function()
             local state="unknown"
             local c=scanner.controller()
@@ -160,9 +165,7 @@ LoopAsync(250,function()
             autowalk.tick()
         end)
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
-    end,EGameThreadMethod.EngineTick)
-    return false
-end)
+end
 scanner.log=log
 do local ok,req=pcall(require,"LISNavRequest");scanner.trace=ok and type(req)=="table" and req.expected_saved_directory~=nil end
 scanner.text=function(key,p)return l10n.text(key,p)end
@@ -175,8 +178,7 @@ sources.language=function()return l10n.language()end
 local pad=require("scanner.pad").new()
 local pad_read=speech.pad
 local pad_errors=0
-LoopAsync(50,function()
-    ExecuteInGameThread(function()
+local function pad_step()
         local ok,err=pcall(function()
             local buttons=pad_read and pad_read() or -1
             local active=buttons>=0 and playable()
@@ -188,8 +190,26 @@ LoopAsync(50,function()
             end
         end)
         if not ok and pad_errors<5 then pad_errors=pad_errors+1;log("pad_error="..tostring(err)) end
-    end,EGameThreadMethod.EngineTick)
-    return false
+end
+
+-- ONE background loop for everything that polls the game, run directly on the
+-- game thread by the loader (LoopInGameThreadWithDelay). The earlier design
+-- created each step on the loader's async thread and handed it to the game
+-- thread (LoopAsync + ExecuteInGameThread); the loader dropped such steps at
+-- random ("Ref was not function") and the game crashed inside that hand-off.
+-- Controller buttons every 50 ms; menus and the main step alternate on the
+-- 250 ms beats, so no beat does both.
+local beat=0
+LoopInGameThreadWithDelay(50,function()
+    beat=beat+1
+    local ok,err=pcall(function()
+        run_keys()
+        pad_step()
+        if beat%5==0 then
+            if (beat//5)%2==0 then menu_step() else main_step() end
+        end
+    end)
+    if not ok then log("loop_error="..tostring(err)) end
 end)
 
 -- Development test session, only with an explicit disposable-profile request.
