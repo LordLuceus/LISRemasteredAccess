@@ -16,25 +16,26 @@ writes to your saves.
 
 - At the title screen it says **Click To Start** once the game accepts a key.
 - In the main menu and settings it reads the highlighted option as you move.
-  Menus move with **W** and **S** (or the D-pad or left stick); the arrow keys
-  do nothing there.
+  Menus move with **W** and **S**, the arrow keys, the D-pad or the left stick.
 - Settings read their name and current value, such as "Vsync, On" or
   "Master, 80 percent". Changing a value with **A** and **D** reads just the
   new value. **Enter** on Gamma opens the gamma screen, which reads the game's
   instruction and the current level.
+- The Episodes screen reads the episode and the highlighted option, and the new
+  episode as you switch with **A** and **D** or the arrows.
 - Saved games read each slot's name, episode, chapter and date, or "New game".
 - Confirmation dialogs read their question and how to answer, such as "Quit the
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
 - **Home** rereads what is on screen now, for example the current countdown.
 
-Not narrated yet: episode and chapter selection, Extras, the keybinding editor
+Not narrated yet: chapter selection, Extras, the keybinding editor
 and the pause menu.
 
 
 ## Planned order
 
 1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
-2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; episode selection, Extras and the pause menu next.
+2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; chapter selection, Extras and the pause menu next.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
 4. Dialogue choices and prompts.
