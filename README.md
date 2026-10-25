@@ -39,6 +39,7 @@ nearest first.
 | Page Down / Page Up | D-pad right / left | Next / previous object (hold to repeat) |
 | Home | D-pad up | Describe the selected object again, with fresh distance and direction |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
+| Shift+Home | D-pad down | Walk to the selected object; press again to stop |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -47,7 +48,27 @@ letters ("Door, A", "Door, B") that stay with the object as you move. The
 selection stays on the same object when the order changes.
 
 The controller commands work only in play, so the D-pad still works normally in
-menus. Walking to the selected object (autowalk) and facing it are next.
+menus.
+
+### Autowalk
+
+Shift+Home (or D-pad down) walks Max to the selected object, using the game's own
+paths and the spot the game expects you to stand at. If the direct way crosses a
+closed door, it goes around through an open one and tells you so. It says when it
+starts and when you arrive. Moving yourself (W, A, S, D, the arrow keys or the
+left stick) or pressing Shift+Home again stops it. It also stops if something
+blocks the way or the game takes over, and tells you which.
+
+In the opening nightmare, select the Lighthouse and walk to it: the scene goes on
+when you reach it.
+
+### When the game takes over
+
+A soft descending tone plays when a cutscene takes control of Max, and an
+ascending one when you get control back. While the game has control, the scanner
+and autowalk do nothing. Ctrl+Home still repeats the last announcement.
+
+Facing the selected object and help are next.
 
 The pause menu, its settings and its confirmations read the same way.
 

@@ -5,6 +5,12 @@ Player-facing changes, newest first.
 ## 2026-10-25
 
 ### In play
+- Autowalk: Shift+Home (or D-pad down) walks to the selected object, going around
+  closed doors, and says when you arrive. Moving yourself or pressing it again
+  stops it. In the opening nightmare it takes you to the lighthouse.
+- Soft tones play when a cutscene takes control and when you get it back. The
+  scanner and autowalk wait while the game has control.
+- Fixed: the game could crash during cutscenes.
 - New scanner: Page Up and Page Down (or D-pad left and right) select objects you
   can interact with, nearest first, with distance, direction and height, for
   example "Mail, 1.5 metres, ahead, 3 of 38". In the opening nightmare it lists
