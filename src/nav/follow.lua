@@ -91,7 +91,9 @@ function M.start(controller,pawn,goal,emit,diagnose)
     local now=os.time()
     M.active={controller=controller,pawn=pawn,controller_name=controller:GetFullName(),pawn_name=pawn:GetFullName(),goal=point(goal),
               emit=emit,game=game,start=now,last_progress=now,last=p,last_report=0,diagnose=diagnose}
-    emit(string.format("follow_start goal=%.3f,%.3f,%.3f distance=%.3f timeout_seconds=20",goal.X,goal.Y,goal.Z,horizontal(p,goal)))
+    local limit=math.max(20,math.min(120,math.ceil(horizontal(p,goal)/100*2.5)))
+    M.active.limit=limit
+    emit(string.format("follow_start goal=%.3f,%.3f,%.3f distance=%.3f timeout_seconds=%d",goal.X,goal.Y,goal.Z,horizontal(p,goal),limit))
     local ok,err=pcall(function()library:SimpleMoveToLocation(controller,goal)end)
     if not ok then emit("follow_request_error="..tostring(err));M.stop("request_error") end
     local path_ok,path_error=pcall(function()
@@ -126,7 +128,7 @@ function M.tick()
         end
         if remaining<=30 and math.abs(p.Z-s.goal.Z)<=40 and (s.pawn.CharacterMovement.MovementMode==1 or s.pawn.CharacterMovement.MovementMode==2) then M.stop("arrived_test_region");return end
         if horizontal(p,s.last)>=5 then s.last=p;s.last_progress=now end
-        if now-s.start>=20 then M.stop("timeout");return end
+        if now-s.start>=(s.limit or 20) then M.stop("timeout");return end
         if now-s.last_progress>=4 then M.stop("stalled");return end
     end)
     if not ok then s.emit("follow_error="..tostring(err));M.stop("observation_error") end
