@@ -53,7 +53,7 @@ target_link_libraries(lisr_speech_core PUBLIC prism::prism)
 add_library(lisr_speech SHARED src/module.cpp)
 lisr_target(lisr_speech)
 add_dependencies(lisr_speech ue4ss_implib)
-target_link_libraries(lisr_speech PRIVATE lisr_speech_core "${UE4SS_IMPLIB}")
+target_link_libraries(lisr_speech PRIVATE lisr_speech_core "${UE4SS_IMPLIB}" winmm)
 set_target_properties(lisr_speech PROPERTIES OUTPUT_NAME lisr_speech)
 
 # Speech core smoke test without the game or UE4SS.

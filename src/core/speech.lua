@@ -20,6 +20,10 @@ do
     if ok then
         local f4=package.loadlib(dll,"lisr_pad")
         if f4 then M.pad=function()local pok,v=pcall(f4);return pok and v or -1 end end
+        local f5=package.loadlib(dll,"lisr_move")
+        if f5 then M.moving=function()local mok,v=pcall(f5);return mok and v==true end end
+        local f6=package.loadlib(dll,"lisr_play")
+        if f6 then M.play=function(path)local pok,v=pcall(f6,path);return pok and v==true end end
     end
 end
 -- Returns true when the native module queued it.
@@ -38,4 +42,6 @@ function M.status()
     local ok,s=pcall(status_fn)
     return ok and ("native=true "..tostring(s)) or ("native=true status_error="..tostring(s))
 end
+-- Folder holding the cue WAVs (Scripts/audio/).
+M.audio_dir=here:gsub("core[/\\]$","").."audio/"
 return M
