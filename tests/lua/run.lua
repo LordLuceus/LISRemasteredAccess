@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -554,6 +554,151 @@ do
     check("camera elsewhere holds",f.cinematic_control(pawn)==true)
     check("cutscene lists never walked",walked==false)
     _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
+end
+-- Cutscene check reads single values only (never walks the cutscene's lists).
+do
+    package.loaded["nav.follow"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local f=require("nav.follow")
+    local walked=false
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local function arr(n)return {GetArrayNum=function()return n end,ForEach=function()walked=true end} end
+    local pawn=o({GetAddress=function()return 7 end})
+    local view=pawn
+    pawn.Controller=o({GetViewTarget=function()return view end})
+    pawn.ControllingMatineeActors=arr(0)
+    check("free when camera on Max and no cutscene",f.cinematic_control(pawn)==false)
+    pawn.ControllingMatineeActors=arr(1)
+    check("cutscene count holds",f.cinematic_control(pawn)==true)
+    pawn.ControllingMatineeActors=arr(0);view=o({GetAddress=function()return 99 end})
+    check("camera elsewhere holds",f.cinematic_control(pawn)==true)
+    check("cutscene lists never walked",walked==false)
+    _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
+end
+-- Autowalk decisions: legs, arrival, cancellation, hand-over, blockage.
+do
+    package.loaded["autowalk.plan"]=nil
+    local W=require("autowalk.plan")
+    local w=W.new("Lighthouse",{{X=1},{X=2},{X=3}})
+    check("first leg",w:next_leg().X==1)
+    check("leg arrival continues",w:leg_result("arrived_test_region").continue==true)
+    w:next_leg();w:leg_result("arrived_test_region");w:next_leg()
+    local r=w:leg_result("arrived_test_region")
+    check("last leg arrival announces",r.done and r.say=="walk_arrived" and r.params.name=="Lighthouse")
+    check("nothing after finish",w:next_leg()==nil)
+    local function single(result)local x=W.new("Mail",{{X=1}});x:next_leg();return x:leg_result(result) end
+    check("cancel",single("cancelled").say=="walk_stopped")
+    check("cutscene takes over",single("cinematic_movement_track").say=="walk_interrupted")
+    check("paused takes over",single("paused").say=="walk_interrupted")
+    check("stall is blocked",single("stalled").say=="walk_blocked")
+    check("timeout",single("timeout").say=="walk_timeout")
+    check("other failure",single("observation_error").say=="walk_failed")
+    local y=W.new("Mail",{{X=1},{X=2}});y:next_leg()
+    check("failure on first of two legs stops",y:leg_result("stalled").done==true and y:next_leg()==nil)
+    check("refusal mapping",W.refusal("no_route")=="walk_no_route" and W.refusal("paused")=="walk_not_now" and W.refusal("whatever")=="walk_no_route")
+end
+-- Autowalk wiring with fake follower, route and door planner (no game).
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+    local started,stopped={},{}
+    local fake_follow={active=nil}
+    fake_follow.ready=function()return fake_follow.ready_value~=false,fake_follow.ready_reason end
+    fake_follow.start=function(_,_,goal,emit)started[#started+1]=goal;fake_follow.active={emit=emit} end
+    fake_follow.stop=function(reason)local s=fake_follow.active;fake_follow.active=nil;stopped[#stopped+1]=reason;if s then s.emit("follow_end="..reason.." stop_ok=true") end end
+    fake_follow.tick=function()end
+    package.loaded["nav.follow"]=fake_follow
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z} end}
+    local plan_result=nil
+    package.loaded["nav.doors"]={plan=function()return plan_result end}
+    local aw=require("autowalk.autowalk")
+    local spoken={}
+    aw.say=function(t)spoken[#spoken+1]=t end
+    aw.text=function(k,p)return k..(p and p.name and (":"..p.name) or "") end
+    local pawn={CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=100}end,GetScaledCapsuleHalfHeight=function()return 84 end}}
+    local c={Pawn=pawn}
+    local mail={name="Mail",stand={X=150,Y=0,Z=0},pos={X=160,Y=0,Z=50}}
+    -- Direct walk: start, arrive.
+    check("direct walk starts",aw.start(c,mail)==true and spoken[#spoken]=="walk_start:Mail")
+    check("aims at the stand point",started[1].X==150)
+    fake_follow.stop("arrived_test_region");aw.tick()
+    check("arrival announced",spoken[#spoken]=="walk_arrived:Mail" and not aw.walking())
+    -- Detour: two-plus legs, then arrival only after the last.
+    plan_result={{10,0,0},{20,0,0},{150,0,0}}
+    aw.start(c,mail)
+    check("detour announced",spoken[#spoken]=="walk_start_detour:Mail")
+    fake_follow.stop("arrived_test_region");aw.tick()
+    check("second leg started",#started==3 and started[3].X==20)
+    fake_follow.stop("arrived_test_region");aw.tick()
+    fake_follow.stop("arrived_test_region");aw.tick()
+    check("arrived after last leg",spoken[#spoken]=="walk_arrived:Mail")
+    plan_result=nil
+    -- Cancel by pressing again.
+    aw.start(c,mail)
+    check("cancel while walking",aw.cancel()==true);aw.tick()
+    check("cancel announced",spoken[#spoken]=="walk_stopped" and not aw.walking())
+    check("cancel when idle does nothing",aw.cancel()==false)
+    -- Cutscene takes over mid-walk.
+    aw.start(c,mail);fake_follow.stop("cinematic_movement_track");aw.tick()
+    check("hand-over announced",spoken[#spoken]=="walk_interrupted")
+    -- Refusals.
+    check("no selection",aw.start(c,nil)==false and spoken[#spoken]=="walk_no_target")
+    fake_follow.ready_value=false;fake_follow.ready_reason="paused"
+    check("not now",aw.start(c,mail)==false and spoken[#spoken]=="walk_not_now")
+    fake_follow.ready_value=nil
+    plan_result=false
+    check("no route",aw.start(c,mail)==false and spoken[#spoken]=="walk_no_route:Mail")
+    plan_result=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
+-- Movement cancels autowalk, but only after the start key's movement is released.
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+    local ff={active=nil}
+    ff.ready=function()return true end
+    ff.start=function(_,_,_,emit)ff.active={emit=emit} end
+    ff.stop=function(r)local s=ff.active;ff.active=nil;if s then s.emit("follow_end="..r.." stop_ok=true") end end
+    ff.tick=function()end
+    package.loaded["nav.follow"]=ff
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z} end}
+    package.loaded["nav.doors"]={plan=function()return nil end}
+    local aw=require("autowalk.autowalk")
+    local spoken={};aw.say=function(t)spoken[#spoken+1]=t end;aw.text=function(k)return k end
+    local moving=false;aw.moving=function()return moving end
+    local pawn={CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=100}end,GetScaledCapsuleHalfHeight=function()return 84 end}}
+    local c={Pawn=pawn};local e={name="Mail",stand={X=150,Y=0,Z=0},pos={X=150,Y=0,Z=0}}
+    aw.start(c,e);aw.tick();aw.tick()
+    check("walk continues without movement input",aw.walking())
+    moving=true;aw.tick()
+    check("movement cancels",not aw.walking() and spoken[#spoken]=="walk_stopped")
+    -- Started while a movement key is already held: ignored until released.
+    aw.start(c,e);aw.tick()
+    check("held key at start does not cancel",aw.walking())
+    moving=false;aw.tick()
+    check("still walking after release",aw.walking())
+    moving=true;aw.tick()
+    check("new movement then cancels",not aw.walking())
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
+-- A cutscene starting at the goal counts as arrival; elsewhere it is a hand-over.
+do
+    package.loaded["autowalk.plan"]=nil
+    local W=require("autowalk.plan")
+    local function single(result,rem)local x=W.new("Lighthouse",{{X=1}});x:next_leg();return x:leg_result(result,rem) end
+    check("cutscene 0.4 m from goal is arrival",single("cinematic_movement_track",39).say=="walk_arrived")
+    check("cutscene far from goal is hand-over",single("cinematic_movement_track",2000).say=="walk_interrupted")
+    check("cutscene with unknown distance is hand-over",single("cinematic_movement_track",nil).say=="walk_interrupted")
+    local y=W.new("Tools",{{X=1},{X=2}});y:next_leg()
+    check("cutscene near an intermediate point is not arrival",y:leg_result("cinematic_movement_track",10).say=="walk_interrupted")
+    check("stall near goal is still blocked",single("stalled",20).say=="walk_blocked")
+end
+-- Pass-through goal: aim beyond the centre along Max's approach line.
+do
+    package.loaded["autowalk.autowalk"]=nil
+    package.loaded["nav.follow"]={};package.loaded["nav.route"]={};package.loaded["nav.doors"]={}
+    local aw=require("autowalk.autowalk")
+    local p=aw.beyond({X=0,Y=0,Z=0},{X=1000,Y=0,Z=50},200)
+    check("aims 2 m past the trigger",math.abs(p.X-1200)<0.01 and p.Y==0 and p.Z==50)
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

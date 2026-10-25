@@ -13,7 +13,7 @@ end
 local function point(p)return {X=p.X,Y=p.Y,Z=p.Z}end
 -- Scene goals. label_key is a mod catalog key (a goal has no game name).
 M.goals={
-    {level="E1_1A_CliffFuture_LD",actor="FaceTrigger_0",class="FaceTrigger",label_key="goal_lighthouse"},
+    {level="E1_1A_CliffFuture_LD",actor="FaceTrigger_0",class="FaceTrigger",label_key="goal_lighthouse",through=200},
 }
 M.report=function(_)end
 local reported={}
@@ -114,9 +114,11 @@ local function goals(out)
                 local o,e={X=0,Y=0,Z=0},{X=0,Y=0,Z=0}
                 local centre=point(a:K2_GetActorLocation())
                 if pcall(function()a:GetActorBounds(true,o,e,false)end) then centre=point(o) end
-                -- A volume goal: stand at its floor, which the navigation can reach.
+                -- A doorway-style trigger (FaceTrigger: width, height, front and
+                -- back actor lists) fires when Max passes through it, not when she
+                -- stands inside it. The walk aims past its centre (see through=).
                 local stand={X=centre.X,Y=centre.Y,Z=centre.Z-(e.Z or 0)}
-                out[#out+1]={id=a:GetFullName(),label=M.text(g.label_key),pos=centre,stand=stand,kind="goal"}
+                out[#out+1]={id=a:GetFullName(),label=M.text(g.label_key),pos=centre,stand=stand,kind="goal",through=g.through}
             end
         end
     end

@@ -45,6 +45,7 @@ end
 local reread=nil
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
+local function playable()return not in_menu() end
 local function on_game(fn)
     return function()ExecuteInGameThread(function()
         local ok,err=pcall(fn)
@@ -52,7 +53,7 @@ local function on_game(fn)
     end,EGameThreadMethod.EngineTick)end
 end
 RegisterKeyBindAsync(Key.HOME,on_game(function()
-    if in_menu() then
+    if not playable() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
         speech.say(text or last_speech,true)
@@ -61,8 +62,17 @@ RegisterKeyBindAsync(Key.HOME,on_game(function()
     end
 end))
 RegisterKeyBindAsync(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
-RegisterKeyBindAsync(Key.PAGE_DOWN,on_game(function()if not in_menu() then scanner.command("next") end end))
-RegisterKeyBindAsync(Key.PAGE_UP,on_game(function()if not in_menu() then scanner.command("previous") end end))
+RegisterKeyBindAsync(Key.PAGE_DOWN,on_game(function()if playable() then scanner.command("next") end end))
+RegisterKeyBindAsync(Key.PAGE_UP,on_game(function()if playable() then scanner.command("previous") end end))
+-- Shift+Home walks to the selected object; pressing it again while walking stops.
+local autowalk=require("autowalk.autowalk")
+local function walk_toggle()
+    if autowalk.cancel() then return end
+    if not playable() then return end
+    local c=scanner.controller()
+    if c then autowalk.start(c,scanner.selected()) end
+end
+RegisterKeyBindAsync(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -118,6 +128,21 @@ end)
 
 -- Scanner speech, wording and controller input (gameplay only).
 scanner.say=function(text)say(text,true)end
+autowalk.say=function(text)say(text,true)end
+autowalk.log=log
+autowalk.moving=function()return speech.moving and speech.moving() or false end
+autowalk.text=function(key,p)return l10n.text(key,p)end
+-- Autowalk runs four times a second on the game thread.
+local walk_errors=0
+LoopAsync(250,function()
+    ExecuteInGameThread(function()
+        local ok,err=pcall(function()
+            autowalk.tick()
+        end)
+        if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
+    end,EGameThreadMethod.EngineTick)
+    return false
+end)
 scanner.log=log
 do local ok,req=pcall(require,"LISNavRequest");scanner.trace=ok and type(req)=="table" and req.expected_saved_directory~=nil end
 scanner.text=function(key,p)return l10n.text(key,p)end
@@ -134,10 +159,11 @@ LoopAsync(50,function()
     ExecuteInGameThread(function()
         local ok,err=pcall(function()
             local buttons=pad_read and pad_read() or -1
-            local active=buttons>=0 and not in_menu()
+            local active=buttons>=0 and playable()
             for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
                 if cmd=="repeat" then speech.say(last_speech,true)
-                elseif cmd=="help" or cmd=="face" or cmd=="autowalk" then log("scanner_command_pending cmd="..cmd)
+                elseif cmd=="autowalk" then walk_toggle()
+                elseif cmd=="help" or cmd=="face" then log("scanner_command_pending cmd="..cmd)
                 else scanner.command(cmd) end
             end
         end)

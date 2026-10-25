@@ -56,6 +56,11 @@ function M.command(cmd)
     end
     return true
 end
--- The selected entry (for autowalk and facing, built on top of this).
-function M.selected()return list:current() end
+-- The selected entry (for autowalk and facing), refreshed from the game.
+function M.selected()
+    local c=controller();if not c then return nil end
+    refresh(c)
+    return list:current()
+end
+M.controller=controller
 return M
