@@ -91,11 +91,84 @@ local function find_title()
     end
     return nil
 end
+-- Shared two-button confirmation popup (MainMenu_2Option_PopUp_Widget, e.g.
+-- "Quit the game?"). Its buttons don't report a highlight to the game's menu
+-- parent, so only the question and its two choices are read.
+local POPUPS={"MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}
+local function find_popup()
+    for _,c in ipairs(POPUPS) do
+        for _,p in ipairs(FindAllOf(c) or {}) do
+            if valid(p) and call_bool(p,"IsInViewport") and call_bool(p,"IsVisible") then return p end
+        end
+    end
+    return nil
+end
+local function popup_snapshot(p)
+    local message=field_text(p,"TextBlock_Message")
+    if not message then return nil end
+    local choices={}
+    for _,k in ipairs({"TextBlock_Confirm","TextBlock_Cancel"}) do
+        local s=field_text(p,k);if s then choices[#choices+1]=s end
+    end
+    local id="popup@"..string.format("%X",p:GetAddress())
+    return {screen=id,index=0,label=message,value=#choices>0 and table.concat(choices,", ") or nil},
+        "screen=popup"
+end
+-- Video Settings' built-in Apply confirmation ("Keep these changes?"): a
+-- Confirmation panel inside the screen, visible only while it is asked.
+local function embedded_confirmation(screen)
+    local ok,panel=pcall(function()return screen.Confirmation end)
+    if not (ok and valid(panel) and call_bool(panel,"IsVisible")) then return nil end
+    return popup_snapshot(screen)
+end
+-- Save slots (BP_LiS_Main_Menu_SaveMenu_C): the highlighted slot is ActiveSlot
+-- (0-based); each slot shows either its name, episode, chapter and date, or
+-- "New game" for an empty slot. Hidden texts are skipped.
+function M.save_slot_text(slot)
+    local parts={}
+    local name=field_text(slot,"Text_Button_Slot")
+    local function shown(k)
+        local ok,w=pcall(function()return slot[k] end)
+        if not (ok and valid(w) and call_bool(w,"IsVisible")) then return nil end
+        return field_text(slot,k)
+    end
+    local new_game=shown("TextBlock_NewGame")
+    if new_game then
+        local visible_name=shown("Text_Button_Slot")
+        return (visible_name and (visible_name..", ") or "")..new_game
+    end
+    for _,k in ipairs({"Text_Button_Slot","TextBlock_Episode","TextBlock_Level","TextBlock_Date"}) do
+        local s=shown(k);if s then parts[#parts+1]=s end
+    end
+    if #parts==0 and name then parts[1]=name end
+    return #parts>0 and table.concat(parts,", ") or nil
+end
+local function save_menu_snapshot(screen)
+    local ok,i=pcall(function()return screen.ActiveSlot end)
+    if not (ok and type(i)=="number") then return nil end
+    local sok,slot=pcall(function()return screen["BP_LiS_Main_Menu_SaveSlot_"..(i+1)] end)
+    if not (sok and valid(slot)) then return nil end
+    local id="saves@"..string.format("%X",screen:GetAddress())
+    return {screen=id,index=i,label=M.save_slot_text(slot)},"screen=saves slot="..(i+1)
+end
 -- Returns a tracker snapshot plus a short diagnostic, or nil when no menu.
 function M.snapshot()
     local title=find_title()
     if not title then return nil end
+    local popup=find_popup()
+    if popup then
+        local s,d=popup_snapshot(popup)
+        if s then return s,d end
+    end
     local ok,screen=pcall(function()return title.LastCreatedWidget end)
+    if ok and valid(screen) and call_bool(screen,"IsVisible") then
+        local c=embedded_confirmation(screen)
+        if c then return c,"screen=confirmation" end
+        if screen:GetClass():GetFName():ToString()=="BP_LiS_Main_Menu_SaveMenu_C" then
+            local s,d=save_menu_snapshot(screen)
+            if s then return s,d end
+        end
+    end
     if ok and valid(screen) and call_bool(screen,"IsVisible") then
         local iok,index=pcall(function()return screen.CurrentInteractableIndex end)
         if iok and type(index)=="number" then

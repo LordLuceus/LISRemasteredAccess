@@ -179,5 +179,51 @@ do
     check("selector falls back to option list",s and s.label=="Subtitles" and s.value=="On",s and (tostring(s.label)..","..tostring(s.value)))
     _G.FindAllOf=nil;_G.EObjectFlags=nil
 end
+-- Popups and save slots, built from values captured in the game.
+do
+    package.loaded["menus.main_menu"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local mm=require("menus.main_menu")
+    local function obj(f)local o=f or {};o.IsValid=function()return true end;o.HasAnyFlags=function()return false end;o.GetAddress=o.GetAddress or function()return 7 end;return o end
+    local function textw(s,hidden)return obj({GetText=function()return {ToString=function()return s end}end,IsVisible=function()return not hidden end})end
+    local function cls(n)return function()return {GetFName=function()return {ToString=function()return n end}end}end end
+    -- Save slots exactly as captured: a used slot and an empty one.
+    local used=obj({Text_Button_Slot=textw("Game 1"),TextBlock_Episode=textw("Episode 1: Chrysalis"),TextBlock_Level=textw("Nightmare"),
+        TextBlock_Date=textw("Date: 10/24/2026 18:56:48"),TextBlock_NewGame=textw("$GT_Mobile_UI_Menu_SlotStartNewGame",true)})
+    local empty=obj({Text_Button_Slot=textw("Game 2",true),TextBlock_Episode=textw(""),TextBlock_Level=textw(""),TextBlock_Date=textw(""),TextBlock_NewGame=textw("New game")})
+    check("used slot",mm.save_slot_text(used)=="Game 1, Episode 1: Chrysalis, Nightmare, Date: 10/24/2026 18:56:48",mm.save_slot_text(used))
+    check("empty slot",mm.save_slot_text(empty)=="New game",mm.save_slot_text(empty))
+    -- Save menu screen follows ActiveSlot.
+    local saves=obj({IsVisible=function()return true end,GetClass=cls("BP_LiS_Main_Menu_SaveMenu_C"),ActiveSlot=0,
+        BP_LiS_Main_Menu_SaveSlot_1=used,BP_LiS_Main_Menu_SaveSlot_2=empty,CurrentInteractableIndex=0})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=saves})
+    local popups={}
+    _G.FindAllOf=function(n)if n=="BP_LiS_Main_Menu_Widget_C" then return {title} end;return popups[n] or {} end
+    local s=mm.snapshot()
+    check("save menu slot 1",s and s.label:find("^Game 1, Episode 1") and s.index==0,s and tostring(s.label))
+    saves.ActiveSlot=1;s=mm.snapshot()
+    check("save menu slot 2",s and s.label=="New game" and s.index==1,s and tostring(s.label))
+    -- Exit popup takes priority over the screen underneath.
+    popups["MainMenu_2Option_PopUp_Widget_C"]={obj({IsInViewport=function()return true end,IsVisible=function()return true end,
+        TextBlock_Message=textw("Quit the game?"),TextBlock_Confirm=textw("Confirm"),TextBlock_Cancel=textw("Cancel")})}
+    s=mm.snapshot()
+    check("exit popup",s and s.label=="Quit the game?" and s.value=="Confirm, Cancel",s and (tostring(s.label).."/"..tostring(s.value)))
+    package.loaded["menus.tracker"]=nil
+    local tr=require("menus.tracker").new()
+    check("popup spoken with choices",tr:update(s)=="Quit the game?, Confirm, Cancel")
+    popups["MainMenu_2Option_PopUp_Widget_C"]=nil
+    -- Video Apply confirmation: hidden panel is ignored, visible one is read.
+    local panel=obj({IsVisible=function()return false end})
+    local video=obj({IsVisible=function()return true end,GetClass=cls("Settings_Video_Widget_C"),Confirmation=panel,
+        TextBlock_Message=textw("Keep these settings?"),TextBlock_Confirm=textw("Confirm"),TextBlock_Cancel=textw("Cancel"),
+        CurrentInteractableIndex=9,CurrentInteractable=obj({Button_Text=textw("Apply Settings")})})
+    title.LastCreatedWidget=video
+    s=mm.snapshot()
+    check("hidden confirmation ignored",s and s.label=="Apply Settings",s and tostring(s.label))
+    panel.IsVisible=function()return true end
+    s=mm.snapshot()
+    check("apply confirmation read",s and s.label=="Keep these settings?" and s.value=="Confirm, Cancel",s and tostring(s.label))
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
