@@ -36,3 +36,7 @@ __pycache__/
 
 # Runtime output
 *.log
+
+# Provider audio (ElevenLabs): not MIT-licensed; bundled only in releases.
+assets/audio/*.pcm
+assets/audio/*.wav

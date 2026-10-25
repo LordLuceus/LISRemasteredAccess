@@ -535,46 +535,6 @@ do
     check("inactive ignores",cmds(p:update(8,false,5))=="")
     check("no controller",cmds(p:update(-1,true,6))=="")
 end
--- Cutscene check reads single values only (never walks the cutscene's lists).
-do
-    package.loaded["nav.follow"]=nil
-    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
-    local f=require("nav.follow")
-    local walked=false
-    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
-    local function arr(n)return {GetArrayNum=function()return n end,ForEach=function()walked=true end} end
-    local pawn=o({GetAddress=function()return 7 end})
-    local view=pawn
-    pawn.Controller=o({GetViewTarget=function()return view end})
-    pawn.ControllingMatineeActors=arr(0)
-    check("free when camera on Max and no cutscene",f.cinematic_control(pawn)==false)
-    pawn.ControllingMatineeActors=arr(1)
-    check("cutscene count holds",f.cinematic_control(pawn)==true)
-    pawn.ControllingMatineeActors=arr(0);view=o({GetAddress=function()return 99 end})
-    check("camera elsewhere holds",f.cinematic_control(pawn)==true)
-    check("cutscene lists never walked",walked==false)
-    _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
-end
--- Cutscene check reads single values only (never walks the cutscene's lists).
-do
-    package.loaded["nav.follow"]=nil
-    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
-    local f=require("nav.follow")
-    local walked=false
-    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
-    local function arr(n)return {GetArrayNum=function()return n end,ForEach=function()walked=true end} end
-    local pawn=o({GetAddress=function()return 7 end})
-    local view=pawn
-    pawn.Controller=o({GetViewTarget=function()return view end})
-    pawn.ControllingMatineeActors=arr(0)
-    check("free when camera on Max and no cutscene",f.cinematic_control(pawn)==false)
-    pawn.ControllingMatineeActors=arr(1)
-    check("cutscene count holds",f.cinematic_control(pawn)==true)
-    pawn.ControllingMatineeActors=arr(0);view=o({GetAddress=function()return 99 end})
-    check("camera elsewhere holds",f.cinematic_control(pawn)==true)
-    check("cutscene lists never walked",walked==false)
-    _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
-end
 -- Autowalk decisions: legs, arrival, cancellation, hand-over, blockage.
 do
     package.loaded["autowalk.plan"]=nil
@@ -691,6 +651,19 @@ do
     check("cutscene near an intermediate point is not arrival",y:leg_result("cinematic_movement_track",10).say=="walk_interrupted")
     check("stall near goal is still blocked",single("stalled",20).say=="walk_blocked")
 end
+-- Control tracking: settle time, silent first state, unknown ignored.
+do
+    package.loaded["core.control"]=nil
+    local C=require("core.control");local c=C.new()
+    check("first state silent",c:update("none",0)==nil and c:update("none",0.5)==nil and not c:has_control())
+    check("control needs to settle",c:update("control",1)==nil and c:update("control",1.2)==nil)
+    check("control back after settle",c:update("control",1.5)=="back" and c:has_control())
+    check("flicker ignored",c:update("none",2)==nil and c:update("control",2.1)==nil and c:has_control())
+    check("unknown ignored",c:update("unknown",3)==nil and c:has_control())
+    c:update("none",4)
+    check("lost after settle",c:update("none",4.5)=="lost" and not c:has_control())
+    check("no repeat",c:update("none",5)==nil)
+end
 -- Pass-through goal: aim beyond the centre along Max's approach line.
 do
     package.loaded["autowalk.autowalk"]=nil
@@ -699,6 +672,37 @@ do
     local p=aw.beyond({X=0,Y=0,Z=0},{X=1000,Y=0,Z=50},200)
     check("aims 2 m past the trigger",math.abs(p.X-1200)<0.01 and p.Y==0 and p.Z==50)
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
+-- Loading a level: brief control then a cutscene stays quiet; later changes cue.
+do
+    package.loaded["core.control"]=nil
+    local C=require("core.control");local c=C.new()
+    c:reset(0)
+    c:update("control",0.5);local a=c:update("control",1)
+    c:update("none",2.3);local b=c:update("none",2.8)
+    check("load flicker quiet",a==nil and b==nil)
+    c:update("control",10);check("back after cutscene",c:update("control",10.5)=="back")
+    c:update("none",20);check("lost later",c:update("none",20.5)=="lost")
+end
+-- Cutscene check reads single values only (never walks the cutscene's lists).
+do
+    package.loaded["nav.follow"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local f=require("nav.follow")
+    local walked=false
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local function arr(n)return {GetArrayNum=function()return n end,ForEach=function()walked=true end} end
+    local pawn=o({GetAddress=function()return 7 end})
+    local view=pawn
+    pawn.Controller=o({GetViewTarget=function()return view end})
+    pawn.ControllingMatineeActors=arr(0)
+    check("free when camera on Max and no cutscene",f.cinematic_control(pawn)==false)
+    pawn.ControllingMatineeActors=arr(1)
+    check("cutscene count holds",f.cinematic_control(pawn)==true)
+    pawn.ControllingMatineeActors=arr(0);view=o({GetAddress=function()return 99 end})
+    check("camera elsewhere holds",f.cinematic_control(pawn)==true)
+    check("cutscene lists never walked",walked==false)
+    _G.EObjectFlags=nil;package.loaded["nav.follow"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

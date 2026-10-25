@@ -1,0 +1,28 @@
+{
+  "provider": "ElevenLabs",
+  "cli": "elevenlabs text-to-sound-effects convert",
+  "request": {
+    "duration_seconds": 0.6,
+    "prompt_influence": 0.7,
+    "model_id": "eleven_text_to_sound_v2"
+  },
+  "output_format": "pcm_24000",
+  "personal_data_sent": false,
+  "source_format": "PCM16 LE, 24000 Hz, 2 channels interleaved. Evidence: the byte count equals exactly the requested duration as stereo, and the two channels correlate at 0.999+ (duplicated mono).",
+  "processing": "Channels averaged to mono; trimmed below -45 dB of peak with 2 ms preroll and 12 ms tail; capped; 2 ms fade in, 8 ms fade out; peak normalised to -12 dBFS.",
+  "licence": "Provider output. Not covered by the repository MIT licence; git-ignored and bundled only in releases.",
+  "cues": {
+    "control_lost": {
+      "prompt": "One soft low descending two-note tone signalling that control is taken away. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.5,
+      "rms_dbfs": -21.95
+    },
+    "control_back": {
+      "prompt": "One soft bright ascending two-note tone signalling that control is returned. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.5,
+      "rms_dbfs": -24.93
+    }
+  }
+}

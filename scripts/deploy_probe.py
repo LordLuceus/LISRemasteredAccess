@@ -35,6 +35,9 @@ try:
     if not native.exists():
         raise RuntimeError('Build the speech module first (see README)')
     sources.append((native, SCRIPTS / 'lisr_speech.dll'))
+    # Cue sounds (provider audio, git-ignored): installed when present locally.
+    for wav in sorted((root / 'assets' / 'audio').glob('*.wav')):
+        sources.append((wav, SCRIPTS / 'audio' / wav.name))
     wanted = {str(rel) for _, rel in sources}
     prefix = str(SCRIPTS) + os.sep
     # Check everything before changing anything.

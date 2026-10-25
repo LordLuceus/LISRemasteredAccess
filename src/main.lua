@@ -45,7 +45,10 @@ end
 local reread=nil
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
-local function playable()return not in_menu() end
+-- Scanner and autowalk work only while the player controls Max (see core/control.lua).
+local control=require("core.control").new()
+local control_world=nil
+local function playable()return not in_menu() and control:has_control() end
 local function on_game(fn)
     return function()ExecuteInGameThread(function()
         local ok,err=pcall(fn)
@@ -137,6 +140,23 @@ local walk_errors=0
 LoopAsync(250,function()
     ExecuteInGameThread(function()
         local ok,err=pcall(function()
+            local state="unknown"
+            local c=scanner.controller()
+            -- Gameplay worlds only: the menu world has a stand-in Max. A world
+            -- change restarts tracking quietly (see core/control.lua).
+            local world=nil
+            if c then pcall(function()world=c:GetWorld():GetFName():ToString()end) end
+            if world~=control_world then control_world=world;control:reset(os.clock()) end
+            if c and world and world~="WhatIf_Menu" and not in_menu() then
+                local ready,reason=require("nav.follow").ready(c,c.Pawn)
+                if ready then state="control"
+                elseif reason=="cinematic_movement_track" or reason=="input_ignored" then state="none" end
+            end
+            local event=control:update(state,os.clock())
+            if event then
+                log("control "..event)
+                if speech.play then speech.play(speech.audio_dir..(event=="lost" and "control_lost.wav" or "control_back.wav")) end
+            end
             autowalk.tick()
         end)
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
