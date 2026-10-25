@@ -8,8 +8,8 @@ function Mark([string]$Text){Add-Content -LiteralPath (Join-Path (Split-Path $Lo
 # The startup splash runs in the same menu world for ~45 s; wait for the title
 # screen widget itself, not the world, before sending anything.
 $deadline=(Get-Date).AddSeconds(90)
-while((Get-Date)-lt $deadline -and -not (Select-String -LiteralPath $LogPath -SimpleMatch 'menu_state HighlightThisOption=' -Quiet)){$Game.Refresh();if($Game.HasExited){throw 'Game exited'};Start-Sleep -Milliseconds 250}
-if(-not (Select-String -LiteralPath $LogPath -SimpleMatch 'menu_state HighlightThisOption=' -Quiet)){throw 'Title screen never appeared; no keys sent'}
+while((Get-Date)-lt $deadline -and -not (Select-String -LiteralPath $LogPath -Pattern 'menu_state HighlightThisOption=|menu_readout screen=title' -Quiet)){$Game.Refresh();if($Game.HasExited){throw 'Game exited'};Start-Sleep -Milliseconds 250}
+if(-not (Select-String -LiteralPath $LogPath -Pattern 'menu_state HighlightThisOption=|menu_readout screen=title' -Quiet)){throw 'Title screen never appeared; no keys sent'}
 Start-Sleep -Seconds 3 # let the title settle
 # Menus navigate with W/S (the game's DPadUp/DPadDown actions), not arrows.
 $sequence=@(@{k=0x53;n='S (any key: leave Click To Start)'},@{k=0x53;n='S'},@{k=0x53;n='S'},@{k=0x53;n='S'},@{k=0x57;n='W'},@{k=0x57;n='W'})

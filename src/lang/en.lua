@@ -16,4 +16,5 @@ return {
     returning="Returning to the main menu.",
     menu="Main menu. Alt F4 exits the game.",
     failed="The navigation test could not start. Check the mod log.",
+    menu_unlabelled="Unlabelled option",
 }

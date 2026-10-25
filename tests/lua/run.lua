@@ -85,5 +85,56 @@ do
     c.commands.test_cmd=nil;c.set_gamepad(false)
 end
 
+-- Menu tracker: speaks on screen/option/label change only, never repeats.
+do
+    package.loaded["menus.tracker"]=nil
+    local t=require("menus.tracker").new()
+    check("no menu says nothing",t:update(nil)==nil)
+    check("title spoken",t:update({screen="title",index=0,label="Click To Start"})=="Click To Start")
+    check("same snapshot silent",t:update({screen="title",index=0,label="Click To Start"})==nil)
+    check("new screen spoken",t:update({screen="main",index=0,label="Episodes"})=="Episodes")
+    check("next option spoken",t:update({screen="main",index=1,label="Settings"})=="Settings")
+    check("repeat silent",t:update({screen="main",index=1,label="Settings"})==nil)
+    check("label change spoken",t:update({screen="main",index=1,label="Settings (new)"})=="Settings (new)")
+    local text,fallback=t:update({screen="main",index=2,label=nil})
+    check("unlabelled reported",text==nil and fallback==true)
+    check("menu gone resets",t:update(nil)==nil)
+    check("same option after reopen spoken",t:update({screen="main",index=2,label="Extras"})=="Extras")
+    check("other screen same index spoken",t:update({screen="sub",index=2,label="Extras"})=="Extras")
+end
+-- Snapshot reader against fake game objects (no game needed).
+do
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local function obj(fields)
+        local o=fields or {}
+        o.IsValid=function()return true end
+        o.HasAnyFlags=function()return false end
+        return o
+    end
+    local function textw(s)return obj({GetText=function()return {ToString=function()return s end}end})end
+    local function option(label)return obj({Button_Text=textw(label)})end
+    local opts={option("Episodes"),option("Settings"),option("Extras")}
+    local screen=obj({IsVisible=function()return true end,CurrentInteractableIndex=1,CurrentInteractable=opts[2],
+        InteractablesArray=opts,GetClass=function()return {GetFName=function()return {ToString=function()return "BP_LiS_MainMenu_Start_Widget_C" end}end}end,
+        GetAddress=function()return 0x1234 end})
+    local title=obj({IsInViewport=function()return true end,LastCreatedWidget=screen,CanAdvance=true,
+        TapToStart=obj({IsVisible=function()return true end,GetText=function()return {ToString=function()return "Click To Start" end}end})})
+    _G.FindAllOf=function(name)return name=="BP_LiS_Main_Menu_Widget_C" and {title} or {} end
+    package.loaded["menus.main_menu"]=nil
+    local mm=require("menus.main_menu")
+    local s=mm.snapshot()
+    check("reads highlighted option",s and s.label=="Settings" and s.index==1,s and tostring(s.label))
+    screen.CurrentInteractable=nil;screen.CurrentInteractableIndex=2
+    s=mm.snapshot()
+    check("falls back to option list",s and s.label=="Extras",s and tostring(s.label))
+    screen.IsVisible=function()return false end
+    s=mm.snapshot()
+    check("title prompt when no screen",s and s.screen=="title" and s.label=="Click To Start")
+    title.CanAdvance=false
+    check("nothing before title accepts input",mm.snapshot()==nil)
+    title.IsInViewport=function()return false end
+    check("nothing when title gone",mm.snapshot()==nil)
+    _G.FindAllOf=nil;_G.EObjectFlags=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

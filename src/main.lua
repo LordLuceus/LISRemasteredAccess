@@ -352,3 +352,26 @@ if request.inspect_menus==true then
         return false
     end)
 end
+-- Menu narration: speaks the title prompt and the highlighted main menu option
+-- whenever it changes. Read-only; four reads a second on the game thread.
+if request.menus==true then
+    local menu=require("menus.main_menu")
+    local tracker=require("menus.tracker").new()
+    local errors=0
+    LoopAsync(250,function()
+        ExecuteInGameThread(function()
+            local ok,err=pcall(function()
+                local snap,detail=menu.snapshot()
+                local text,fallback=tracker:update(snap)
+                if fallback then text=l10n.text("menu_unlabelled") end
+                if text then
+                    last_speech=text
+                    speech.say(text,true)
+                    print(prefix.."menu_readout "..tostring(detail).." label="..tostring(snap and snap.label).."\n")
+                end
+            end)
+            if not ok and errors<5 then errors=errors+1;print(prefix.."menu_error="..tostring(err).."\n") end
+        end,EGameThreadMethod.EngineTick)
+        return false
+    end)
+end
