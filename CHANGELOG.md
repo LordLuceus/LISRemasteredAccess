@@ -9,7 +9,10 @@ Player-facing changes, newest first.
   nothing there.
 - The Episodes screen reads the episode and the highlighted option, for example
   "Episode 2: Out of Time, Continue", and announces the new episode as you switch.
-  It no longer wrongly says "Click To Start" when opened.
+  It no longer wrongly says "Click To Start" when opened. Locked episodes say why,
+  for example "Finish Previous Episode to Play".
+- The chapter list (through Collectible Mode) reads the selected chapter and the
+  number of photos collected there.
 - The mod is now active on every normal Steam launch. Before, it only ran in
   development test sessions, so a normal launch gave the unmodded game.
 - The title screen says "Click To Start" once the game accepts a key, and the
