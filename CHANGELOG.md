@@ -5,6 +5,9 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Exits are on the scanner, for example "Go To The Main Campus, exit" in the
+  corridor after the principal. Walk there with Shift+Home and use the game's
+  interact key to leave.
 - The scanner no longer lists things the story hasn't made available yet: the
   bathroom butterfly, cart and hammer, the students before they arrive, and the
   classroom desk items before you look at the photo. They appear when the game

@@ -33,7 +33,9 @@ writes to your saves.
 The scanner lists the objects you can interact with, plus a scene's goal where
 the game has nothing to interact with (the opening nightmare's lighthouse),
 nearest first. It follows the story: objects appear when the game makes them
-available, not before.
+available, not before. Exits are listed too, named after the game's own prompt
+("Go To The Main Campus, exit"): walk to one with Shift+Home, then use the game's
+interact key (A on a controller) to leave.
 
 | Keyboard | Controller | Action |
 | --- | --- | --- |
