@@ -5,6 +5,9 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Fixed: the game could crash during conversations, a few seconds after the
+  answers on screen changed. If the answers ever stop being read, the next set
+  is read as usual.
 - Fixed: starting autowalk on the Main Campus crashed the game.
 - Exits are on the scanner, for example "Go To The Main Campus, exit" in the
   corridor after the principal. Walk there with Shift+Home and use the game's
