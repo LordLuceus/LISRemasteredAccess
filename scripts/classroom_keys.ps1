@@ -25,4 +25,14 @@ Press 0x31 '1 (Look at photo)' 8
 Press 0x1B 'Escape (close the photo)' 4
 Press 0x21 'Page Up' 2;Press 0x21 'Page Up' 2;Press 0x21 'Page Up' 2;Press 0x46 'F (Camera)' 5
 Press 0x22 'Page Down' 2;Press 0x46 'F (Journal)' 5
+# Optional: take the selfie (camera, action 2), which starts Jefferson's question,
+# then wait for the answers and choose the first announced one.
+if($env:LISR_CHOICE){
+    Press 0x21 'Page Up' 2;Press 0x46 'F (Camera)' 5
+    Press 0x32 '2 (Take Selfie)' 3
+    $end=(Get-Date).AddSeconds(90)
+    while(-not (Select-String -LiteralPath $LogPath -SimpleMatch '[LISAccess] choice_announce' -Quiet)){$Game.Refresh();if($Game.HasExited){throw 'Game exited'};if((Get-Date)-gt $end){Mark 'no choice announced';break};Start-Sleep -Milliseconds 500}
+    Start-Sleep -Seconds 3
+    if(Select-String -LiteralPath $LogPath -SimpleMatch '[LISAccess] choice_announce' -Quiet){Press 0x31 '1 (first answer)' 10}
+}
 'Classroom face test finished.'
