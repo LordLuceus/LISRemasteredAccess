@@ -97,6 +97,10 @@ end
 -- the same label (Look01 and Look02) that the pop-up shows as one button, so
 -- the spoken list comes from the pop-up; each button is matched to the first
 -- enabled action with the same label for triggering. Pure part: M.from_popup.
+-- The pop-up's button functions per slot (from its code: slot 1 is Left,
+-- 2 Top, 3 Right, 4 Bottom, the same slots the face buttons X Y B A use).
+-- The function names include a space: "Bottom Action" (from the widget code).
+M.SLOT_FUNCTIONS={"Left Action","Top Action","Right Action","Bottom Action"}
 function M.from_popup(texts,visible,actions)
     local out,used={},{}
     for k=1,4 do
@@ -186,8 +190,29 @@ function M.trigger(controller,n)
     local actions=M.offered(f)
     local a=actions[n]
     if not a then M.say(M.text("focus_no_slot",{index=n}));return false end
-    local ok,result=pcall(function()return f:TriggerActionBP(a.index)end)
-    M.log("action_trigger object="..object_name(f).." slot="..n.." index="..a.index.." name="..tostring(a.name).." ok="..tostring(ok).." result="..tostring(result))
+    -- Press the pop-up's own button for that slot (Left, Top, Right, Bottom),
+    -- exactly what the controller's face buttons do. Objects can author several
+    -- enabled actions with the same label (the classroom door has three "Open"
+    -- actions); only the game knows which one its button runs, so the action
+    -- index is used only when the pop-up cannot be pressed.
+    local how,ok,result="none",false,nil
+    if a.slot then
+        local fn=M.SLOT_FUNCTIONS[a.slot]
+        ok,result=pcall(function()
+            local w=f:GetInteractionWidget()
+            if not (w and w:IsValid()) then error("no pop-up") end
+            w[fn](w)
+        end)
+        how="popup_"..fn
+    end
+    local popup_error=nil
+    if not ok then
+        if a.slot then popup_error=tostring(result) end
+        ok,result=pcall(function()return f:TriggerActionBP(a.index)end)
+        how="trigger_index"
+    end
+    if popup_error then M.log("action_popup_failed error="..popup_error) end
+    M.log("action_trigger object="..object_name(f).." slot="..n.." popup_slot="..tostring(a.slot).." index="..tostring(a.index).." name="..tostring(a.name).." via="..how.." ok="..tostring(ok).." result="..tostring(result))
     if not ok then M.say(M.text("focus_failed"));return false end
     return true
 end

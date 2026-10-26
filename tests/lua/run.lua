@@ -969,5 +969,28 @@ do
     check("missing answer refused",not C.choose(3) and said[#said]=="No answer 3.")
     _G.FindAllOf=nil;package.loaded["dialogue.choices"]=nil
 end
+-- Actions press the pop-up's own button for the slot (the door has three
+-- enabled "Open" actions; only the game knows which its button runs).
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local pressed,triggered=nil,nil
+    local function act(name,on)return {ActionName={ToString=function()return name end},bEnabled=on,OverrideDisplayName={ToString=function()return "$GT_Sensen_Action_Open" end}} end
+    local list={act("Look01",false),act("Interact01",false),act("Interact02",true),act("Interact03",true),act("Interact04",true)}
+    local popup=o({TextValues={ForEach=function(_,cb)for i,s in ipairs({" "," "," ","$GT_Sensen_Action_Open","Door"}) do cb(i,{get=function()return {ToString=function()return s end}end}) end end},
+        button1_visible=false,button2_visible=false,button3_visible=false,button4_visible=true,["Bottom Action"]=function()pressed="Bottom" end})
+    local door=o({GetAddress=function()return 5 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "Door" end},
+        Actions={ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end},
+        GetInteractionWidget=function()return popup end,TriggerActionBP=function(_,i)triggered=i end})
+    local c=o({GetAddress=function()return 1 end})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=door})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    A.say=function()end;A.text=function(k)return k end;A.translate=function(k)return k end
+    check("door: key 1 presses the pop-up's Bottom button",A.trigger(c,1) and pressed=="Bottom" and triggered==nil)
+    popup["Bottom Action"]=nil -- pop-up can't be pressed: fall back to the action index
+    check("fallback to the action index",A.trigger(c,1) and triggered==2)
+    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
