@@ -32,7 +32,8 @@ writes to your saves.
 
 The scanner lists the objects you can interact with, plus a scene's goal where
 the game has nothing to interact with (the opening nightmare's lighthouse),
-nearest first.
+nearest first. It follows the story: objects appear when the game makes them
+available, not before.
 
 | Keyboard | Controller | Action |
 | --- | --- | --- |

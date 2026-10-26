@@ -5,6 +5,14 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- The scanner no longer lists things the story hasn't made available yet: the
+  bathroom butterfly, cart and hammer, the students before they arrive, and the
+  classroom desk items before you look at the photo. They appear when the game
+  makes them available.
+- Number keys now work on every object the face buttons do; the classroom door
+  opens with 1.
+- Fixed: a comma could be read after a sentence in dialogue choices ("I feel
+  sick., B").
 - Dialogue choices are read when they appear, with the key for each answer:
   numbers on the keyboard, the face buttons on a controller. Press the number to
   answer. Major choices are announced as such.
