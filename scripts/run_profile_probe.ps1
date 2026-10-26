@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare','classroom')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[switch]$ScannerKeys,[switch]$AutowalkKeys,[switch]$FaceKeys,[switch]$ActionKeys,[switch]$IdleActions,[switch]$ClassroomFace,[switch]$TutorialKeys,[switch]$GateTrace,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
+param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare','classroom','campus')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[switch]$ScannerKeys,[switch]$AutowalkKeys,[switch]$FaceKeys,[switch]$ActionKeys,[switch]$IdleActions,[switch]$ClassroomFace,[switch]$TutorialKeys,[switch]$GateTrace,[switch]$ReaderTrace,[switch]$CampusWalk,[switch]$PolledKeys,[switch]$JournalCrash,[switch]$JournalCrashProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
 $ErrorActionPreference='Stop'
 if($SessionName -notmatch '^profile-probe-[a-z0-9-]+$'){throw 'Invalid session name'}
 if(Get-Process 'LiS-Win64-Shipping' -ErrorAction SilentlyContinue){throw 'Close the remaster before a profile probe'}
@@ -61,6 +61,10 @@ function ConvertTo-LuaPoints([string]$Text){
 }
 if($ActionPatterns){$list=(($ActionPatterns -split ',') | Where-Object {$_} | ForEach-Object {"'$_'"}) -join ',';$requestText=(Add-RequestField $requestText)+", action_patterns={$list}}"}
 if($AutoGoal){if(-not $Follow){throw 'AutoGoal requires -Follow'};$g=(ConvertTo-LuaPoints $AutoGoal);$requestText=(Add-RequestField $requestText)+", auto_goal=$($g.Substring(1,$g.Length-2))}"}
+if($PolledKeys){$requestText=(Add-RequestField $requestText)+", live=true}"}
+if($JournalCrash){$requestText=(Add-RequestField $requestText)+", live=true"+$(if($JournalCrashProbe){', trace_reader=true'}else{''})+"}"}
+if($CampusWalk){$requestText=(Add-RequestField $requestText)+", live=true}"}
+if($ReaderTrace){$requestText=(Add-RequestField $requestText)+", live=true, trace_reader=true}"}
 if($GateTrace){$requestText=(Add-RequestField $requestText)+", live=true, trace_focus=true}"}
 if($TutorialKeys){if($Scene -ne 'classroom'){throw 'TutorialKeys needs -Scene classroom'};$requestText=(Add-RequestField $requestText)+", live=true, trace_focus=true}"}
 if($ClassroomFace){if($Scene -ne 'classroom'){throw 'ClassroomFace needs -Scene classroom'};$requestText=(Add-RequestField $requestText)+", live=true, trace_focus=true}"}
@@ -99,6 +103,19 @@ $command=(Get-CimInstance Win32_Process -Filter "ProcessId=$($game.Id)").Command
 $profileArgumentPresent=$command -like '*UserDir*'
 if($command.Replace('\','/').IndexOf($profile.Replace('\','/'),[StringComparison]::OrdinalIgnoreCase) -lt 0){throw 'Game does not carry this operator profile; will not control it'}
 $keyVerification='not_requested'
+if($PolledKeys){
+    try{& (Join-Path $PSScriptRoot 'polled_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
+if($JournalCrash){
+    try{& (Join-Path $PSScriptRoot 'journal_crash_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
+if($CampusWalk){
+    try{& (Join-Path $PSScriptRoot 'campus_walk_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
+if($ReaderTrace -and -not $KeepOpen){
+    $readerScript=if($env:LISR_JOURNAL){'journal_keys.ps1'}elseif($Scene -eq 'garage'){'reader_house_keys.ps1'}else{'reader_keys.ps1'}
+    try{& (Join-Path $PSScriptRoot $readerScript) -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
 if($GateTrace){
     try{& (Join-Path $PSScriptRoot 'gate_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
 }

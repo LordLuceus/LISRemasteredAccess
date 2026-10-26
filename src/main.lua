@@ -98,6 +98,7 @@ bind_key(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
 -- also work in menus and while the game has control).
 local face=require("scanner.face")
 local face_probe_tick=nil
+local face_probe_tick_reader=nil
 local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
@@ -278,6 +279,10 @@ do local ok,req=pcall(require,"LISNavRequest")
         tutorial.trace=true
         require("scanner.sources").trace_gates=true
     end
+    if ok and type(req)=="table" and req.expected_saved_directory and req.trace_reader then
+        local rp=require("dev.reader_probe");local n=0
+        face_probe_tick_reader=function()n=n+1;if n%2==0 then pcall(rp.tick,log) end end
+    end
 end
 face.text=function(key,p)return l10n.text(key,p)end
 help.text=function(key,p)return l10n.text(key,p)end
@@ -342,6 +347,7 @@ local function main_step()
             face.tick()
             if c and control:has_control() and not in_menu() then actions.tick(c) end
             if face_probe_tick then face_probe_tick() end
+            if face_probe_tick_reader then face_probe_tick_reader() end
         end)
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
 end

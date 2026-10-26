@@ -38,6 +38,15 @@ public static class LISKeyTest {
   }finally{SendInput(1,new INPUT[]{sh[1]},Marshal.SizeOf(typeof(INPUT)));}
   return true;
  }
+ // Holds one key down for holdMs (tests key repeat), then releases it.
+ public static bool Hold(uint expectedPid,ushort key,int holdMs) {
+  uint pid;GetWindowThreadProcessId(GetForegroundWindow(),out pid);if(pid!=expectedPid)return false;
+  INPUT[] k=new INPUT[2];k[0].type=k[1].type=1;k[0].value.key.vk=k[1].value.key.vk=key;k[1].value.key.flags=2;
+  if(key>=0x21&&key<=0x28||key==0x2D||key==0x2E){k[0].value.key.flags|=1;k[1].value.key.flags|=1;}
+  if(SendInput(1,new INPUT[]{k[0]},Marshal.SizeOf(typeof(INPUT)))!=1)return false;
+  try{System.Threading.Thread.Sleep(holdMs);}finally{SendInput(1,new INPUT[]{k[1]},Marshal.SizeOf(typeof(INPUT)));}
+  return true;
+ }
  // Ctrl+key: holds Left Ctrl (an ordinary, non-extended key) around one press.
  public static bool PressWithControl(uint expectedPid,ushort key) {
   uint pid;GetWindowThreadProcessId(GetForegroundWindow(),out pid);if(pid!=expectedPid)return false;
