@@ -17,9 +17,12 @@ while(-not (Select-String -LiteralPath $LogPath -SimpleMatch "[LISNavSay] Classr
 $end=(Get-Date).AddSeconds(120)
 while(-not (Select-String -LiteralPath $LogPath -SimpleMatch "[LISAccess] control back" -Quiet)){$Game.Refresh();if($Game.HasExited){throw 'Game exited'};if((Get-Date)-gt $end){Mark 'control never came back; trying anyway';break};Start-Sleep -Milliseconds 500}
 Start-Sleep -Seconds 2
+# Idle first, so idle-triggered tutorial prompts can appear.
+if($env:LISR_IDLE_SECONDS){Mark "idle $env:LISR_IDLE_SECONDS s";Start-Sleep -Seconds ([int]$env:LISR_IDLE_SECONDS)}
 # Photo first (it gates the rest), then the camera and the journal.
 Press 0x22 'Page Down' 2;Press 0x22 'Page Down' 2;Press 0x22 'Page Down' 2;Press 0x22 'Page Down' 2;Press 0x46 'F (Photo)' 5
-Press 0x31 '1 (Look at photo)' 12
+Press 0x31 '1 (Look at photo)' 8
+Press 0x1B 'Escape (close the photo)' 4
 Press 0x21 'Page Up' 2;Press 0x21 'Page Up' 2;Press 0x21 'Page Up' 2;Press 0x46 'F (Camera)' 5
 Press 0x22 'Page Down' 2;Press 0x46 'F (Journal)' 5
 'Classroom face test finished.'
