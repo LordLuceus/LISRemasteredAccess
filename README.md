@@ -111,7 +111,16 @@ with Page Up or Page Down, press F to face it, then press the announced key for
 Look (or Take Selfie). On a controller they use the D-pad, the left-stick click
 and the announced button.
 
-Reading screens (letters, the journal) are not narrated yet.
+### Close-ups
+
+When you look at a letter, poster or notice board, the mod reads the game's
+text version of it straight away; you don't need the game's Read button. Things
+without a text version, such as photos, say "No text version." Pages are read
+as you turn them, with the page number at the end when there is more than one.
+Ctrl+Home (on a controller, hold the left-stick click and press D-pad right)
+repeats it.
+
+The journal is not narrated yet.
 
 The pause menu, its settings and its confirmations read the same way.
 

@@ -5,6 +5,11 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Letters, posters, notice boards and other close-ups are read when you look at
+  them, using the game's own text version. Things without one, such as photos,
+  say "No text version." Ctrl+Home repeats it.
+- The controller's repeat, help and sound preview (hold the left-stick click)
+  now also work while the game has control, for example in a close-up.
 - Holding Page Down or Page Up on the keyboard now repeats, as it already did
   on the D-pad.
 - Fixed: the game could crash during conversations, a few seconds after the
