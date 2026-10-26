@@ -5,6 +5,7 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Fixed: starting autowalk on the Main Campus crashed the game.
 - Exits are on the scanner, for example "Go To The Main Campus, exit" in the
   corridor after the principal. Walk there with Shift+Home and use the game's
   interact key to leave.
