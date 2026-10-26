@@ -22,9 +22,9 @@ CUES = {
     'control_lost': {
         'prompt': 'One soft low descending two-note tone signalling that control is taken away. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.',
         'cap_ms': 500},
-    'control_back': {
-        'prompt': 'One soft bright ascending two-note tone signalling that control is returned. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.',
-        'cap_ms': 500},
+    # Chosen by the user (Oct 2026): the loss cue played backwards, so the pair
+    # is audibly one sound and its reverse. Made locally, not by the provider.
+    'control_back': {'reverse_of': 'control_lost'},
 }
 
 
@@ -34,6 +34,8 @@ def generate():
         sys.exit('elevenlabs CLI not found')
     AUDIO.mkdir(parents=True, exist_ok=True)
     for name, cue in CUES.items():
+        if 'prompt' not in cue:
+            continue
         out = AUDIO / (name + '.pcm')
         body = json.dumps(dict(REQUEST, text=cue['prompt']))
         r = subprocess.run([exe, 'text-to-sound-effects', 'convert', '--json', body,
@@ -55,6 +57,17 @@ def process():
                          'bundled only in releases.',
               'cues': {}}
     for name, cue in CUES.items():
+        if 'reverse_of' in cue:
+            with wave.open(str(AUDIO / (cue['reverse_of'] + '.wav')), 'rb') as r:
+                params, frames = r.getparams(), r.readframes(r.getnframes())
+            width = params.sampwidth * params.nchannels
+            rev = b''.join(frames[i:i + width] for i in range(len(frames) - width, -1, -width))
+            with wave.open(str(AUDIO / (name + '.wav')), 'wb') as w:
+                w.setparams(params); w.writeframes(rev)
+            report['cues'][name] = {'reverse_of': cue['reverse_of'],
+                                    'duration_seconds': round(params.nframes / params.framerate, 3),
+                                    'rms_dbfs': report['cues'][cue['reverse_of']]['rms_dbfs']}
+            continue
         src = array.array('h')
         src.frombytes((AUDIO / (name + '.pcm')).read_bytes())
         if sys.byteorder != 'little':

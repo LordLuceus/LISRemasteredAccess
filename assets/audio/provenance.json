@@ -19,10 +19,9 @@
       "rms_dbfs": -21.95
     },
     "control_back": {
-      "prompt": "One soft bright ascending two-note tone signalling that control is returned. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
-      "source_bytes": 57600,
+      "reverse_of": "control_lost",
       "duration_seconds": 0.5,
-      "rms_dbfs": -24.93
+      "rms_dbfs": -21.95
     }
   }
 }
