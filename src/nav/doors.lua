@@ -20,7 +20,17 @@ function M.doorways(emit)
     for _,a in ipairs(actors) do
         if valid(a) then
             seen=seen+1
-            local ok,mesh=pcall(function()return a.StaticMeshComponent.StaticMesh:GetFName():ToString()end)
+            -- Check each link before following it: an actor with no mesh
+            -- component (or a component with no mesh) gives a null object, and
+            -- reading a field through it crashes the loader outright - pcall
+            -- cannot catch that. Seen on the Main Campus (1561 actors).
+            local ok,mesh=pcall(function()
+                local comp=a.StaticMeshComponent
+                if not (comp and comp:IsValid()) then return nil end
+                local sm=comp.StaticMesh
+                if not (sm and sm:IsValid()) then return nil end
+                return sm:GetFName():ToString()
+            end)
             if ok and type(mesh)=="string" then named=named+1 end
             if ok and type(mesh)=="string" and string.find(mesh,"ST_Walls_",1,true) and string.find(mesh,"Door",1,true) then
                 matched=matched+1
