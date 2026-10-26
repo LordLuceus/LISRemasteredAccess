@@ -16,6 +16,8 @@ M.goals={
     {level="E1_1A_CliffFuture_LD",actor="FaceTrigger_0",class="FaceTrigger",label_key="goal_lighthouse",through=200},
 }
 M.report=function(_)end
+M.trace_gates=false
+M.gate_seen={}
 local reported={}
 local function report_once(id,line)if not reported[id] then reported[id]=true;M.report(line) end end
 -- Object names: the game's own translator (LiSWidget:GetLocalizedString),
@@ -69,17 +71,67 @@ local function component_of(controller)
     end
     return found
 end
-local function any_enabled(actor)
-    local any=false
+local availability=require("scanner.availability")
+-- Enabled actions' conditions, copied out as plain values inside the walk.
+-- Conditions are authored map data and do not change while the level is
+-- loaded, so each object's are read once and kept (keyed by its full name,
+-- which includes its level). Reading them walks arrays nested inside each
+-- action - and another object's actions for actor conditions - the nested-walk
+-- pattern that crashed the loader when repeated often (the cutscene check), so
+-- it is not done on every scanner key press. Whether an action is enabled DOES
+-- change in play, so that is read fresh each time with the same flat walk the
+-- scanner has always used.
+local condition_cache={}
+local function all_conditions(actor)
+    local key=nil;pcall(function()key=actor:GetFullName()end)
+    if key and condition_cache[key] then return condition_cache[key] end
+    local by_index={}
+    local actions={}
     pcall(function()
-        actor.Actions:ForEach(function(_,v)
-            local ok,e=pcall(function()return v:get().bEnabled end)
-            if ok and e==true then any=true end
+        actor.Actions:ForEach(function(i,v)
+            local ok,a=pcall(function()return v:get()end)
+            if ok then actions[#actions+1]={i,a} end
         end)
     end)
-    return any
+    for _,p in ipairs(actions) do by_index[p[1]]=availability.read_conditions(p[2]) end
+    if key then condition_cache[key]=by_index end
+    return by_index
+end
+local function enabled_indices(actor)
+    local list={}
+    pcall(function()
+        actor.Actions:ForEach(function(i,v)
+            local ok,e=pcall(function()return v:get().bEnabled end)
+            if ok and e==true then list[#list+1]=i end
+        end)
+    end)
+    return list
+end
+local function enabled_conditions(actor)
+    local on=enabled_indices(actor)
+    if #on==0 then return {} end
+    local all=all_conditions(actor)
+    local list={}
+    for _,i in ipairs(on) do list[#list+1]=all[i] or {} end
+    return list
+end
+local function any_enabled(actor)return #enabled_conditions(actor)>0 end
+-- Available now: some enabled action's story conditions hold (the game's rule).
+local function available(actor,is_active)
+    local list=enabled_conditions(actor)
+    if #list==0 then return false end
+    if not is_active then return true end
+    for _,c in ipairs(list) do if availability.action_ok(c,is_active) then return true end end
+    -- Diagnostic (test sessions): which story facts kept the object out.
+    if M.trace_gates then pcall(function()
+        local facts={}
+        for _,c in ipairs(list) do for _,f in ipairs(c["and"]) do facts[#facts+1]=f.fact.."="..tostring(f.want).."/now="..tostring(is_active(f.fact)) end end
+        M.report("scanner_story_gated id="..actor:GetFName():ToString().." conditions="..table.concat(facts,","))
+    end) end
+    return false
 end
 local function interactions(controller,out)
+    local is_active=availability.fact_reader(controller)
     local component=component_of(controller)
     if not component then report_once("component","scanner_source error=no_interaction_component");return end
     -- Copy the actor references out first, then read them. Reading names
@@ -91,9 +143,35 @@ local function interactions(controller,out)
         if ok and valid(a) then actors[#actors+1]=a end
     end)
     for _,a in ipairs(actors) do
+        -- Diagnostic (test sessions): the visibility state of every registered
+        -- object, once per object, to find what marks story-gated ones.
+        if M.trace_gates then pcall(function()
+            local id=a:GetFName():ToString()
+            local v={}
+            for _,f in ipairs({"bHidden","bIsRegistered","bNeedToHide","bObjectInDisplay","bByPassVisiblityTest","bShowNameEvenIfNoActionAvailable","CurrentZoneStatus"}) do
+                local ok,x=pcall(function()return a[f]end);v[#v+1]=f.."="..(ok and tostring(x) or "err")
+            end
+            local ok,h=pcall(function()return a:IsHidden()end);v[#v+1]="IsHidden="..(ok and tostring(h) or "err")
+            local oa=nil;pcall(function()oa=a.ObjectActor end)
+            if oa then local ok2,h2=pcall(function()return oa:IsHidden()end);v[#v+1]="object_hidden="..(ok2 and tostring(h2) or "err") end
+            v[#v+1]="enabled="..tostring(any_enabled(a))
+            local line=table.concat(v," ")
+            if M.gate_seen[id]~=line then M.gate_seen[id]=line;M.report("scanner_gate id="..id.." "..line) end
+        end) end
         local ok,entry=pcall(function()
             if a.bIsRegistered~=true or a.bNeedToHide==true then return nil end
-            if not any_enabled(a) then return nil end
+            -- Hidden by the story (seen in the classroom: six students not yet in
+            -- the scene are registered with their actor hidden).
+            if a.bHidden==true then return nil end
+            -- The object's visible model (ObjectActor) is hidden until the story
+            -- shows it: the bathroom butterfly's model starts hidden and is
+            -- revealed when it flies in, though its actions have no conditions.
+            local model=nil;pcall(function()model=a.ObjectActor end)
+            if valid(model) and model.bHidden==true then
+                if M.trace_gates then pcall(function()M.report("scanner_model_hidden id="..a:GetFName():ToString())end) end
+                return nil
+            end
+            if not available(a,is_active) then return nil end
             local key=a.objectName:ToString()
             if key=="" or key=="None" then return nil end
             local label=M.translate(key)

@@ -227,6 +227,7 @@ do local ok,req=pcall(require,"LISNavRequest")
         face_probe_tick=probe.tick
         actions.trace_popup=true
         tutorial.trace=true
+        require("scanner.sources").trace_gates=true
     end
 end
 face.text=function(key,p)return l10n.text(key,p)end

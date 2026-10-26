@@ -993,28 +993,46 @@ do
     check("fallback to the action index",A.trigger(c,1) and triggered==2)
     _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
 end
--- Actions press the pop-up's own button for the slot (the door has three
--- enabled "Open" actions; only the game knows which its button runs).
+-- Scanner skips objects the story has hidden (bHidden), as captured in the
+-- classroom for students not yet in the scene.
 do
-    package.loaded["scanner.actions"]=nil
-    local A=require("scanner.actions")
-    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
-    local pressed,triggered=nil,nil
-    local function act(name,on)return {ActionName={ToString=function()return name end},bEnabled=on,OverrideDisplayName={ToString=function()return "$GT_Sensen_Action_Open" end}} end
-    local list={act("Look01",false),act("Interact01",false),act("Interact02",true),act("Interact03",true),act("Interact04",true)}
-    local popup=o({TextValues={ForEach=function(_,cb)for i,s in ipairs({" "," "," ","$GT_Sensen_Action_Open","Door"}) do cb(i,{get=function()return {ToString=function()return s end}end}) end end},
-        button1_visible=false,button2_visible=false,button3_visible=false,button4_visible=true,["Bottom Action"]=function()pressed="Bottom" end})
-    local door=o({GetAddress=function()return 5 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "Door" end},
-        Actions={ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end},
-        GetInteractionWidget=function()return popup end,TriggerActionBP=function(_,i)triggered=i end})
+    package.loaded["scanner.sources"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local function actor(name,hidden)return o({bIsRegistered=true,bNeedToHide=false,bHidden=hidden,objectName={ToString=function()return name end},
+        Actions={ForEach=function(_,cb)cb(1,{get=function()return {bEnabled=true} end})end},GetFullName=function()return name end,
+        K2_GetActorLocation=function()return {X=0,Y=0,Z=0}end,GetFName=function()return {ToString=function()return name end}end}) end
     local c=o({GetAddress=function()return 1 end})
-    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=door})
+    local list={actor("Camera",false),actor("Daniel",true),actor("Butterfly",false)}
+    list[3].ObjectActor=o({bHidden=true}) -- captured: the butterfly's model starts hidden
+    list[1].ObjectActor=o({bHidden=false})
+    local comp=o({GetOwner=function()return c end,RegisteredActors={ForEach=function(_,cb)for i,a in ipairs(list) do cb(i,{get=function()return a end}) end end}})
     _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
-    A.say=function()end;A.text=function(k)return k end;A.translate=function(k)return k end
-    check("door: key 1 presses the pop-up's Bottom button",A.trigger(c,1) and pressed=="Bottom" and triggered==nil)
-    popup["Bottom Action"]=nil -- pop-up can't be pressed: fall back to the action index
-    check("fallback to the action index",A.trigger(c,1) and triggered==2)
-    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+    _G.StaticFindObject=function()return nil end
+    local src=require("scanner.sources");src.translate=function(k)return k end
+    local got=src.collect(c)
+    local names={};for _,e in ipairs(got) do names[#names+1]=e.label end
+    check("hidden actor and hidden model left out",#got==1 and got[1].label=="Camera",table.concat(names,","))
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;package.loaded["scanner.sources"]=nil
+end
+-- Story availability: each action's fact conditions, the game's rule.
+do
+    package.loaded["scanner.availability"]=nil
+    local V=require("scanner.availability")
+    local facts={E1_2A_REWINDED=false,E1_2A_Toilets_FireAlarm_Look02_Triggered=false,E1_2A_Toilets_FireAlarm_Interact01_Triggered=false}
+    local is=function(f)return facts[f] end
+    -- Trolley (captured from the bathroom map): needs a rewind and the alarm looked at.
+    local trolley={["and"]={{fact="E1_2A_REWINDED",want=true},{fact="E1_2A_Toilets_FireAlarm_Look02_Triggered",want=true},{fact="E1_2A_Toilets_FireAlarm_Interact01_Triggered",want=false}}}
+    check("trolley gated on entry",not V.action_ok(trolley,is))
+    facts.E1_2A_REWINDED=true;facts.E1_2A_Toilets_FireAlarm_Look02_Triggered=true
+    check("trolley available after rewind and look",V.action_ok(trolley,is))
+    local hammer={["and"]={{fact="E1_2A_Toilets_FireAlarm_Interact01_Triggered",want=false}}}
+    facts.E1_2A_Toilets_FireAlarm_Interact01_Triggered=true
+    check("hammer gone after the alarm",not V.action_ok(hammer,is))
+    check("unknown fact never hides",V.action_ok({["and"]={{fact="Nope",want=true}}},is))
+    check("no conditions is available",V.action_ok({},is))
+    check("OR needs one match",not V.action_ok({["or"]={{fact="E1_2A_REWINDED",want=false}}},is) and V.action_ok({["or"]={{fact="E1_2A_REWINDED",want=false},{fact="E1_2A_REWINDED",want=true}}},is))
+    package.loaded["scanner.availability"]=nil
 end
 -- Every spoken string passes core.text.tidy (in core/speech.lua): no added
 -- punctuation after an authored sentence ending, whatever joined the parts.
@@ -1038,6 +1056,49 @@ do
     print=real
     check("speech path tidies",printed and printed:find("sick. B, Go.",1,true)~=nil,tostring(printed))
     package.loaded["core.speech"]=nil
+end
+-- Actor conditions become the target action's own triggered fact (captured:
+-- the hammer needs the cart's Interact01 to have run).
+do
+    package.loaded["scanner.availability"]=nil
+    local V=require("scanner.availability")
+    local function arr(list)return {ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end} end
+    local function name(s)return {ToString=function()return s end} end
+    local cart={IsValid=function()return true end,Actions=arr({{ActionName=name("Look01"),AutogeneratedFactName=name("E1_2A_Toilets_Trolley_Look01_Triggered")},
+        {ActionName=name("Interact01"),AutogeneratedFactName=name("E1_2A_Toilets_Trolley_Interact01_Triggered")}})}
+    local hammer_action={FactCondAND=arr({{FactName=name("E1_2A_Toilets_FireAlarm_Interact01_Triggered"),bFactActive=false}}),FactCondOR=arr({}),
+        ActorCondAND=arr({{WhatIfInteractionActor=cart,ActionName=name("Interact01"),bTriggered=true}}),ActorCondOR=arr({})}
+    local c=V.read_conditions(hammer_action)
+    check("actor condition read as the cart's fact",#c["and"]==2 and c["and"][2].fact=="E1_2A_Toilets_Trolley_Interact01_Triggered" and c["and"][2].want==true)
+    local facts={E1_2A_Toilets_FireAlarm_Interact01_Triggered=false,E1_2A_Toilets_Trolley_Interact01_Triggered=false}
+    check("hammer hidden on entry",not V.action_ok(c,function(f)return facts[f] end))
+    facts.E1_2A_Toilets_Trolley_Interact01_Triggered=true
+    check("hammer appears after the cart",V.action_ok(c,function(f)return facts[f] end))
+    package.loaded["scanner.availability"]=nil
+end
+-- Conditions are read once per object (nested walks are not repeated on every
+-- key press), while each action's enabled switch is read fresh.
+do
+    package.loaded["scanner.sources"]=nil;package.loaded["scanner.availability"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local cond_walks=0
+    local function arr(list)return {ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end} end
+    local function counted(list)return {ForEach=function(_,cb)cond_walks=cond_walks+1;for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end} end
+    local action={bEnabled=true,FactCondAND=counted({}),FactCondOR=counted({}),ActorCondAND=counted({}),ActorCondOR=counted({})}
+    local a=o({bIsRegistered=true,bNeedToHide=false,bHidden=false,objectName={ToString=function()return "Mail" end},Actions=arr({action}),
+        GetFullName=function()return "LiSInteractionActor /Game/L.L:Mail" end,K2_GetActorLocation=function()return {X=0,Y=0,Z=0}end,GetFName=function()return {ToString=function()return "Mail" end}end})
+    local c=o({GetAddress=function()return 1 end,IsFactActive=function()return false end})
+    local comp=o({GetOwner=function()return c end,RegisteredActors=arr({a})})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    _G.StaticFindObject=function()return nil end;_G.FName=function(s)return s end
+    local src=require("scanner.sources");src.translate=function(k)return k end
+    for _=1,5 do src.collect(c) end
+    check("conditions read once for five refreshes",cond_walks==4,tostring(cond_walks))
+    action.bEnabled=false
+    check("enabled switch read fresh",#src.collect(c)==0)
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;_G.FName=nil
+    package.loaded["scanner.sources"]=nil;package.loaded["scanner.availability"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
