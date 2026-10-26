@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Holding Page Down or Page Up on the keyboard now repeats, as it already did
+  on the D-pad.
 - Fixed: the game could crash during conversations, a few seconds after the
   answers on screen changed. If the answers ever stop being read, the next set
   is read as usual.
