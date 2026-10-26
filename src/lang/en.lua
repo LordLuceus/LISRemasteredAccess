@@ -24,6 +24,7 @@ return {
     dialog_confirm="{confirm_key} to confirm",
     gamma_title="Gamma",
     goal_lighthouse="Lighthouse",
+    exit_label="{name}, exit",
     walk_start="Walking to {name}.",
     walk_start_detour="Walking to {name}, around a closed door.",
     walk_arrived="Arrived at {name}.",

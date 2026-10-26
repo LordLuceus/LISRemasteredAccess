@@ -24,7 +24,7 @@ local pending=nil
 -- in_reach: the game lists the object in its inner (actionable) zone.
 function M.outcome(entry,focused,camera_ok,in_reach)
     if not camera_ok then return "face_unsupported",{name=entry.name} end
-    if entry.kind=="goal" then return "face_turned",{name=entry.name} end
+    if entry.kind=="goal" or entry.kind=="exit" then return "face_turned",{name=entry.name} end
     if focused then return nil end -- the focused-object announcement speaks
     return "face_turned_unfocused",{name=entry.name}
 end
@@ -131,7 +131,7 @@ function M.tick()
     if not p then return end
     if p.wait>0 then p.wait=p.wait-1;return end
     -- A goal has no interaction to focus: one turn is the whole job.
-    if p.entry.kind=="goal" or not p.entry.actor then return finish(p,false,nil,true) end
+    if p.entry.kind=="goal" or p.entry.kind=="exit" or not p.entry.actor then return finish(p,false,nil,true) end
     local focused,in_reach=judge(p.controller,p.entry)
     if not M.should_correct(p,focused,M.clock()) then return finish(p,focused,in_reach,true) end
     local behaviour=behaviour_of(p.controller)

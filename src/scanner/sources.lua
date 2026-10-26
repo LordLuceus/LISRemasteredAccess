@@ -191,7 +191,7 @@ local function goals(out)
             if ok and match then
                 local o,e={X=0,Y=0,Z=0},{X=0,Y=0,Z=0}
                 local centre=point(a:K2_GetActorLocation())
-                if pcall(function()a:GetActorBounds(true,o,e,false)end) then centre=point(o) end
+                if pcall(function()a:GetActorBounds(true,o,e)end) then centre=point(o) end
                 -- A doorway-style trigger (FaceTrigger: width, height, front and
                 -- back actor lists) fires when Max passes through it, not when she
                 -- stands inside it. The walk aims past its centre (see through=).
@@ -201,10 +201,73 @@ local function goals(out)
         end
     end
 end
+-- Exits (loading zones). They are not interaction objects: a DNEVolume whose
+-- behaviour components show the game's own exit prompt ("[action_interact] Go
+-- To The Main Campus"), stored in the volume's string parameters
+-- (ExposParam_STRING, $GT_HUD_Int_...). Found that way in every Episode 1 map
+-- that has one. Listed only while one of its behaviour components is active
+-- (the corridor has four, one per story stage), and named from the prompt with
+-- the key placeholder removed. Max walks into the volume (its live bounds, not
+-- the actor pivot, which can lie outside it); the game's own prompt then
+-- appears and is used as usual.
+local exit_keys_cache={}
+local function exit_key(volume)
+    local id=nil;pcall(function()id=volume:GetFullName()end)
+    if id and exit_keys_cache[id]~=nil then return exit_keys_cache[id] or nil end
+    local key=false
+    for _,p in ipairs(FindAllOf("ExposParam_STRING") or {}) do
+        local ok,hit=pcall(function()
+            if p:GetOuter():GetAddress()~=volume:GetAddress() then return nil end
+            local v=p.ParamValue:ToString()
+            if v:find("^%$GT_HUD_Int_") then return v end
+        end)
+        if ok and hit then key=hit;break end
+    end
+    if id then exit_keys_cache[id]=key end
+    return key or nil
+end
+local function exit_active(volume)
+    local active=false
+    pcall(function()
+        for _,c in ipairs(FindAllOf("DNEBehaviorComponent") or {}) do
+            local ok,on=pcall(function()return c:GetOuter():GetAddress()==volume:GetAddress() and c.bActive==true end)
+            if ok and on then active=true;break end
+        end
+    end)
+    return active
+end
+function M.exit_label(text)
+    -- "[action_interact] Go To The Main Campus" -> "Go To The Main Campus"
+    local s=text:gsub("%[[%w_]+%]",""):gsub("^%s+",""):gsub("%s+$","")
+    return s
+end
+local function exits(out)
+    for _,v in ipairs(FindAllOf("DNEVolume") or {}) do
+        local ok,entry=pcall(function()
+            if not valid(v) then return nil end
+            local key=exit_key(v)
+            if not key then return nil end
+            if not exit_active(v) then return nil end
+            local o,e={X=0,Y=0,Z=0},{X=0,Y=0,Z=0}
+            -- This engine's GetActorBounds takes three arguments (no trailing
+            -- bIncludeFromChildActors); the four-argument form raises an error.
+            v:GetActorBounds(false,o,e)
+            local centre=point(o)
+            local label=M.exit_label(M.translate(key))
+            return {id=v:GetFullName(),label=M.text("exit_label",{name=label}),pos=centre,
+                stand={X=centre.X,Y=centre.Y,Z=centre.Z-(e.Z or 0)},kind="exit"}
+        end)
+        if ok and entry then
+            out[#out+1]=entry
+            report_once("exit_found:"..entry.id,string.format("scanner_exit label=%s at=%.0f,%.0f,%.0f",entry.label,entry.pos.X,entry.pos.Y,entry.pos.Z))
+        elseif not ok then report_once("exit:"..tostring(#out),"scanner_source exit_error="..tostring(entry)) end
+    end
+end
 function M.collect(controller)
     local out={}
     interactions(controller,out)
     goals(out)
+    exits(out)
     return out
 end
 return M

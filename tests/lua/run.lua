@@ -1100,5 +1100,29 @@ do
     _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;_G.FName=nil
     package.loaded["scanner.sources"]=nil;package.loaded["scanner.availability"]=nil
 end
+-- Exits: an active loading-zone volume with the game's exit prompt is listed,
+-- named from the prompt; an inactive one is not.
+do
+    package.loaded["scanner.sources"]=nil
+    _G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.HasAnyFlags=function()return false end;return t end
+    local vol=o({GetAddress=function()return 50 end,GetFullName=function()return "DNEVolume /Game/E1_2A_Corridor_LD.x:DNEVolume_5" end,
+        GetActorBounds=function(...)assert(select("#",...)==4,"engine GetActorBounds takes 3 arguments");local _,_,orig,ext=...;orig.X,orig.Y,orig.Z=-590,-3197,99;ext.X,ext.Y,ext.Z=81,199,99 end})
+    local param=o({GetOuter=function()return vol end,ParamValue={ToString=function()return "$GT_HUD_Int_GoToCampusA" end}})
+    local comp=o({GetOuter=function()return vol end,bActive=true})
+    local c=o({GetAddress=function()return 1 end})
+    local ic=o({GetOwner=function()return c end,RegisteredActors={ForEach=function()end}})
+    _G.FindAllOf=function(n)return ({DNEVolume={vol},ExposParam_STRING={param},DNEBehaviorComponent={comp},LiSInteractionComponent={ic}})[n] or {} end
+    _G.StaticFindObject=function()return nil end
+    local src=require("scanner.sources")
+    src.translate=function(k)return k=="$GT_HUD_Int_GoToCampusA" and "[action_interact] Go To The Main Campus" or k end
+    local en=require("lang.en");src.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return p[n] end)) end
+    local got=src.collect(c)
+    check("active exit listed with the prompt's name",#got==1 and got[1].kind=="exit" and got[1].label=="Go To The Main Campus, exit",got[1] and got[1].label)
+    check("exit stand point is the volume's floor, not the pivot",got[1] and got[1].stand.Z==0 and got[1].pos.X==-590)
+    comp.bActive=false
+    check("inactive exit not listed",#src.collect(c)==0)
+    _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;package.loaded["scanner.sources"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
