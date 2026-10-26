@@ -9,8 +9,12 @@ local M={}
 M.text=function(key,p)return key end
 M.log=function(_)end
 M.trace=false
+-- Objects being destroyed are skipped too: reading a field of a dialogue button
+-- the game is tearing down crashed the loader (traced 26 Oct: inside the read of
+-- DialogButtons_Array as a conversation changed).
+local DYING=EObjectFlags and (EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed) or nil
 local function valid(o)
-    local ok,r=pcall(function()return o~=nil and o:IsValid()end)
+    local ok,r=pcall(function()return o~=nil and o:IsValid() and not (DYING and o:HasAnyFlags(DYING))end)
     return ok and r==true
 end
 local function visible(o)
@@ -52,38 +56,53 @@ local function view()
     local found=nil
     pcall(function()
         for _,w in ipairs(FindAllOf("BP_LiSDialogWidget_View_C") or {}) do
-            local ok,on=pcall(function()return w:IsValid() and w:IsInViewport() and w:IsVisible()end)
+            local ok,on=pcall(function()return valid(w) and w:IsInViewport() and w:IsVisible()end)
             if ok and on then found=w;break end
         end
     end)
     return found
 end
--- Shown answers: {button=,text=,index=,position=} in button order.
+-- Shown answers: {slot=,text=,index=,position=,direction=} in button order.
+-- Everything is read INSIDE the walk over DialogButtons_Array, and no game
+-- object reference is kept afterwards - the same rule as scanner/actions.lua
+-- ("element references from a game array must not outlive it"). Two crashes
+-- during conversations (26 Oct, traced with debug symbols) happened in a
+-- field read on an answer button this reader had taken out of the array and
+-- read later; the object can be replaced by the game between those steps.
+-- choose() re-finds the button by its slot at the moment it is pressed.
+local function each_button(v,fn)
+    v.DialogButtons_Array:ForEach(function(i,e)
+        local ok,b=pcall(function()return e:get()end)
+        if ok and valid(b) then fn(i,b) end
+    end)
+end
 function M.read()
     local v=view()
     if not v then return nil end
-    local buttons={}
-    pcall(function()
-        v.DialogButtons_Array:ForEach(function(_,e)local ok,b=pcall(function()return e:get()end);if ok then buttons[#buttons+1]=b end end)
-    end)
     local out={}
-    for i,b in ipairs(buttons) do
-        if valid(b) and visible(b) then
+    local walked,err=pcall(function()
+        each_button(v,function(i,b)
+            if not visible(b) then return end
             local text=nil
-            pcall(function()text=b.DialogText:GetText():ToString()end)
-            if text and text:find("%S") then
-                local idx,pos=nil,nil
-                pcall(function()idx=b.ActionIndex end)
-                pcall(function()pos=b.OptionPosition end)
-                -- The button shows one direction icon (Image_Up/Left/Right/Down)
-                -- for the face button that picks it on a controller.
-                local dir=nil
-                for _,d in ipairs({"Up","Left","Right","Down"}) do
-                    if not dir then pcall(function()if visible(b["Image_"..d]) then dir=d end end) end
-                end
-                out[#out+1]={button=b,slot=i,text=text,index=idx,position=pos,direction=dir}
+            pcall(function()local d=b.DialogText;if valid(d) then text=d:GetText():ToString() end end)
+            if not (text and text:find("%S")) then return end
+            local idx,pos=nil,nil
+            pcall(function()idx=b.ActionIndex end)
+            pcall(function()pos=b.OptionPosition end)
+            -- The button shows one direction icon (Image_Up/Left/Right/Down)
+            -- for the face button that picks it on a controller.
+            local dir=nil
+            for _,d in ipairs({"Up","Left","Right","Down"}) do
+                if not dir then pcall(function()local img=b["Image_"..d];if valid(img) and visible(img) then dir=d end end) end
             end
-        end
+            out[#out+1]={slot=i,text=text,index=idx,position=pos,direction=dir}
+        end)
+    end)
+    -- Never fail silently: a read that stops part-way is logged (once per
+    -- distinct error), so a vanished choice list can be explained afterwards.
+    if not walked and tostring(err)~=M.last_error then
+        M.last_error=tostring(err)
+        M.log("choice_read_error="..tostring(err))
     end
     if #out==0 then return nil end
     local major=false;pcall(function()major=v:IsMajorChoice()==true end)
@@ -95,7 +114,15 @@ function M.choose(n)
     if not options then M.say(M.text("choice_none"));return false end
     local o=options[n]
     if not o then M.say(M.text("choice_no_option",{index=n}));return false end
-    local ok,err=pcall(function()o.button:ClickButton()end)
+    local v=view()
+    local ok,err=false,"answer gone"
+    if v then
+        pcall(function()
+            each_button(v,function(i,b)
+                if i==o.slot and not ok then ok,err=pcall(function()b:ClickButton()end) end
+            end)
+        end)
+    end
     M.log("choice_chosen n="..n.." slot="..o.slot.." index="..tostring(o.index).." ok="..tostring(ok)..(ok and "" or " err="..tostring(err)))
     return ok
 end

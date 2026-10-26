@@ -957,7 +957,7 @@ do
     check("major choice wording",C.announce_text(opts,true):find("^Major choice: ")~=nil)
     -- Choosing calls the shown button's own ClickButton (the game's face-button path).
     local clicked=nil
-    local function b(t,i,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,DialogText={GetText=function()return {ToString=function()return t end}end},
+    local function b(t,i,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,DialogText={IsValid=function()return true end,GetText=function()return {ToString=function()return t end}end},
         ActionIndex=i,OptionPosition=i,ClickButton=function()clicked=i end,Image_Up={IsValid=function()return true end,IsVisible=function()return false end}} end
     local buttons={b("A",0,true),b("",1,false),b("C",2,true)}
     local v={IsValid=function()return true end,IsInViewport=function()return true end,IsVisible=function()return true end,IsMajorChoice=function()return false end,
@@ -968,6 +968,10 @@ do
     check("hidden and empty answers skipped",#list==2 and list[2].text=="C")
     check("second announced answer clicks its own button",C.choose(2) and clicked==2)
     check("missing answer refused",not C.choose(3) and said[#said]=="No answer 3.")
+    check("no game object kept in the answers",list[1].button==nil and list[2].button==nil)
+    -- The answer changed between reading and choosing: the button now in that slot is pressed.
+    buttons[3]=b("C2",7,true);clicked=nil
+    check("choose re-finds the button by slot",C.choose(2) and clicked==7)
     _G.FindAllOf=nil;package.loaded["dialogue.choices"]=nil
 end
 -- Actions press the pop-up's own button for the slot (the door has three
