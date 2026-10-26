@@ -41,7 +41,7 @@ nearest first.
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 | Shift+Home | D-pad down | Walk to the selected object; press again to stop |
 | F | Left-stick click | Turn toward the selected object |
-| 1 to 4 | Face buttons | Use the focused object's actions, as announced |
+| 1 to 4 | Face buttons | Answer a dialogue choice, or use the focused object's actions, as announced |
 | F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
 | F2 | Hold left-stick click, then D-pad left | Play the next sound cue and say what it means |
 
@@ -88,6 +88,13 @@ If facing ends with "Not focused", the game is not offering that object right
 now. It can be too low for the camera to reach, or not available yet in the
 story: in the opening classroom, the other objects on your desk only open up
 after you look at the photo.
+
+### Dialogue choices
+
+When answers appear in a conversation, the mod reads them with their keys:
+"Choose: 1, You're asking me?, 2, I did know..." Major choices start with "Major
+choice". Press the number to answer; Ctrl+Home repeats the list. On a controller
+the face button for each answer is named instead, and pressing it works as usual.
 
 ### Tutorial prompts
 

@@ -5,6 +5,11 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- Dialogue choices are read when they appear, with the key for each answer:
+  numbers on the keyboard, the face buttons on a controller. Press the number to
+  answer. Major choices are announced as such.
+- The sound for getting control back is now the control-loss sound played
+  backwards.
 - Tutorial prompts are read when they appear, and Ctrl+Home repeats them. The
   classroom prompts about dragging the mouse to look at the photo or take a
   selfie now describe the mod's keys instead. On a controller, prompts name the
