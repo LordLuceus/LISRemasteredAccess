@@ -1142,6 +1142,47 @@ do
     check("page position at the end when several",V.describe("Hello.",2,3)=="Hello. Page 2 of 3.")
     package.loaded["hud.viewer"]=nil
 end
+-- Journal: one item at a time with its position; diary paragraphs restored to
+-- authored order (captured: the game's order changed between two visits).
+do
+    package.loaded["hud.journal"]=nil
+    local J=require("hud.journal")
+    local en=require("lang.en")
+    J.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    check("sort key",J.sort_key("E0_Page00_C")=="D000000C" and J.sort_key("E1_Page12_A")>J.sort_key("E1_Page05_F") and J.sort_key("E1_page06_D")~=nil)
+    check("character page keys",J.sort_key("Chara_Kate_B")>J.sort_key("Chara_Kate_A"))
+    local key={["July 10, 2013"]="000000A",["I GOT ACCEPTED."]="000000B",["My mom cried."]="000000E"}
+    local scrambled={"My mom cried.","July 10, 2013","I GOT ACCEPTED."}
+    local o=J.order(scrambled,function(p)return key[p] end)
+    check("paragraphs in authored order",o[1]=="July 10, 2013" and o[2]=="I GOT ACCEPTED." and o[3]=="My mom cried.")
+    check("unknown paragraphs kept after",J.order({"x","July 10, 2013"},function(p)return key[p] end)[2]=="x")
+    check("names in stable order",table.concat(J.sorted({"Max","David","Kate"}),",")=="David,Kate,Max")
+    local page={kind="diary",title="Journal",items={"July 10, 2013","I GOT ACCEPTED."},page={1,12}}
+    local c=J.cursor()
+    check("entry: title, page, first item",c:update(page)=="Journal Page 1 of 12. July 10, 2013",c:update(page) or "")
+    check("same page again is silent",c:update(page)==nil)
+    check("down reads the next item",c:move(1)=="I GOT ACCEPTED.")
+    check("past the end",c:move(1)=="Last item.")
+    check("up again",c:move(-1)=="July 10, 2013" and c:move(-1)=="First item.")
+    local page2={kind="diary",title="Journal",items={"August 18, 2013"},page={2,12}}
+    check("new page announced with its number",c:update(page2)=="Journal Page 2 of 12. August 18, 2013")
+    check("closing resets",c:update(nil)==nil and c:update(page2)~=nil)
+    local empty={kind="photos",title="Photos",items={}}
+    check("tab without readable items",J.cursor():update(empty)=="Photos Nothing to read on this page.")
+    package.loaded["hud.journal"]=nil
+end
+-- Controller: D-pad up/down step through a reader, ignoring keys held on entry.
+do
+    package.loaded["scanner.pad"]=nil
+    local p=require("scanner.pad").new()
+    check("held on entry ignored",p:reader(0x2,0)==nil)
+    p:reader(0,0.1)
+    check("down",p:reader(0x2,0.2)==1)
+    check("repeat after hold",p:reader(0x2,0.5)==nil and p:reader(0x2,0.7)==1)
+    p:reader(0,0.8)
+    check("up",p:reader(0x1,0.9)==-1)
+    package.loaded["scanner.pad"]=nil
+end
 -- Controller chords work without control (object viewer), scanner keys do not.
 do
     package.loaded["scanner.pad"]=nil
@@ -1153,6 +1194,80 @@ do
     p:update(0x40,false,1.4)
     check("stick click alone does not face while inactive",#p:update(0,false,1.5)==0)
     package.loaded["scanner.pad"]=nil
+end
+-- Journal lists follow the game's highlight; profiles read before the list.
+do
+    package.loaded["hud.journal"]=nil
+    local J=require("hud.journal")
+    local en=require("lang.en")
+    J.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    local c=J.cursor()
+    local function chars(name)return {kind="characters",title="Characters",items={name},list=true} end
+    check("list entry announced with title",c:update(chars("Max"))=="Characters Max")
+    check("game moved highlight: only the name",c:update(chars("Jefferson"))=="Jefferson")
+    check("Up/Down leave lists to the game",c:move(1)==nil)
+    local profile={kind="profile",title="Max",items={"\"Say Cheese!\"","On a scholarship even!"},ref="Max"}
+    check("profile announced with its name and first paragraph",c:update(profile)=="Max \"Say Cheese!\"")
+    check("profile paragraphs step",c:move(1)=="On a scholarship even!")
+    local days={kind="days",title="Days",items={"Monday"},list=true}
+    check("days menu",J.cursor():update(days)=="Days Monday")
+    package.loaded["hud.journal"]=nil
+end
+-- Paragraph order from page positions: left column top-down, then right (the
+-- original's rule; Victoria's authored keys C,B,D,E,A read in that layout).
+do
+    package.loaded["hud.journal"]=nil
+    local J=require("hud.journal")
+    local items={{text="A",x=900,y=500},{text="B",x=100,y=300},{text="C",x=100,y=50},{text="D",x=100,y=600},{text="E",x=900,y=80}}
+    local o,how=J.reading_order(items,function()return nil end)
+    check("columns then top-down",table.concat(o,",")=="C,B,D,E,A" and how=="position",table.concat(o,","))
+    local single={{text="B",x=100,y=300},{text="A",x=110,y=40},{text="C",x=105,y=700}}
+    check("single column top-down",table.concat((J.reading_order(single,function()return nil end)),",")=="A,B,C")
+    local nopos={{text="x"},{text="July"}}
+    local o2,how2=J.reading_order(nopos,function(p)return p=="July" and "D0000A" or nil end)
+    check("no positions: authored keys",o2[1]=="July" and how2=="key")
+    local same={{text="b",x=0,y=0},{text="a",x=0,y=0}}
+    check("all at origin counts as no positions",select(2,J.reading_order(same,function()return nil end))=="key")
+    package.loaded["hud.journal"]=nil
+end
+-- Message threads: one message at a time, starting at the latest; new
+-- messages announced once.
+do
+    package.loaded["hud.journal"]=nil
+    local J=require("hud.journal")
+    local en=require("lang.en")
+    J.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    check("message wording",J.message_text("Kate","10:42 AM","Hi Max!")=="Kate, 10:42 AM: Hi Max!")
+    check("message without time",J.message_text("Max",nil,"On my way.")=="Max: On my way.")
+    check("designer placeholder never spoken as sender",J.message_text("Text Block","09/25 10:51 am","Hey Max u around?")=="Unknown sender, 09/25 10:51 am: Hey Max u around?")
+    local c=J.cursor()
+    local thread={kind="thread",title="Kate",ref="Kate",items={"Kate: Hi.","Max: Hey.","Kate: Bye."},ids={"1","2","3"}}
+    check("opens at the latest message",c:update(thread)=="Kate Kate: Bye.")
+    check("up reads older",c:move(-1)=="Max: Hey.")
+    check("down back to latest",c:move(1)=="Kate: Bye." and c:move(1)=="Last item.")
+    local grown={kind="thread",title="Kate",ref="Kate",items={"Kate: Hi.","Max: Hey.","Kate: Bye.","Kate: Wait!"},ids={"1","2","3","4"}}
+    check("new message announced once",c:update(grown)=="New message. Kate: Wait!" and c:update(grown)==nil)
+    check("cursor follows to the new message when at the end",c:move(1)=="Last item.")
+    package.loaded["hud.journal"]=nil
+end
+-- Message threads: sender from the portrait texture (works when the game opens
+-- the thread itself); typing bubbles (".", "..") are not messages.
+do
+    package.loaded["hud.journal"]=nil
+    local J=require("hud.journal")
+    J.text=function(k)return k=="journal_max" and "Max" or k end
+    J.translate=function(k)return k=="$GT_Menus_Journal_Warren" and "Warren" or k end
+    local function o(t)t=t or {};t.IsValid=function()return true end;t.IsVisible=function()return true end;return t end
+    local function tb(s)return o({GetText=function()return {ToString=function()return s end} end}) end
+    local function sms(body,mine)return o({IsA=function()return true end,TextBlock_Body=tb(body),TextBlock_Meta=tb("10/07 4:23 pm"),IsMax=mine,GetAddress=function()return body end}) end
+    local kids={sms("I hope so.",false),sms(".",false),sms("..",true)}
+    local box=o({GetChildrenCount=function()return #kids end,GetChildAt=function(_,i)return kids[i+1] end})
+    J.last_contact="Dad"
+    local w=o({VerticalBox_Content=box,SenderPortrait=o({GetFName=function()return {ToString=function()return "WarrenThumb" end} end})})
+    local th=J.thread_items(w)
+    check("sender from the portrait, not the list",th and th.title=="Warren" and th.items[1]=="Warren, 10/07 4:23 pm: I hope so.",th and th.items[1])
+    check("typing bubbles skipped",th and #th.items==1)
+    package.loaded["hud.journal"]=nil
 end
 -- Keyboard shortcuts polled on the game thread (no loader key binds).
 do

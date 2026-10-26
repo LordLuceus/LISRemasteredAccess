@@ -102,6 +102,10 @@ local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
 local viewer=require("hud.viewer")
+local journal=require("hud.journal")
+local journal_cursor=journal.cursor()
+local journal_open=false
+local journal_move -- defined with the journal step below
 local choices=require("dialogue.choices")
 local function face_selected()
     if not playable() then return end
@@ -132,6 +136,9 @@ for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
         local c=scanner.controller();if c then actions.trigger(c,n) end
     end))
 end
+bind_key(Key.UP_ARROW,on_game(function()journal_move(-1)end),{["repeat"]=true})
+bind_key(Key.DOWN_ARROW,on_game(function()journal_move(1)end),{["repeat"]=true})
+
 bind_key(Key.F1,on_game(show_help))
 bind_key(Key.F2,on_game(next_preview))
 
@@ -204,6 +211,24 @@ local function viewer_step()
         log("viewer page="..page.index.."/"..page.count.." spoken="..text)
     end
 end
+-- Journal: a new tab or page is announced with its first item; Up/Down
+-- (D-pad up/down) step through items one at a time.
+local function journal_step()
+    local ok,page=pcall(journal.page)
+    if not ok then return end
+    journal_open=page~=nil
+    -- The contact remembered from the list is only valid while the journal
+    -- stays open; a thread the game opens itself must never inherit it.
+    if not journal_open then journal.last_contact=nil end
+    local text=journal_cursor:update(page)
+    if text then say(text,true);log("journal "..tostring(page and page.kind).." spoken="..text) end
+end
+journal_move=function(direction)
+    if not journal_open then return false end
+    local text=journal_cursor:move(direction)
+    if text then say(text,true) end
+    return true
+end
 local menu_errors,settings_tick=0,0
 local arrows_done=false
 local function menu_step()
@@ -215,6 +240,7 @@ local function menu_step()
             tutorial_step()
             choices_step()
             viewer_step()
+            journal_step()
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
             local text,fallback=tracker:update(snap)
@@ -260,6 +286,29 @@ tutorial.text=function(key,p)return l10n.text(key,p)end
 tutorial.log=log
 viewer.text=function(key,p)return l10n.text(key,p)end
 viewer.clean=require("core.text").clean
+journal.text=function(key,p)return l10n.text(key,p)end
+journal.clean=require("core.text").clean
+journal.translate=function(key)return require("scanner.sources").translate(key)end
+journal.say=function(text)say(text,true)end
+journal.log=log
+-- Diary paragraphs in authored order: the game's text for each authored key,
+-- translated once per language, maps a shown paragraph back to its key.
+do
+    local keys=require("hud.diary_keys")
+    local map,map_lang=nil,nil
+    journal.key_order=function(paragraph)
+        local lang=l10n.language()
+        if map_lang~=lang then
+            map,map_lang={},lang
+            local translate=require("scanner.sources").translate
+            for _,k in ipairs(keys) do
+                local ok,s=pcall(translate,"$GT_Menus_Diary_"..k)
+                if ok and type(s)=="string" then map[require("core.text").clean(s)]=journal.sort_key(k) end
+            end
+        end
+        return map[paragraph]
+    end
+end
 choices.text=function(key,p)return l10n.text(key,p)end
 choices.log=log
 choices.say=function(text)say(text,true)end
@@ -311,7 +360,13 @@ local pad_errors=0
 local function pad_step()
         local ok,err=pcall(function()
             local buttons=pad_read and pad_read() or -1
-            local active=buttons>=0 and playable()
+            if journal_open and buttons>=0 then
+                local dir=pad:reader(buttons,os.clock())
+                if dir then journal_move(dir) end
+            else pad:reader_reset() end
+            -- While the journal is open the D-pad reads it; scanner commands
+            -- (D-pad down = autowalk) must not fire behind it.
+            local active=buttons>=0 and playable() and not journal_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
                 if cmd=="repeat" then speech.say(last_speech,true)
                 elseif cmd=="autowalk" then walk_toggle()

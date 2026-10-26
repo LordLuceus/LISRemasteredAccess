@@ -55,4 +55,20 @@ function M:update(buttons,active,now)
     self.previous=buttons
     return out
 end
+-- D-pad up/down for reading lists (the journal), with hold-to-repeat. Separate
+-- from the scanner state; used only while a reader is open. Returns -1, 1 or nil.
+function M:reader(buttons,now)
+    if buttons<0 then buttons=0 end
+    local prev=self.reader_prev or buttons -- ignore keys already held on entry
+    local edge=buttons & ~prev
+    self.reader_prev=buttons
+    for _,b in ipairs({{UP,-1},{DOWN,1}}) do
+        local bit,dir=b[1],b[2]
+        if (edge&bit)~=0 then self.reader_at=now+DELAY;self.reader_bit=bit;return dir end
+        if (buttons&bit)~=0 and self.reader_bit==bit and self.reader_at and now>=self.reader_at then self.reader_at=now+RATE;return dir end
+    end
+    if (buttons&(UP|DOWN|LEFT|RIGHT))==0 then self.reader_bit=nil;self.reader_at=nil end
+    return nil
+end
+function M:reader_reset()self.reader_prev=nil;self.reader_bit=nil;self.reader_at=nil end
 return M
