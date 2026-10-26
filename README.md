@@ -120,7 +120,31 @@ as you turn them, with the page number at the end when there is more than one.
 Ctrl+Home (on a controller, hold the left-stick click and press D-pad right)
 repeats it.
 
-The journal is not narrated yet.
+### The journal
+
+Open the journal as usual (Tab or J, or View on a controller) and switch tabs
+with Q and E (the shoulder buttons). Each tab announces its name and its first
+item. Then:
+
+| Keyboard | Controller | Action |
+| --- | --- | --- |
+| Up / Down | D-pad up / down | Previous / next item (hold to repeat) |
+| Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
+
+- **Diary:** one paragraph at a time, in reading order, then the current
+  objective. The page number is read when you change page. Backing out of the
+  diary opens the list of days, read as you move.
+- **Characters:** the highlighted character as you move through them. A profile
+  reads one paragraph at a time. The picker is a grid that can skip people when
+  moved by key; open any profile and use Left and Right to go through the rest.
+- **Messages:** each contact, with how many messages are unread. A conversation
+  starts at the latest message ("Kate, 09/25 10:51 am: Hey Max u around?") and
+  Up goes back through older ones. New messages are announced as they arrive.
+- **Photos and Places** have nothing to read yet.
+
+On the keyboard the game uses Escape both for Back and for the pause menu, so
+leaving a page with Escape can open the pause menu instead; B on a controller
+always goes back.
 
 The pause menu, its settings and its confirmations read the same way.
 
@@ -135,7 +159,7 @@ pause menu is narrated yet.
 3. Object scanner and autowalk, using the game's own interaction list and
    navigation, with automatic detours around closed doors.
 4. Dialogue choices and prompts.
-5. Journal, text messages, rewind and the remaining features.
+5. Journal and text messages *(done)*; rewind and the remaining features.
 
 ## Speech and braille
 

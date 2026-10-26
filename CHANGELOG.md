@@ -5,6 +5,16 @@ Player-facing changes, newest first.
 ## 2026-10-26
 
 ### In play
+- The journal is read. On each tab you hear its name and the first item; Up and
+  Down (the D-pad on a controller) read one item at a time, with "First item."
+  and "Last item." at the ends; holding repeats. The diary reads one paragraph
+  at a time in reading order, then the current objective, with the page number
+  when you change page. Character profiles read their paragraphs in order.
+  Messages read each contact with any unread count; a conversation starts at the
+  latest message, and new messages are announced as they arrive.
+- Known limit: the character picker and the photo episodes move around a grid
+  the way the game does, which can skip people. Opening any profile and using
+  Left and Right to go through the others reaches everyone.
 - Letters, posters, notice boards and other close-ups are read when you look at
   them, using the game's own text version. Things without one, such as photos,
   say "No text version." Ctrl+Home repeats it.
