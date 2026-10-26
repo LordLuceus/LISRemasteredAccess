@@ -2,6 +2,14 @@
 
 Player-facing changes, newest first.
 
+## 2026-10-26
+
+### In play
+- Tutorial prompts are read when they appear, and Ctrl+Home repeats them. The
+  classroom prompts about dragging the mouse to look at the photo or take a
+  selfie now describe the mod's keys instead. On a controller, prompts name the
+  stick, trigger or bumper the game shows as a picture.
+
 ## 2026-10-25
 
 ### In play

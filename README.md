@@ -89,6 +89,18 @@ now. It can be too low for the camera to reach, or not available yet in the
 story: in the opening classroom, the other objects on your desk only open up
 after you look at the photo.
 
+### Tutorial prompts
+
+When the game shows a tutorial prompt, the mod reads it once, without cutting
+off other speech; Ctrl+Home repeats it. On a controller the button pictures are
+named ("Use the left stick to move", "Hold the left trigger to rewind").
+
+The classroom prompts that tell you to hold the mouse button and drag towards an
+action are replaced with the mod's own steps: select the photo (or the camera)
+with Page Up or Page Down, press F to face it, then press the announced key for
+Look (or Take Selfie). On a controller they use the D-pad, the left-stick click
+and the announced button.
+
 Reading screens (letters, the journal) are not narrated yet.
 
 The pause menu, its settings and its confirmations read the same way.
