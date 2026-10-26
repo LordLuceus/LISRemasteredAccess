@@ -101,6 +101,7 @@ local face_probe_tick=nil
 local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
+local viewer=require("hud.viewer")
 local choices=require("dialogue.choices")
 local function face_selected()
     if not playable() then return end
@@ -191,6 +192,18 @@ local function choices_step()
         log("choice_announce slots="..table.concat(d,",").." major="..tostring(major).." spoken="..text)
     end
 end
+-- Object viewer: each page read when it is shown (Ctrl+Home repeats).
+local last_page=nil
+local function viewer_step()
+    local ok,page=pcall(viewer.current)
+    if not ok or not page then last_page=nil;return end
+    if page.key~=last_page then
+        last_page=page.key
+        local text=viewer.describe(page.text,page.index,page.count)
+        say(text,true)
+        log("viewer page="..page.index.."/"..page.count.." spoken="..text)
+    end
+end
 local menu_errors,settings_tick=0,0
 local arrows_done=false
 local function menu_step()
@@ -201,6 +214,7 @@ local function menu_step()
             if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
             tutorial_step()
             choices_step()
+            viewer_step()
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
             local text,fallback=tracker:update(snap)
@@ -244,6 +258,8 @@ help.text=function(key,p)return l10n.text(key,p)end
 preview.text=function(key)return l10n.text(key)end
 tutorial.text=function(key,p)return l10n.text(key,p)end
 tutorial.log=log
+viewer.text=function(key,p)return l10n.text(key,p)end
+viewer.clean=require("core.text").clean
 choices.text=function(key,p)return l10n.text(key,p)end
 choices.log=log
 choices.say=function(text)say(text,true)end

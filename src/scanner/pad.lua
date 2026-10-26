@@ -6,7 +6,8 @@
 --   Left-stick click  face, on release, unless used as a modifier:
 --   held + D-pad up   help;  held + D-pad right  repeat last announcement;
 --   held + D-pad left sound preview.
--- Active only in gameplay (the caller passes active=false in menus).
+-- Scanner commands only in gameplay (the caller passes active=false otherwise);
+-- the left-stick chords work everywhere.
 local M={}
 M.__index=M
 local UP,DOWN,LEFT,RIGHT,THUMB=0x1,0x2,0x4,0x8,0x40
@@ -22,6 +23,15 @@ function M:update(buttons,active,now)
     local thumb=(buttons&THUMB)~=0
     if (edge&THUMB)~=0 then self.thumb_used=false;self.thumb_started=active end
     if not active then
+        -- Without control (object viewer, cutscenes, menus) the left-stick
+        -- chords still work - repeat, help and sound preview, like Ctrl+Home,
+        -- F1 and F2 on the keyboard - but nothing that acts on the world.
+        if thumb then
+            if (buttons&(UP|DOWN|LEFT|RIGHT))~=0 then self.thumb_used=true end
+            if (edge&UP)~=0 then out[#out+1]="help" end
+            if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
+            if (edge&LEFT)~=0 then out[#out+1]="preview" end
+        end
         self.thumb_started=false;self.repeat_at={}
         self.previous=buttons;return out
     end

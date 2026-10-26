@@ -75,6 +75,8 @@ return {
     choice_option="{key}, {text}",
     choice_none="No dialogue choice now.",
     choice_no_option="No answer {index}.",
+    viewer_no_text="No text version.",
+    viewer_page="Page {index} of {count}.",
     cue_control_lost="Game takes control.",
     cue_control_back="You have control.",
     scanner_distance="{value} metres",

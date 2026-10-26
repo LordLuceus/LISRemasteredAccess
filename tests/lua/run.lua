@@ -1128,6 +1128,32 @@ do
     check("inactive exit not listed",#src.collect(c)==0)
     _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;package.loaded["scanner.sources"]=nil
 end
+-- Object viewer: the page's text version (captured: the mail), or a plain
+-- "No text version." (captured: the classroom photo); page position last.
+do
+    package.loaded["hud.viewer"]=nil
+    local V=require("hud.viewer")
+    local en=require("lang.en")
+    V.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    V.clean=require("core.text").clean
+    local mail="Your statement is enclosed \nURGENT \nYour electricity bill is inside \nPAST DUE"
+    check("mail text read",V.describe(mail,1,1)=="Your statement is enclosed. URGENT. Your electricity bill is inside. PAST DUE",V.describe(mail,1,1))
+    check("photo without text",V.describe("",1,1)=="No text version.")
+    check("page position at the end when several",V.describe("Hello.",2,3)=="Hello. Page 2 of 3.")
+    package.loaded["hud.viewer"]=nil
+end
+-- Controller chords work without control (object viewer), scanner keys do not.
+do
+    package.loaded["scanner.pad"]=nil
+    local p=require("scanner.pad").new()
+    p:update(0x40,false,1)
+    check("repeat chord while inactive",table.concat(p:update(0x48,false,1.1),",")=="repeat")
+    p:update(0,false,1.2)
+    check("scanner keys stay off while inactive",#p:update(0x8,false,1.3)==0)
+    p:update(0x40,false,1.4)
+    check("stick click alone does not face while inactive",#p:update(0,false,1.5)==0)
+    package.loaded["scanner.pad"]=nil
+end
 -- Keyboard shortcuts polled on the game thread (no loader key binds).
 do
     package.loaded["core.keys"]=nil
