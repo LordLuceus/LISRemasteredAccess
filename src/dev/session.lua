@@ -166,17 +166,19 @@ say("checking")
 if request.live==true then
     -- Input callbacks are not game-thread calls. Dispatch Unreal access explicitly
     -- through EngineTick, regardless of the keyboard callback's delivery thread.
-    RegisterKeyBindAsync(Key.F8,function()
+    -- Keys come from the mod's game-thread key poller (shared.bind_key), like
+    -- every other shortcut: no Lua on the loader's input thread.
+    shared.bind_key(Key.F8,function()
         print(prefix.."key=F8\n")
-        ExecuteInGameThread(function()
+        do
             if follow_probe.active then follow_cancelled=true;follow_probe.stop("user_cancel")
             elseif request.follow and not nav_checked and not follow_cancelled then follow_cancelled=true;say("stopped")
             else say("none") end
-        end,EGameThreadMethod.EngineTick)
+        end
     end)
-    RegisterKeyBindAsync(Key.F10,function()
+    shared.bind_key(Key.F10,function()
         print(prefix.."key=F10\n")
-        ExecuteInGameThread(function()
+        do
             if not native_controls_passed then say("failed");return end
             for _,controller in ipairs(FindAllOf("LiSPlayerController") or {}) do
                 if controller:IsValid() and not controller:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed) then
@@ -191,17 +193,18 @@ if request.live==true then
                 end
             end
             say("unavailable")
-        end,EGameThreadMethod.EngineTick)
+        end
     end)
-    print(prefix.."keys_registered="..tostring(true)..","..tostring(IsKeyBindRegistered(Key.F8))..","..tostring(IsKeyBindRegistered(Key.F10)).."\n")
+    print(prefix.."keys_registered=true,polled\n")
 end
 
 local polls = 0
-LoopAsync(5000, function()
+local poll_handle
+poll_handle = LoopInGameThreadWithDelay(5000, function()
     polls = polls + 1
-    if polls > (request.max_polls or 18) and not request.live then return true end
+    if polls > (request.max_polls or 18) and not request.live then CancelDelayedAction(poll_handle); return end
     local poll = polls
-    ExecuteInGameThread(function()
+    do
         local ok, err = pcall(function()
             if not native_controls_passed then return end
             local controllers = FindAllOf("LiSPlayerController") or {}
@@ -327,22 +330,21 @@ LoopAsync(5000, function()
             end
         end)
         if not ok then print(prefix .. "poll_error=" .. tostring(err) .. "\n") end
-    end, EGameThreadMethod.EngineTick)
-    return false
+    end
 end)
 if request.follow==true then
     local count=0
-    LoopAsync(250,function()
+    local handle
+    handle=LoopInGameThreadWithDelay(250,function()
         count=count+1
         local expired=not request.live and count>=(request.follow_ticks or 240)
-        ExecuteInGameThread(function()follow_probe.tick();if expired then follow_probe.stop("probe_expired") end end,EGameThreadMethod.EngineTick)
-        return expired
+        follow_probe.tick();if expired then follow_probe.stop("probe_expired");CancelDelayedAction(handle) end
     end)
 end
 if request.inspect_menus==true then
     local menu_errors=0
-    LoopAsync(1000,function()
-        ExecuteInGameThread(function()
+    LoopInGameThreadWithDelay(1000,function()
+        do
             if not native_controls_passed then return end
             local ok,err=pcall(function()
                 for _,c in ipairs(FindAllOf("LiSPlayerController") or {}) do
@@ -350,8 +352,7 @@ if request.inspect_menus==true then
                 end
             end)
             if not ok and menu_errors<5 then menu_errors=menu_errors+1;emit("menu_probe_error="..tostring(err)) end
-        end,EGameThreadMethod.EngineTick)
-        return false
+        end
     end)
 end
 end

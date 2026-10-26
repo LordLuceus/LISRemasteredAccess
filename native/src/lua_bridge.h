@@ -23,6 +23,9 @@ class Lua {
     __declspec(dllimport) auto set_bool(bool value) const -> void;
     __declspec(dllimport) auto set_string(std::string_view value) const -> void;
     __declspec(dllimport) auto set_integer(int64_t number) const -> void;
+    __declspec(dllimport) auto is_integer(int32_t force_index = 1) const -> bool;
+    // Note: like get_string, get_integer REMOVES the value it reads from the stack.
+    __declspec(dllimport) auto get_integer(int32_t force_index = 1) const -> int64_t;
 
     // Public only so the layout check below can see it; never touch directly.
     lua_State* m_lua_state;

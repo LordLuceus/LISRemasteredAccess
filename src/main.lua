@@ -49,22 +49,31 @@ local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
 local control=require("core.control").new()
 local control_world=nil
 local function playable()return not in_menu() and control:has_control() end
--- Key presses are queued and run by the game-thread loop below, never handed to
--- the game thread from the loader's input thread (that hand-off is what the
--- loader dropped and crashed in). The input thread only appends to a table.
-local key_queue={}
-local function on_game(fn)
-    return function()key_queue[#key_queue+1]=fn end
+-- Keyboard shortcuts are polled by the game-thread loop below (core/keys.lua):
+-- no mod code ever runs on the loader's input thread. bind_key keeps the
+-- loader's call shape: bind_key(key, fn) or bind_key(key, {modifier}, fn).
+local keys=require("core.keys").new()
+local function on_game(fn)return fn end
+local function bind_key(key,mods,fn,opts)
+    if type(mods)=="function" then fn,mods,opts=mods,nil,fn end
+    local m="none"
+    if type(mods)=="table" then
+        if mods[1]==ModifierKey.CONTROL then m="ctrl" elseif mods[1]==ModifierKey.SHIFT then m="shift" end
+    end
+    keys:bind(key,m,fn,opts)
 end
+local keys_reported=false
 local function run_keys()
-    if #key_queue==0 then return end
-    local pending=key_queue;key_queue={}
-    for _,fn in ipairs(pending) do
+    if not speech.keys then
+        if not keys_reported then keys_reported=true;log("keys_unavailable: lisr_keys missing from lisr_speech.dll") end
+        return
+    end
+    for _,fn in ipairs(keys:update(speech.keys(table.unpack(keys.vks)),os.clock())) do
         local ok,err=pcall(fn)
         if not ok then log("key_error="..tostring(err)) end
     end
 end
-RegisterKeyBindAsync(Key.HOME,on_game(function()
+bind_key(Key.HOME,on_game(function()
     if not playable() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
@@ -73,9 +82,9 @@ RegisterKeyBindAsync(Key.HOME,on_game(function()
         scanner.command("describe")
     end
 end))
-RegisterKeyBindAsync(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
-RegisterKeyBindAsync(Key.PAGE_DOWN,on_game(function()if playable() then scanner.command("next") end end))
-RegisterKeyBindAsync(Key.PAGE_UP,on_game(function()if playable() then scanner.command("previous") end end))
+bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
+bind_key(Key.PAGE_DOWN,on_game(function()if playable() then scanner.command("next") end end),{["repeat"]=true})
+bind_key(Key.PAGE_UP,on_game(function()if playable() then scanner.command("previous") end end),{["repeat"]=true})
 -- Shift+Home walks to the selected object; pressing it again while walking stops.
 local autowalk=require("autowalk.autowalk")
 local function walk_toggle()
@@ -84,7 +93,7 @@ local function walk_toggle()
     local c=scanner.controller()
     if c then autowalk.start(c,scanner.selected()) end
 end
-RegisterKeyBindAsync(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
+bind_key(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
 -- F faces the selected object; F1 help; F2 sound preview (help and preview
 -- also work in menus and while the game has control).
 local face=require("scanner.face")
@@ -109,11 +118,11 @@ local function run_delayed()
     end
 end
 local function next_preview()preview.next(function(play)after_beats(18,play)end)end
-RegisterKeyBindAsync(Key.F,on_game(face_selected))
+bind_key(Key.F,on_game(face_selected))
 -- 1-4 use the actions of the object the game has focused.
 local actions=require("scanner.actions")
 for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
-    RegisterKeyBindAsync(k,on_game(function()
+    bind_key(k,on_game(function()
         if in_menu() then return end
         -- An open dialogue choice takes the number keys (control is not
         -- required: the game holds Max during conversations).
@@ -122,8 +131,8 @@ for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
         local c=scanner.controller();if c then actions.trigger(c,n) end
     end))
 end
-RegisterKeyBindAsync(Key.F1,on_game(show_help))
-RegisterKeyBindAsync(Key.F2,on_game(next_preview))
+bind_key(Key.F1,on_game(show_help))
+bind_key(Key.F2,on_game(next_preview))
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -143,7 +152,7 @@ do
     if ok and type(req)=="table" and req.expected_saved_directory and req.describe_unlabelled then menu.describe_unlabelled=require("dev.unlabelled").describe(log) end
     if ok and type(req)=="table" and req.expected_saved_directory and req.trace_dialogs then
         local trace=require("dev.dialog_trace")
-        LoopAsync(500,function()ExecuteInGameThread(function()pcall(trace.tick,log)end,EGameThreadMethod.EngineTick);return false end)
+        LoopInGameThreadWithDelay(500,function()pcall(trace.tick,log)end)
     end
 end
 local tracker=require("menus.tracker").new()
@@ -328,5 +337,5 @@ if not request_ok then
     if not tostring(request):find("not found",1,true) then log("request_error="..tostring(request)) end
 elseif type(request)=="table" and request.expected_saved_directory then
     log("test session requested")
-    require("dev.session")(request,{l10n=l10n,controls=controls,speech=speech,say=say})
+    require("dev.session")(request,{l10n=l10n,controls=controls,speech=speech,say=say,bind_key=bind_key})
 end

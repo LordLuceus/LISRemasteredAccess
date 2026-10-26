@@ -22,6 +22,8 @@ do
         if f4 then M.pad=function()local pok,v=pcall(f4);return pok and v or -1 end end
         local f5=package.loadlib(dll,"lisr_move")
         if f5 then M.moving=function()local mok,v=pcall(f5);return mok and v==true end end
+        local f7=package.loadlib(dll,"lisr_keys")
+        if f7 then M.keys=function(...)local kok,v=pcall(f7,...);if kok then return v end end end
         local f6=package.loadlib(dll,"lisr_play")
         if f6 then M.play=function(path)local pok,v=pcall(f6,path);return pok and v==true end end
     end

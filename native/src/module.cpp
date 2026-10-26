@@ -1,7 +1,7 @@
 // LISRemasteredAccess native speech module.
 // Loaded from Lua with package.loadlib; each export is a lua_CFunction.
-// Prism runs on one dedicated worker thread: Lua may call from the game thread
-// or UE4SS's async thread, and a stalled screen-reader RPC must never block the game.
+// Prism runs on one dedicated worker thread so that a stalled screen-reader RPC
+// never blocks the game thread, where all of the mod's Lua runs.
 #include "lua_bridge.h"
 #include "speech.h"
 #include <Windows.h>
@@ -153,6 +153,34 @@ __declspec(dllexport) int lisr_move(lua_State* state) {
         }
     }
     Lua(state).set_bool(moving);
+    return 1;
+}
+// lisr_keys(vk1, vk2, ...) -> a bit mask of which listed virtual keys are held
+// (bit 0 for vk1), plus bit 30 Shift and bit 31 Ctrl. Zero unless the game
+// window is in the foreground, so typing elsewhere never counts. Read-only.
+// The Lua side turns these into presses on its own game-thread loop: keys are
+// polled there instead of using UE4SS key binds, whose callbacks run Lua on
+// the loader's event thread without the game-thread lock (a cross-thread race
+// on the Lua state).
+__declspec(dllexport) int lisr_keys(lua_State* state) {
+    Lua lua(state);
+    int64_t mask = 0;
+    DWORD pid = 0;
+    if (HWND fg = GetForegroundWindow()) GetWindowThreadProcessId(fg, &pid);
+    if (pid == GetCurrentProcessId()) {
+        // get_integer removes the value it reads, so always read argument 1.
+        const int n = lua.get_stack_size();
+        for (int i = 0; i < n && i < 30; ++i) {
+            if (!lua.is_integer(1)) break;
+            const int64_t vk = lua.get_integer(1);
+            // 0x8000: held now; 0x0001: pressed since the previous call, so a
+            // tap shorter than the 50 ms poll is not lost.
+            if (vk > 0 && vk < 256 && (GetAsyncKeyState(static_cast<int>(vk)) & 0x8001)) mask |= (int64_t{1} << i);
+        }
+        if (GetAsyncKeyState(VK_SHIFT) & 0x8000) mask |= int64_t{1} << 30;
+        if (GetAsyncKeyState(VK_CONTROL) & 0x8000) mask |= int64_t{1} << 31;
+    }
+    lua.set_integer(mask);
     return 1;
 }
 // lisr_play(path) -> true when playback started. Plays a WAV file

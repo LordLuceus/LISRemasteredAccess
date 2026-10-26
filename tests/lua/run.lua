@@ -1128,5 +1128,57 @@ do
     check("inactive exit not listed",#src.collect(c)==0)
     _G.FindAllOf=nil;_G.StaticFindObject=nil;_G.EObjectFlags=nil;package.loaded["scanner.sources"]=nil
 end
+-- Keyboard shortcuts polled on the game thread (no loader key binds).
+do
+    package.loaded["core.keys"]=nil
+    local K=require("core.keys").new()
+    local log={}
+    local HOME,PGDN=0x24,0x22
+    K:bind(HOME,"none",function()log[#log+1]="describe" end)
+    K:bind(HOME,"ctrl",function()log[#log+1]="repeat" end)
+    K:bind(HOME,"shift",function()log[#log+1]="walk" end)
+    K:bind(PGDN,"none",function()log[#log+1]="next" end)
+    local SHIFT,CTRL=1<<30,1<<31
+    local function run(mask)for _,f in ipairs(K:update(mask)) do f() end end
+    check("one slot per key",#K.vks==2 and K.vks[1]==HOME and K.vks[2]==PGDN)
+    run(1)  -- Home already held at the first reading: ignored
+    check("key held at start ignored",#log==0)
+    run(0);run(1)
+    check("press fires once",table.concat(log,",")=="describe")
+    run(1)
+    check("holding does not repeat",#log==1)
+    run(0);run(1|SHIFT)
+    check("Shift+Home is its own shortcut",log[#log]=="walk" and #log==2)
+    run(0);run(1|CTRL)
+    check("Ctrl+Home is its own shortcut",log[#log]=="repeat" and #log==3)
+    run(0);run(2)
+    check("other key",log[#log]=="next")
+    run(0);run(3)
+    check("two keys pressed together both fire",log[#log-1]=="describe" and log[#log]=="next")
+    check("no reading (game not focused) is harmless",#K:update(nil)==0)
+    package.loaded["core.keys"]=nil
+end
+-- Held Page Down repeats like the D-pad (0.45 s, then every 0.18 s); keys bound
+-- without repeat do not.
+do
+    package.loaded["core.keys"]=nil
+    local K=require("core.keys").new()
+    local n,h=0,0
+    K:bind(0x22,"none",function()n=n+1 end,{["repeat"]=true})
+    K:bind(0x24,"none",function()h=h+1 end)
+    local function at(mask,t)for _,f in ipairs(K:update(mask,t)) do f() end end
+    at(0,0);at(3,0.0)
+    check("first press",n==1 and h==1)
+    at(3,0.3);check("no repeat before the delay",n==1)
+    at(3,0.46);check("repeats after the delay",n==2)
+    at(3,0.6);check("not before the rate",n==2)
+    at(3,0.65);check("then at the rate",n==3)
+    check("non-repeating key stays single",h==1)
+    at(0,0.7);at(1,0.8)
+    check("released and pressed again fires once",n==4)
+    at(1,1.0);check("and waits the full delay again",n==4)
+    at(1,1.26);check("then repeats",n==5)
+    package.loaded["core.keys"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

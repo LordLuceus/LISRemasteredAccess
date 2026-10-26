@@ -8,3 +8,5 @@ EXPORTS
     ?set_bool@Lua@LuaMadeSimple@RC@@QEBAX_N@Z
     ?set_string@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z
     ?set_integer@Lua@LuaMadeSimple@RC@@QEBAX_J@Z
+    ?is_integer@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?get_integer@Lua@LuaMadeSimple@RC@@QEBA_JH@Z
