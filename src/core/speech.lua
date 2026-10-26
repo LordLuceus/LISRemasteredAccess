@@ -27,8 +27,10 @@ do
     end
 end
 -- Returns true when the native module queued it.
+local tidy=require("core.text").tidy
 function M.say(text,interrupt)
     if type(text)~="string" or text=="" then return false end
+    text=tidy(text)
     print("[LISNavSay] "..text.."\n")
     if not M.native then return false end
     local ok,queued=pcall(speak_fn,text,interrupt~=false)

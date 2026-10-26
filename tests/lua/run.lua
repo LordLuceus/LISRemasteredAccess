@@ -942,7 +942,8 @@ do
     C.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
     local opts={{text="The Daguerreian Process.",direction="Up"},{text="I don't know.",direction="Down"}}
     C.keys(opts,false)
-    check("choice keyboard keys",C.announce_text(opts,false)=="Choose: 1, The Daguerreian Process., 2, I don't know.",C.announce_text(opts,false))
+    local tidy=require("core.text").tidy
+    check("choice keyboard keys (as spoken)",tidy(C.announce_text(opts,false))=="Choose: 1, The Daguerreian Process. 2, I don't know.",tidy(C.announce_text(opts,false)))
     C.keys(opts,true)
     check("choice controller buttons",opts[1].key=="Y" and opts[2].key=="A")
     local cap={{text="You're asking me?",slot=2},{text="I did know...",slot=3}} -- captured: icons hidden
@@ -991,6 +992,52 @@ do
     popup["Bottom Action"]=nil -- pop-up can't be pressed: fall back to the action index
     check("fallback to the action index",A.trigger(c,1) and triggered==2)
     _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+end
+-- Actions press the pop-up's own button for the slot (the door has three
+-- enabled "Open" actions; only the game knows which its button runs).
+do
+    package.loaded["scanner.actions"]=nil
+    local A=require("scanner.actions")
+    local function o(t)t=t or {};t.IsValid=function()return true end;return t end
+    local pressed,triggered=nil,nil
+    local function act(name,on)return {ActionName={ToString=function()return name end},bEnabled=on,OverrideDisplayName={ToString=function()return "$GT_Sensen_Action_Open" end}} end
+    local list={act("Look01",false),act("Interact01",false),act("Interact02",true),act("Interact03",true),act("Interact04",true)}
+    local popup=o({TextValues={ForEach=function(_,cb)for i,s in ipairs({" "," "," ","$GT_Sensen_Action_Open","Door"}) do cb(i,{get=function()return {ToString=function()return s end}end}) end end},
+        button1_visible=false,button2_visible=false,button3_visible=false,button4_visible=true,["Bottom Action"]=function()pressed="Bottom" end})
+    local door=o({GetAddress=function()return 5 end,bIsInteractionUIOpened=true,objectName={ToString=function()return "Door" end},
+        Actions={ForEach=function(_,cb)for i,v in ipairs(list) do cb(i,{get=function()return v end}) end end},
+        GetInteractionWidget=function()return popup end,TriggerActionBP=function(_,i)triggered=i end})
+    local c=o({GetAddress=function()return 1 end})
+    local comp=o({GetOwner=function()return c end,ActorInteractionFocused=door})
+    _G.FindAllOf=function(n)return n=="LiSInteractionComponent" and {comp} or {} end
+    A.say=function()end;A.text=function(k)return k end;A.translate=function(k)return k end
+    check("door: key 1 presses the pop-up's Bottom button",A.trigger(c,1) and pressed=="Bottom" and triggered==nil)
+    popup["Bottom Action"]=nil -- pop-up can't be pressed: fall back to the action index
+    check("fallback to the action index",A.trigger(c,1) and triggered==2)
+    _G.FindAllOf=nil;package.loaded["scanner.actions"]=nil
+end
+-- Every spoken string passes core.text.tidy (in core/speech.lua): no added
+-- punctuation after an authored sentence ending, whatever joined the parts.
+do
+    package.loaded["core.text"]=nil
+    local T=require("core.text")
+    check("user's report",T.tidy("Choose: X, I feel sick., B, I have to use the bathroom.")=="Choose: X, I feel sick. B, I have to use the bathroom.")
+    check("question then comma",T.tidy("Choose: 1, Why?, 2, Fine.")=="Choose: 1, Why? 2, Fine.")
+    check("question then full stop",T.tidy("Facing Why?.")=="Facing Why?")
+    check("dots ellipsis then comma",T.tidy("I did know..., 2, No.")=="I did know... 2, No.")
+    check("dots ellipsis then full stop kept as three",T.tidy("I did know....")=="I did know...")
+    check("ellipsis character then comma",T.tidy("Wait\226\128\166, 2, Go.")=="Wait\226\128\166 2, Go.")
+    check("ellipsis character then full stop",T.tidy("Wait\226\128\166.")=="Wait\226\128\166")
+    check("ordinary commas untouched",T.tidy("Mail, 1.5 metres, ahead, 3 of 38")=="Mail, 1.5 metres, ahead, 3 of 38")
+    check("decimal untouched",T.tidy("Door, 0.8 metres")=="Door, 0.8 metres")
+    check("space before punctuation",T.tidy("Hold the left trigger , to rewind .")=="Hold the left trigger, to rewind.")
+    -- And it is actually applied on the speech path.
+    package.loaded["core.speech"]=nil
+    local printed=nil;local real=print;print=function(s)printed=s end
+    local S=require("core.speech");S.say("Choose: X, I feel sick., B, Go.",true)
+    print=real
+    check("speech path tidies",printed and printed:find("sick. B, Go.",1,true)~=nil,tostring(printed))
+    package.loaded["core.speech"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
