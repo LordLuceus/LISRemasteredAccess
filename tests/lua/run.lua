@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true,options=true,key=true,text=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -933,6 +933,41 @@ do
     local en=require("lang.en")
     check("rewrite strings exist",en.tutorial_look_keys and en.tutorial_look_pad and en.tutorial_selfie_keys and en.tutorial_selfie_pad)
     package.loaded["hud.tutorial"]=nil
+end
+-- Dialogue choices: key names and wording, and choosing through the game's button.
+do
+    package.loaded["dialogue.choices"]=nil
+    local C=require("dialogue.choices")
+    local en=require("lang.en")
+    C.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    local opts={{text="The Daguerreian Process.",direction="Up"},{text="I don't know.",direction="Down"}}
+    C.keys(opts,false)
+    check("choice keyboard keys",C.announce_text(opts,false)=="Choose: 1, The Daguerreian Process., 2, I don't know.",C.announce_text(opts,false))
+    C.keys(opts,true)
+    check("choice controller buttons",opts[1].key=="Y" and opts[2].key=="A")
+    local cap={{text="You're asking me?",slot=2},{text="I did know...",slot=3}} -- captured: icons hidden
+    C.keys(cap,true,false);check("minor choice: slot 2 is X, slot 3 is B (confirmed in play)",cap[1].key=="X" and cap[2].key=="B")
+    local all={{slot=1},{slot=2},{slot=3},{slot=4}}
+    C.keys(all,true,false);check("minor slots Y X B A",all[1].key=="Y" and all[4].key=="A")
+    C.keys(all,true,true);check("major slots X B Y A",all[1].key=="X" and all[2].key=="B" and all[3].key=="Y" and all[4].key=="A")
+    C.keys(cap,false);check("keyboard numbers ignore slots",cap[1].key=="1" and cap[2].key=="2")
+    check("no doubled full stop after a question",C.announce_text({{text="Why?",key="1"}},false)=="Choose: 1, Why?")
+    check("full stop added after a bare answer",C.announce_text({{text="Sure",key="1"}},false)=="Choose: 1, Sure.")
+    check("major choice wording",C.announce_text(opts,true):find("^Major choice: ")~=nil)
+    -- Choosing calls the shown button's own ClickButton (the game's face-button path).
+    local clicked=nil
+    local function b(t,i,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,DialogText={GetText=function()return {ToString=function()return t end}end},
+        ActionIndex=i,OptionPosition=i,ClickButton=function()clicked=i end,Image_Up={IsValid=function()return true end,IsVisible=function()return false end}} end
+    local buttons={b("A",0,true),b("",1,false),b("C",2,true)}
+    local v={IsValid=function()return true end,IsInViewport=function()return true end,IsVisible=function()return true end,IsMajorChoice=function()return false end,
+        DialogButtons_Array={ForEach=function(_,cb)for i,x in ipairs(buttons) do cb(i,{get=function()return x end}) end end}}
+    _G.FindAllOf=function(n)return n=="BP_LiSDialogWidget_View_C" and {v} or {} end
+    local said={};C.say=function(t)said[#said+1]=t end
+    local list=C.read()
+    check("hidden and empty answers skipped",#list==2 and list[2].text=="C")
+    check("second announced answer clicks its own button",C.choose(2) and clicked==2)
+    check("missing answer refused",not C.choose(3) and said[#said]=="No answer 3.")
+    _G.FindAllOf=nil;package.loaded["dialogue.choices"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

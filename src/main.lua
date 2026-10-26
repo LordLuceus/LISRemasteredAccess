@@ -92,6 +92,7 @@ local face_probe_tick=nil
 local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
+local choices=require("dialogue.choices")
 local function face_selected()
     if not playable() then return end
     local c=scanner.controller()
@@ -113,6 +114,10 @@ RegisterKeyBindAsync(Key.F,on_game(face_selected))
 local actions=require("scanner.actions")
 for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
     RegisterKeyBindAsync(k,on_game(function()
+        if in_menu() then return end
+        -- An open dialogue choice takes the number keys (control is not
+        -- required: the game holds Max during conversations).
+        if choices.read() then choices.choose(n);return end
         if not playable() then return end
         local c=scanner.controller();if c then actions.trigger(c,n) end
     end))
@@ -162,6 +167,21 @@ local function tutorial_step()
         end
     end
 end
+-- Dialogue choices: announced once when a new set of answers appears.
+local last_choices=nil
+local function choices_step()
+    if in_menu() then last_choices=nil;return end
+    local ok,options,major=pcall(choices.read)
+    if not ok or not options then last_choices=nil;return end
+    choices.keys(options,controls.using_gamepad(),major)
+    local text=choices.announce_text(options,major)
+    if text~=last_choices then
+        last_choices=text
+        say(text,true)
+        local d={};for _,o in ipairs(options) do d[#d+1]=tostring(o.slot)..":"..tostring(o.index)..":"..tostring(o.direction)..":"..tostring(o.position) end
+        log("choice_announce slots="..table.concat(d,",").." major="..tostring(major).." spoken="..text)
+    end
+end
 local menu_errors,settings_tick=0,0
 local arrows_done=false
 local function menu_step()
@@ -171,6 +191,7 @@ local function menu_step()
             -- player's input has been created and can rebuild its key maps.
             if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
             tutorial_step()
+            choices_step()
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
             local text,fallback=tracker:update(snap)
@@ -213,6 +234,9 @@ help.text=function(key,p)return l10n.text(key,p)end
 preview.text=function(key)return l10n.text(key)end
 tutorial.text=function(key,p)return l10n.text(key,p)end
 tutorial.log=log
+choices.text=function(key,p)return l10n.text(key,p)end
+choices.log=log
+choices.say=function(text)say(text,true)end
 preview.say=function(text)say(text,true)end
 preview.play=function(file)return speech.play and speech.play(speech.audio_dir..file) end
 autowalk.log=log
