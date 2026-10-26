@@ -912,5 +912,27 @@ do
     check("controller without slot falls back to number",A.announce_text("Car",{"Look"})=="Car. 1, Look.")
     package.loaded["scanner.actions"]=nil
 end
+-- Tutorial prompts: captured classroom texts; drag prompts rewritten by block name.
+do
+    package.loaded["hud.tutorial"]=nil
+    local T=require("hud.tutorial");T.text=function(k)return k end
+    check("look rewritten (keyboard)",T.compose({{name="Look_M+K",text="Hold Left Mouse Button, drag <img id=\"Mouse\"/> towards “Look”"}},false)=="tutorial_look_keys")
+    check("look rewritten (controller)",T.compose({{name="Look_GamepadRich",text="Aim at the photo with <img id=\"RStick36\"/>"}},true)=="tutorial_look_pad")
+    check("selfie rewritten",T.compose({{name="Selfie_GamepadRich",text="press Left Mouse Button"}},true)=="tutorial_selfie_pad")
+    check("images spoken",T.compose({{name="SpiralRich",text="Hold <img id=\"LTXB1_0\"/> to rewind"}},true)=="Hold left trigger to rewind")
+    local en0=require("lang.en");T.text=function(k)return en0[k] or k end
+    check("split move prompt names the stick",T.compose({{name="MoveTutorialPad1",text="Use "},{name="MoveTutorialPad2",text=" to move"}},true)=="Use the left stick to move")
+    check("split camera prompt names the stick",T.compose({{name="CameraPad1",text="Use "},{name="CameraPad2",text=" to look around"}},true)=="Use the right stick to look around")
+    check("split mouse camera prompt",T.compose({{name="CameraMouse1",text="Use "},{name="CameraMouse2",text=" to look around"}},false)=="Use the mouse to look around")
+    check("split rewind prompts name the trigger",T.compose({{name="TextBlock_SpiralPad1",text="Hold "},{name="TextBlock_SpiralPad2",text=" to rewind"}},true)=="Hold the left trigger to rewind")
+    check("split quick undo names the bumper",T.compose({{name="QuickUndoTutorialPad1",text="Press "},{name="QuickUndoTutorialPad2",text=" to quickly undo"}},true)=="Press the left bumper to quickly undo")
+    T.text=function(k)return k end
+    check("keyboard text as shown",T.compose({{name="MoveTutorialMouse",text="Use W, S, A, D to move."}},false)=="Use W, S, A, D to move.")
+    check("untranslated key dropped",T.compose({{name="Selfie_Gamepad_1x",text="$GT_Mobile_UI_Tuto_SelfieGamepad2"}},true)==nil)
+    check("quotes and lines normalised",T.speakable("A “Look”\r\nB")=='A "Look" B')
+    local en=require("lang.en")
+    check("rewrite strings exist",en.tutorial_look_keys and en.tutorial_look_pad and en.tutorial_selfie_keys and en.tutorial_selfie_pad)
+    package.loaded["hud.tutorial"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

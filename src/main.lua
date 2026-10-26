@@ -91,6 +91,7 @@ local face=require("scanner.face")
 local face_probe_tick=nil
 local help=require("core.help")
 local preview=require("core.preview")
+local tutorial=require("hud.tutorial")
 local function face_selected()
     if not playable() then return end
     local c=scanner.controller()
@@ -147,6 +148,20 @@ reread=function()
     if not snap or not snap.label or snap.label=="" then return nil end
     return require("core.text").join(snap.label,snap.value)
 end
+-- Tutorial prompts: spoken once when a new one appears (Ctrl+Home repeats it).
+local last_tutorial=nil
+local function tutorial_step()
+    if in_menu() then return end
+    local ok,text,names,rewrite=pcall(tutorial.current,controls.using_gamepad())
+    if not ok then return end
+    if text~=last_tutorial then
+        last_tutorial=text
+        if text then
+            say(text,false)
+            log("tutorial_prompt blocks="..tostring(names).." rewrite="..tostring(rewrite).." spoken="..text)
+        end
+    end
+end
 local menu_errors,settings_tick=0,0
 local arrows_done=false
 local function menu_step()
@@ -155,6 +170,7 @@ local function menu_step()
             -- Arrow keys mirror WASD. Applied once the title screen exists, so the
             -- player's input has been created and can rebuild its key maps.
             if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
+            tutorial_step()
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
             local text,fallback=tracker:update(snap)
@@ -189,11 +205,14 @@ do local ok,req=pcall(require,"LISNavRequest")
         face.watch=function(c,e)probe.watch(c,e,log)end
         face_probe_tick=probe.tick
         actions.trace_popup=true
+        tutorial.trace=true
     end
 end
 face.text=function(key,p)return l10n.text(key,p)end
 help.text=function(key,p)return l10n.text(key,p)end
 preview.text=function(key)return l10n.text(key)end
+tutorial.text=function(key,p)return l10n.text(key,p)end
+tutorial.log=log
 preview.say=function(text)say(text,true)end
 preview.play=function(file)return speech.play and speech.play(speech.audio_dir..file) end
 autowalk.log=log
