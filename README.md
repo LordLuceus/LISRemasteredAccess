@@ -66,6 +66,13 @@ starts and when you arrive. Moving yourself (W, A, S, D, the arrow keys or the
 left stick) or pressing Shift+Home again stops it. It also stops if something
 blocks the way or the game takes over, and tells you which.
 
+Some places have no walking paths from the game, such as most of the
+Dormitories lawn. There the mod works out its own way around obstacles, which
+can take a moment: you hear "Finding a way to" and the name. If it says "No
+route" where you know you can walk, try again from a few steps away or from
+another object; please report it, as the log records why. Places the story
+hasn't opened yet also say "No route".
+
 In the opening nightmare, select the Lighthouse and walk to it: the scene goes on
 when you reach it.
 

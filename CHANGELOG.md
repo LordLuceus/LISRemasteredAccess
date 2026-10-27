@@ -2,6 +2,15 @@
 
 Player-facing changes, newest first.
 
+## 2026-10-27
+
+### In play
+- Autowalk works where the game has no walking paths of its own, such as most
+  of the Dormitories lawn, where it used to say "No route" to the water pump,
+  Samuel and others. It now finds its own way around obstacles; if that takes a
+  moment you hear "Finding a way to Water Pump." It still says "No route" when
+  the story hasn't opened the way yet.
+
 ## 2026-10-26
 
 ### In play
