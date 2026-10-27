@@ -103,6 +103,7 @@ local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
 local tooltip=require("hud.tooltip")
+local sms=require("hud.sms")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local journal_cursor=journal.cursor()
@@ -240,6 +241,11 @@ local function prompt_step()
         if text then say(text,true);log("activity_prompt spoken="..text) end
     end
 end
+-- New text messages, announced once when the HUD's notification appears.
+local function sms_step()
+    local ok,text=pcall(sms.tick)
+    if ok and text then say(text,true);log("sms_notification trigger="..tostring(sms.trigger).." spoken="..text) end
+end
 local function tooltip_step()
     if in_menu() then last_tooltip=nil;return end
     local ok,text=pcall(tooltip.current)
@@ -291,6 +297,7 @@ local function menu_step()
             choices_step()
             tooltip_step()
             prompt_step()
+            sms_step()
             viewer_step()
             journal_step()
             if settings_tick%8==1 then refresh_settings() end
@@ -365,6 +372,7 @@ do
         return map[paragraph]
     end
 end
+sms.text=function(key,p)return l10n.text(key,p)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
 -- The widget's own key text on the keyboard (it follows the player's binding);
 -- the controller button by name, since the controller shows a picture.

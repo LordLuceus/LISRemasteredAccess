@@ -1458,5 +1458,25 @@ do
     check("placeholder words ignored",T.prompt_text("dsfasdfasfd","Space")==nil and T.prompt_text("$GT_HUD_Skip","Space")==nil)
     package.loaded["hud.tooltip"]=nil
 end
+-- New text message notifications (HUD).
+do
+    package.loaded["hud.sms"]=nil
+    local S=require("hud.sms")
+    local en=require("lang.en")
+    S.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    check("one message",S.announce("Chloe","1")=="New message from Chloe.")
+    check("several unread",S.announce("Warren","3")=="New message from Warren. 3 unread.")
+    check("placeholder sender ignored",S.announce("Text Block","1")==nil and S.announce("","1")==nil)
+    local a={hud=1,sms=true,playing=false,sender="Chloe",count="1"}
+    check("first look only records",not S.is_new(nil,a))
+    check("unchanged, not new",not S.is_new(a,{hud=1,sms=true,playing=false,sender="Chloe",count="1"}))
+    check("animation starting is new (same sender and count)",S.is_new(a,{hud=1,sms=true,playing=true,sender="Chloe",count="1"})=="animation")
+    check("still playing is not new again",not S.is_new({hud=1,sms=true,playing=true,sender="Chloe",count="1"},{hud=1,sms=true,playing=true,sender="Chloe",count="1"}))
+    check("another sender is new",S.is_new(a,{hud=1,sms=true,playing=false,sender="Warren",count="1"})=="change")
+    -- 27 Oct: a scene load made a new HUD whose Sender holds its designer text.
+    check("a new scene's HUD is only recorded",not S.is_new({hud=1,sms=true,playing=false,sender="Victoria",count="1"},{hud=2,sms=true,playing=true,sender="Chloe",count="1"}))
+    check("a new photo is not a message",not S.is_new(a,{hud=1,sms=false,playing=true,sender="Chloe",count="1"}))
+    package.loaded["hud.sms"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -91,6 +91,8 @@ return {
     journal_unknown_sender="Unknown sender",
     journal_unread="{name}, {count} unread",
     journal_new_message="New message.",
+    sms_new="New message from {name}.",
+    sms_new_many="New message from {name}. {count} unread.",
     journal_item="{text}",
     journal_page="Page {index} of {count}.",
     journal_no_items="Nothing to read on this page.",
