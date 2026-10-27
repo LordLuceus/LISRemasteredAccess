@@ -1435,5 +1435,23 @@ do
     check("line over an unsampled cell is not open",not s:line_open({X=0,Y=0},{X=0,Y=2400}))
     package.loaded["nav.grid"]=nil
 end
+-- Action tooltips: the exit prompt with the device's interact key.
+do
+    package.loaded["hud.tooltip"]=nil
+    local T=require("hud.tooltip")
+    local key=function(a)return a=="action_interact" and "Space" or nil end
+    check("exit prompt with key",T.speakable("[action_interact] Go To The Main Campus",key)=="Go To The Main Campus, Space")
+    check("unknown action dropped",T.speakable("[action_mystery] Leave",function()return nil end)=="Leave")
+    check("developer placeholder ignored",T.speakable("dsfasdfasfd",key)==nil)
+    check("empty ignored",T.speakable("  ",key)==nil and T.speakable(nil,key)==nil)
+    check("untranslated key ignored",T.speakable("$GT_HUD_Int_GoToCampusA",key)==nil)
+    -- Standing in an exit (its live bounds) gives that exit's prompt.
+    local list={{id="a",pos={X=0,Y=0,Z=100},extent={X=200,Y=100,Z=100},prompt="[action_interact] Go To The Parking Lot"}}
+    check("inside the exit",T.exit_at(list,{X=150,Y=50,Z=5})~=nil)
+    check("outside the exit",T.exit_at(list,{X=260,Y=0,Z=5})==nil)
+    check("margin keeps it while at the edge",T.exit_at(list,{X=240,Y=0,Z=5},50)~=nil)
+    check("exit prompt spoken with the key",T.speakable(T.exit_at(list,{X=0,Y=0,Z=5}).prompt,key)=="Go To The Parking Lot, Space")
+    package.loaded["hud.tooltip"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -253,15 +253,23 @@ local function exits(out)
             -- bIncludeFromChildActors); the four-argument form raises an error.
             v:GetActorBounds(false,o,e)
             local centre=point(o)
-            local label=M.exit_label(M.translate(key))
+            local prompt=M.translate(key)
+            local label=M.exit_label(prompt)
             return {id=v:GetFullName(),label=M.text("exit_label",{name=label}),pos=centre,
-                stand={X=centre.X,Y=centre.Y,Z=centre.Z-(e.Z or 0)},kind="exit"}
+                stand={X=centre.X,Y=centre.Y,Z=centre.Z-(e.Z or 0)},kind="exit",
+                prompt=prompt,extent={X=e.X,Y=e.Y,Z=e.Z}}
         end)
         if ok and entry then
             out[#out+1]=entry
             report_once("exit_found:"..entry.id,string.format("scanner_exit label=%s at=%.0f,%.0f,%.0f",entry.label,entry.pos.X,entry.pos.Y,entry.pos.Z))
         elseif not ok then report_once("exit:"..tostring(#out),"scanner_source exit_error="..tostring(entry)) end
     end
+end
+-- Active exits only (for announcing the exit prompt when Max is inside one).
+function M.exits()
+    local out={}
+    exits(out)
+    return out
 end
 function M.collect(controller)
     local out={}

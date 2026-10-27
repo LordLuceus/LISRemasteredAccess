@@ -102,6 +102,7 @@ local face_probe_tick_reader=nil
 local help=require("core.help")
 local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
+local tooltip=require("hud.tooltip")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local journal_cursor=journal.cursor()
@@ -200,6 +201,42 @@ local function choices_step()
         log("choice_announce slots="..table.concat(d,",").." major="..tostring(major).." spoken="..text)
     end
 end
+-- Prompts: the game's tooltip line (thoughts such as "I need to get Victoria
+-- out of my way" and the objective), spoken once when it changes; and the exit
+-- prompt, spoken when Max walks into an active exit. The game draws the exit
+-- prompt in a way no widget reports, so it comes from the exit itself (the
+-- same text the scanner uses, with the interact key for the device).
+local last_tooltip=nil
+local exit_inside,exit_check=nil,0
+local function exit_step()
+    exit_check=exit_check+1
+    if exit_check%2~=0 then return end -- twice a second is plenty
+    local c=scanner.controller()
+    if not (c and control:has_control()) then return end
+    local ok,list=pcall(require("scanner.sources").exits)
+    if not ok then return end
+    local p=nil
+    pcall(function()local cap=c.Pawn.CapsuleComponent;local l=cap:K2_GetComponentLocation();p={X=l.X,Y=l.Y,Z=l.Z-cap:GetScaledCapsuleHalfHeight()}end)
+    if not p then return end
+    local e=tooltip.exit_at(list,p,exit_inside and 50 or 0)
+    local id=e and e.id or nil
+    if id~=exit_inside then
+        exit_inside=id
+        if e then
+            local text=tooltip.speakable(e.prompt,tooltip.key_name)
+            if text then say(text,true);log("exit_prompt spoken="..text) end
+        end
+    end
+end
+local function tooltip_step()
+    if in_menu() then last_tooltip=nil;return end
+    local ok,text=pcall(tooltip.current)
+    if not ok then return end
+    if text~=last_tooltip then
+        last_tooltip=text
+        if text then say(text,true);log("tooltip source="..tostring(tooltip.source).." spoken="..text) end
+    end
+end
 -- Object viewer: each page read when it is shown (Ctrl+Home repeats).
 local last_page=nil
 local function viewer_step()
@@ -240,6 +277,7 @@ local function menu_step()
             if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
             tutorial_step()
             choices_step()
+            tooltip_step()
             viewer_step()
             journal_step()
             if settings_tick%8==1 then refresh_settings() end
@@ -314,6 +352,7 @@ do
         return map[paragraph]
     end
 end
+tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
 choices.text=function(key,p)return l10n.text(key,p)end
 choices.log=log
 choices.say=function(text)say(text,true)end
@@ -345,7 +384,7 @@ local function main_step()
             end
             autowalk.tick()
             face.tick()
-            if c and control:has_control() and not in_menu() then actions.tick(c) end
+            if c and control:has_control() and not in_menu() then actions.tick(c);pcall(exit_step) end
             if face_probe_tick then face_probe_tick() end
             if face_probe_tick_reader then face_probe_tick_reader() end
         end)

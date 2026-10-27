@@ -11,6 +11,9 @@ M.commands={
     -- The game's own confirm/cancel bindings (DefaultInput.ini UI_Confirm/UI_Cancel).
     confirm={keyboard="Enter",controller="A"},
     back={keyboard="Escape",controller="B"},
+    -- Exit prompts ([action_interact] in their text) take Space on the keyboard
+    -- (confirmed in play; C and the mouse do nothing there) and A on a controller.
+    exit_confirm={keyboard="Space",controller="A"},
 }
 -- Controller buttons for the interaction pop-up's four slots. From the pop-up's
 -- own code: slot 1 is its Left action, 2 Top, 3 Right, 4 Bottom; the game maps
