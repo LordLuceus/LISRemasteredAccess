@@ -228,6 +228,18 @@ local function exit_step()
         end
     end
 end
+-- Activity prompts are their own line: the thought line can stay on screen
+-- the whole time, so a shared "latest text" would never let the prompt through.
+local last_prompt=nil
+local function prompt_step()
+    if in_menu() then last_prompt=nil;return end
+    local ok,text=pcall(tooltip.prompt)
+    if not ok then return end
+    if text~=last_prompt then
+        last_prompt=text
+        if text then say(text,true);log("activity_prompt spoken="..text) end
+    end
+end
 local function tooltip_step()
     if in_menu() then last_tooltip=nil;return end
     local ok,text=pcall(tooltip.current)
@@ -278,6 +290,7 @@ local function menu_step()
             tutorial_step()
             choices_step()
             tooltip_step()
+            prompt_step()
             viewer_step()
             journal_step()
             if settings_tick%8==1 then refresh_settings() end
@@ -353,6 +366,12 @@ do
     end
 end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
+-- The widget's own key text on the keyboard (it follows the player's binding);
+-- the controller button by name, since the controller shows a picture.
+tooltip.prompt_key=function(shown)
+    if controls.using_gamepad() or not shown or not shown:find("%S") then return controls.name("stop_activity") end
+    return shown
+end
 choices.text=function(key,p)return l10n.text(key,p)end
 choices.log=log
 choices.say=function(text)say(text,true)end

@@ -14,6 +14,9 @@ M.commands={
     -- Exit prompts ([action_interact] in their text) take Space on the keyboard
     -- (confirmed in play; C and the mouse do nothing there) and A on a controller.
     exit_confirm={keyboard="Space",controller="A"},
+    -- Stopping an activity (the guitar, the drone, getting up): SkipPrimary,
+    -- Space on the keyboard; B on a controller.
+    stop_activity={keyboard="Space",controller="B"},
 }
 -- Controller buttons for the interaction pop-up's four slots. From the pop-up's
 -- own code: slot 1 is its Left action, 2 Top, 3 Right, 4 Bottom; the game maps

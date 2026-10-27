@@ -1451,6 +1451,11 @@ do
     check("outside the exit",T.exit_at(list,{X=260,Y=0,Z=5})==nil)
     check("margin keeps it while at the edge",T.exit_at(list,{X=240,Y=0,Z=5},50)~=nil)
     check("exit prompt spoken with the key",T.speakable(T.exit_at(list,{X=0,Y=0,Z=5}).prompt,key)=="Go To The Parking Lot, Space")
+    -- Activity prompts: the words plus the key, never a bare key.
+    check("stop prompt with key",T.prompt_text("Stop Playing","Space")=="Stop Playing, Space")
+    check("stop prompt on a controller",T.prompt_text("  Stop  Flying ","B")=="Stop Flying, B")
+    check("no words, nothing spoken",T.prompt_text("","Space")==nil and T.prompt_text(nil,"Space")==nil)
+    check("placeholder words ignored",T.prompt_text("dsfasdfasfd","Space")==nil and T.prompt_text("$GT_HUD_Skip","Space")==nil)
     package.loaded["hud.tooltip"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))

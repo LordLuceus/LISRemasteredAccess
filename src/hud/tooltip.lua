@@ -1,10 +1,12 @@
--- On-screen action tooltips (BP_LiSTooltipsHigh_View): the game's prompts such
--- as "[action_interact] Go To The Main Campus" when Max stands in an exit. The
--- exit's behaviour sends its prompt on the Tooltips announcement channel; this
--- widget, with its single TextBlock_Tolltip, is that channel's display.
--- Read only from the copy on screen. The text block also holds a developer
--- placeholder ("dsfasdfasfd") while hidden, so visibility is required and
--- obvious placeholder text is ignored.
+-- On-screen prompts:
+-- * the HUD's tooltip line (BP_Widget_HUD_View.TextBlock_Tolltip): Max's
+--   thoughts and objectives, read when they change;
+-- * activity prompts (BP_LiSPromptWidget_View): "Stop Playing" with its key;
+-- * exit prompts, which no widget reports (checked in play): spoken from the
+--   exit itself by main.lua using exit_at() and speakable().
+-- Read only from copies on screen. Text blocks also hold designer placeholders
+-- ("dsfasdfasfd") while hidden, so visibility is required and obvious
+-- placeholder text is ignored.
 local M={}
 M.key_name=function(_)return nil end
 local function on_screen(w)
@@ -35,8 +37,44 @@ M.SOURCES={
     {"BP_Widget_HUD_View_C","TextBlock_Tolltip"},
     {"BP_LiSTooltipsHigh_View_C","TextBlock_Tolltip"},
     {"BP_LiSNotificationWidget_View_C","TextBlock_Notification"},
-    {"BP_LiSPromptWidget_View_C","KeyText"},
 }
+-- Activity prompts ("Stop Playing", "Stop Flying", getting up): the game's
+-- prompt widget (BP_LiSPromptWidget_View) shows the words in SkipWordText and
+-- the key in KeyText - the key the game reads for SkipPrimary (Space) - or a
+-- face-button picture on a controller (B). Reading KeyText alone gave a bare
+-- "Space". Pure: the spoken form from the words and the key name.
+function M.prompt_text(words,key)
+    if type(words)~="string" then return nil end
+    local s=words:gsub("<[^>]+>",""):gsub("%s+"," "):gsub("^%s+",""):gsub("%s+$","")
+    if s=="" or not s:find("%a") or s:find("^%$") or s:lower()=="dsfasdfasfd" then return nil end
+    if key and key~="" then s=s..", "..key end
+    return s
+end
+-- key_for(shown_key_text) -> the key to name for the device in use.
+M.prompt_key=function(shown)return shown end
+local function visible_text(o)
+    local ok,s=pcall(function()
+        if not (o and o:IsValid() and o:IsVisible()) then return nil end
+        return o:GetText():ToString()
+    end)
+    return ok and s or nil
+end
+function M.prompt()
+    local found=nil
+    pcall(function()
+        for _,w in ipairs(FindAllOf("BP_LiSPromptWidget_View_C") or {}) do
+            if on_screen(w) then
+                local words=visible_text(w.SkipWordText)
+                if words then
+                    local shown=visible_text(w.KeyText)
+                    found=M.prompt_text(words,M.prompt_key(shown))
+                    if found then return end
+                end
+            end
+        end
+    end)
+    return found
+end
 M.source=nil
 local function shown(o)local ok,v=pcall(function()return o~=nil and o:IsValid() and o:IsVisible()end);return ok and v==true end
 function M.current()
