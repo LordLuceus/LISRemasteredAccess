@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-27
 
 ### In play
+- Prompts to stop an activity are read in full with their key, for example
+  "Stop Playing, Space" (B on a controller), instead of just "Space".
 - Max's thoughts and objectives are read when they change, for example "I need
   to get Victoria out of my way".
 - Exit prompts are read when you walk into an exit, with the key to press:
