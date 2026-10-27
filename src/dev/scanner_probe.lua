@@ -2,6 +2,7 @@
 -- each name as the game translates it, and finds a translator that works
 -- outside widgets. Read-only; runs once per scene.
 local M={}
+M.project_extents={{50,200},{150,400},{300,800},{600,1500}}
 local function valid(o)
     local ok,r=pcall(function()return o~=nil and o:IsValid()end)
     return ok and r==true
@@ -46,6 +47,18 @@ function M.run(controller,emit)
             local h,m=L.height({X=p.X,Y=p.Y,Z=p.Z},e.pos)
             emit(string.format("scanner_entry i=%d name=%s kind=%s distance=%.1fm dir=%s height=%s stand=%s id=%s",
                 i,e.name,e.kind,e.distance/100,L.direction(p,yaw,e.pos),h and string.format("%s %.1f",h,m) or "-",tostring(e.stand~=nil),e.id:match("[^.:]+$") or e.id))
+            -- Route diagnosis: the walk target (stand point, else the actor)
+            -- projected onto the navigation mesh with growing search boxes.
+            if M.project_extents then
+                local target=e.stand or e.pos
+                local parts={}
+                for _,ext in ipairs(M.project_extents) do
+                    local ok,out=false,nil
+                    pcall(function()ok,out=require("nav.route").project(controller,target,{X=ext[1],Y=ext[1],Z=ext[2]})end)
+                    parts[#parts+1]=string.format("%d/%d=%s",ext[1],ext[2],ok and string.format("%.0f,%.0f,%.0f",out.X,out.Y,out.Z) or "no")
+                end
+                emit(string.format("scanner_project i=%d name=%s target=%.0f,%.0f,%.0f stand=%s %s",i,e.name,target.X,target.Y,target.Z,tostring(e.stand~=nil),table.concat(parts," ")))
+            end
         end
     end
 end

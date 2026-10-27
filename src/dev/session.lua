@@ -44,7 +44,8 @@ local scenes = {
     junkyard={title="$GT_Menus_Journal_Episode2Sub6",map="E2_3A",path="/Game/Maps/Episode02/Sequence03/E2_3A"},
     nightmare={title="$GT_Menus_Journal_Episode1Sub1",map="E1_1A",path="/Game/Maps/Episode01/Sequence01/E1_1A"},
     classroom={title="$GT_Menus_Journal_Episode1Sub2",map="E1_2A",path="/Game/Maps/Episode01/Sequence02/E1_2A"},
-    campus={title="$GT_Menus_Journal_Episode1Sub3",map="E1_3A",path="/Game/Maps/Episode01/Sequence03/E1_3A"}
+    campus={title="$GT_Menus_Journal_Episode1Sub3",map="E1_3A",path="/Game/Maps/Episode01/Sequence03/E1_3A"},
+    dorms={title="$GT_Menus_Journal_Episode1Sub4",map="E1_3B",path="/Game/Maps/Episode01/Sequence03/E1_3B"}
 }
 local native_controls_passed = false
 local travel_requested = false
@@ -270,6 +271,36 @@ poll_handle = LoopInGameThreadWithDelay(5000, function()
                             if done and player and request.scanner_probe then
                                 local sok,serr=pcall(function()require("dev.scanner_probe").run(controller,emit)end)
                                 if not sok then emit("scanner_probe_error="..tostring(serr)) end
+                                if request.offmesh_probe then
+                                    local ook,oerr=pcall(function()require("dev.offmesh_probe").run(controller,emit)end)
+                                    if not ook then emit("offmesh_probe_error="..tostring(oerr)) end
+                                end
+                                if request.navmesh_probe then
+                                    local nok,nerr=pcall(function()
+                                        local np=require("dev.navmesh_probe")
+                                        local system,list=np.describe(controller,emit)
+                                        if system then
+                                            -- Centre between the lawn and the pump (Dormitories).
+                                            np.grid(controller,system,list,-600,1000,10,emit,"first")
+                                            if request.navmesh_rebuild then
+                                                local rok,rerr=pcall(function()np.rebuild(controller,system,list,emit)end)
+                                                if not rok then emit("navprobe rebuild_error="..tostring(rerr)) end
+                                            end
+                                            local again=0
+                                            local h
+                                            h=LoopInGameThreadWithDelay(5000,function()
+                                                again=again+1
+                                                pcall(function()np.building(controller,emit,"t"..(again*5))end)
+                                                if again==6 then pcall(function()np.grid(controller,system,list,-600,1000,10,emit,"second")end) end
+                                                if again==14 then
+                                                    CancelDelayedAction(h)
+                                                    pcall(function()np.grid(controller,system,list,-600,1000,10,emit,"third")end)
+                                                end
+                                            end)
+                                        end
+                                    end)
+                                    if not nok then emit("navmesh_probe_error="..tostring(nerr)) end
+                                end
                             end
                             if done and player and request.scene=="nightmare" then
                                 local nok,best=pcall(function()return require("dev.nightmare").survey(controller,player,emit)end)
