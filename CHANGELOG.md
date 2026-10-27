@@ -5,6 +5,10 @@ Player-facing changes, newest first.
 ## 2026-10-27
 
 ### In play
+- Max's thoughts and objectives are read when they change, for example "I need
+  to get Victoria out of my way".
+- Exit prompts are read when you walk into an exit, with the key to press:
+  "Leave The Girls' Dormitories, Space" on the keyboard, or A on a controller.
 - Autowalk works where the game has no walking paths of its own, such as most
   of the Dormitories lawn, where it used to say "No route" to the water pump,
   Samuel and others. It now finds its own way around obstacles; if that takes a

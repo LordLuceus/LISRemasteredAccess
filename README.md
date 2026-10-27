@@ -34,8 +34,12 @@ The scanner lists the objects you can interact with, plus a scene's goal where
 the game has nothing to interact with (the opening nightmare's lighthouse),
 nearest first. It follows the story: objects appear when the game makes them
 available, not before. Exits are listed too, named after the game's own prompt
-("Go To The Main Campus, exit"): walk to one with Shift+Home, then use the game's
-interact key (A on a controller) to leave.
+("Go To The Main Campus, exit"): walk to one with Shift+Home. When you step into
+it the mod reads the game's prompt with the key to press ("Go To The Main
+Campus, Space"); press Space, or A on a controller, to leave.
+
+Max's thoughts and objectives ("I need to get Victoria out of my way") are read
+when they change.
 
 | Keyboard | Controller | Action |
 | --- | --- | --- |
