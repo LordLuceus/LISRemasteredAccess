@@ -17,10 +17,10 @@ end
 local function feet(pawn)
     local c=pawn.CapsuleComponent;local p=point(c:K2_GetComponentLocation());p.Z=p.Z-c:GetScaledCapsuleHalfHeight();return p
 end
-function M.project(controller,wanted)
+function M.project(controller,wanted,extent)
     local system,mesh=context(controller)
     local out={X=0,Y=0,Z=0}
-    local ok=system:K2_ProjectPointToNavigation(controller,wanted,out,mesh,nil,{X=50,Y=50,Z=200})
+    local ok=system:K2_ProjectPointToNavigation(controller,wanted,out,mesh,nil,extent or {X=50,Y=50,Z=200})
     return ok,out
 end
 function M.query(controller,pawn,label,from,goal,emit)

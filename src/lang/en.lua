@@ -28,6 +28,7 @@ return {
     exit_label="{name}, exit",
     walk_start="Walking to {name}.",
     walk_start_detour="Walking to {name}, around a closed door.",
+    walk_finding="Finding a way to {name}.",
     walk_arrived="Arrived at {name}.",
     walk_stopped="Walking stopped.",
     walk_interrupted="Walking stopped. The game took over.",

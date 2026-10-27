@@ -605,8 +605,6 @@ do
     fake_follow.ready_value=false;fake_follow.ready_reason="paused"
     check("not now",aw.start(c,mail)==false and spoken[#spoken]=="walk_not_now")
     fake_follow.ready_value=nil
-    plan_result=false
-    check("no route",aw.start(c,mail)==false and spoken[#spoken]=="walk_no_route:Mail")
     plan_result=nil
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
 end
@@ -1320,6 +1318,122 @@ do
     at(1,1.0);check("and waits the full delay again",n==4)
     at(1,1.26);check("then repeats",n==5)
     package.loaded["core.keys"]=nil
+end
+-- Off the navigation mesh: our own planner and walker take over.
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+    local loops={}
+    _G.LoopInGameThreadWithDelay=function(_,fn)loops[#loops+1]=fn;return #loops end
+    _G.CancelDelayedAction=function(h)loops[h]=false end
+    local function pump(n)for _=1,n or 1 do for i,f in ipairs(loops) do if f then f() end end end end
+    local ff={active=nil};ff.ready=function()return true end;ff.start=function()end;ff.stop=function()end;ff.tick=function()end
+    package.loaded["nav.follow"]=ff
+    local projectable=false
+    package.loaded["nav.route"]={project=function(_,p)return projectable,{X=p.X,Y=p.Y,Z=p.Z} end}
+    package.loaded["nav.doors"]={plan=function()return false end}
+    local plan_state,steps="found",0
+    local walked=nil
+    package.loaded["nav.offmesh"]={
+        planner=function()return {g={samples=0},waypoints={{X=150,Y=0,Z=0}},step=function(self)steps=steps+1;if plan_state=="failed" then self.reason="no_path" end;return plan_state end} end,
+        walk=function(_,_,wps,done)walked={wps=wps,done=done} end,
+        cancel=function()if walked then walked.done("cancelled",50);walked=nil;return true end;return false end,
+        ground_below=function(_,_,p)return p.Z-130 end}
+    local aw=require("autowalk.autowalk")
+    local spoken={};aw.say=function(t)spoken[#spoken+1]=t end
+    aw.text=function(k,p)return k..(p and p.name and (":"..p.name) or "") end
+    local pawn={CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=100}end,GetScaledCapsuleHalfHeight=function()return 84 end}}
+    local c={Pawn=pawn};local pump_e={name="Water Pump",stand={X=150,Y=0,Z=0},pos={X=160,Y=0,Z=50}}
+    check("unprojected target plans off the mesh",aw.start(c,pump_e)==true and aw.walking())
+    pump(1)
+    check("found: walk starts and is announced",walked~=nil and spoken[#spoken]=="walk_start:Water Pump")
+    walked.done("arrived_test_region",20)
+    check("off-mesh arrival announced",spoken[#spoken]=="walk_arrived:Water Pump" and not aw.walking())
+    aw.start(c,pump_e);pump(1)
+    check("cancel stops the off-mesh walk",aw.cancel()==true and spoken[#spoken]=="walk_stopped" and not aw.walking())
+    plan_state="failed"
+    aw.start(c,pump_e);pump(1)
+    check("no way found says no route",spoken[#spoken]=="walk_no_route:Water Pump" and not aw.walking())
+    projectable=true
+    aw.start(c,pump_e);pump(1)
+    check("no navmesh route also tries the grid",steps>=4 and spoken[#spoken]=="walk_no_route:Water Pump")
+    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+end
+-- Own grid planner (levels whose navigation mesh leaves ground uncovered).
+do
+    package.loaded["nav.grid"]=nil
+    local G=require("nav.grid")
+    -- A 20 x 20 m lawn at z=0 with a wall from y=-500..500 at x=1000 (gap at
+    -- y>500), a raised 1 m platform at x>1600, and nothing outside 2500 cm.
+    local function sample(x,y)
+        if math.abs(x)>2500 or math.abs(y)>2500 then return nil end
+        if x>=950 and x<=1050 and y>=-1500 and y<=500 then return nil end
+        if x>1600 and y<-1000 then return 100 end
+        return 0
+    end
+    local function run(s)local st;repeat st=s:step(200) until st~="running";return st end
+    local s=G.new({X=0,Y=0,Z=0},{X=2000,Y=0,Z=0},{sample=sample})
+    check("grid finds a way round the wall",run(s)=="found")
+    local through=false;for _,p in ipairs(s.path) do if p.X>=950 and p.X<=1050 and p.Y<=500 then through=true end end
+    check("grid path never crosses the wall",not through)
+    local endp=s.path[#s.path];check("grid ends at the target",(endp.X-2000)^2+endp.Y^2<=60^2)
+    local s2=G.new({X=0,Y=0,Z=0},{X=2000,Y=-2000,Z=0},{sample=sample})
+    check("grid refuses a 1 m step up",run(s2)=="failed")
+    local s3=G.new({X=0,Y=0,Z=0},{X=1550,Y=-2000,Z=0},{sample=sample})
+    check("reaches the foot of the platform",run(s3)=="found")
+    local function boxed(x,y)if math.abs(x)>=200 or math.abs(y)>=200 then return nil end;return 0 end
+    local s4=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=boxed})
+    check("grid reports an enclosed start",run(s4)=="failed" and s4.reason=="no_path")
+    local rep=s4:report(60)
+    check("failure report names the cause and maps the area",rep[1]:find("refused=") and rep[2]:find("^grid_target") and rep[3] and rep[3]:find("^grid_area") and #rep>4)
+    -- A diagonal line of refused cells (x+y=500, cell 50) is crossable only by
+    -- diagonal steps past two refused side cells: impossible without a corner
+    -- check, possible when the sweep says Max fits.
+    local function diag(x,y)
+        if math.abs(x)>1000 or math.abs(y)>1000 then return nil end
+        if math.abs((x+y)-500)<1 then return nil end
+        return 0
+    end
+    local s7=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=diag})
+    check("diagonal wall: no way without a corner check",run(s7)=="failed")
+    local corner_calls=0
+    local s8=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=diag,corner=function()corner_calls=corner_calls+1;return true end})
+    check("diagonal wall: crossed when the corner sweep allows it",run(s8)=="found" and corner_calls>0)
+    local s9=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=diag,corner=function()return false end})
+    check("diagonal wall: still refused when the sweep is blocked",run(s9)=="failed")
+    check("best distance recorded",s7.best_d<1000)
+    local big=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=function(x,y)if x>=900 then return nil end;return 0 end,reach=150})
+    check("a target inside an obstacle is reached from beside it with a larger reach",run(big)=="found")
+    -- Zachary (27 Oct): a person's centre is inside their collision, so with a
+    -- 60 cm arrival radius only a thin ring of cells could count, and whether
+    -- any grid cell landed in it depended on where Max started - failed from
+    -- one spot, found from another. Person: refused within 55 cm.
+    local function person(x,y)if (x-1000)^2+y^2<55^2 then return nil end;return 0 end
+    local a1=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=person,reach=60})
+    local a2=G.new({X=0,Y=25,Z=0},{X=1000,Y=0,Z=0},{sample=person,reach=60})
+    check("60 cm round a person: depends on the starting spot",run(a1)=="failed" and run(a2)=="found")
+    local b1=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=person,reach=150})
+    check("150 cm round a person: found from either spot",run(b1)=="found")
+    local far=G.new({X=0,Y=0,Z=0},{X=4270,Y=0,Z=0},{sample=function()return 0 end,radius=4000})
+    check("search area always contains the target",far.radius>=4270+2000)
+    local s5=G.new({X=0,Y=0,Z=0},{X=2000,Y=0,Z=0},{sample=sample,max_samples=100})
+    check("grid stops at its sample budget",run(s5)=="failed" and s5.reason=="too_far")
+    local s6=G.new({X=0,Y=0,Z=0},{X=2000,Y=0,Z=0},{sample=sample})
+    check("grid works in small steps",s6:step(10)=="running" and s6.samples<=18)
+    -- Shortening keeps only the corner at the wall's gap.
+    local function clear(a,b)
+        for t=0,1,0.02 do local x,y=a.X+(b.X-a.X)*t,a.Y+(b.Y-a.Y)*t;if not sample(x,y) then return false end end
+        return true
+    end
+    local short=G.shorten(s.path,clear)
+    check("shortened path has few waypoints",#short>=2 and #short<=4,#short)
+    local ok=true;local prev=s.path[1];for _,p in ipairs(short) do if not clear(prev,p) then ok=false end;prev=p end
+    check("every shortened leg is clear",ok)
+    local wp=s:waypoints()
+    local ok2=true;local pv=s.path[1];for _,p in ipairs(wp) do if not clear(pv,p) then ok2=false end;pv=p end
+    check("waypoints from the grid's own cells are clear",ok2 and #wp<=6,#wp)
+    check("line over an unsampled cell is not open",not s:line_open({X=0,Y=0},{X=0,Y=2400}))
+    package.loaded["nav.grid"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
