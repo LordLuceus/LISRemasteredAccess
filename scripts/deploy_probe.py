@@ -30,6 +30,18 @@ try:
         raise RuntimeError('Close the remaster before deployment')
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     game = Path(data['game']).resolve()
+    # A test run that was interrupted can leave its session request installed;
+    # a normal launch would then start a test session. Put the neutral request
+    # back (no claim is held here, so no run owns it) and say so.
+    neutral = "return {scene='inspect'}"
+    request = game / SCRIPTS / 'LISNavRequest.lua'
+    if request.exists() and request.read_text(encoding='utf-8-sig') != neutral:
+        request.write_bytes(neutral.encode('utf-8'))
+        for f in data['files']:
+            if f['relative'] == str(SCRIPTS / 'LISNavRequest.lua'):
+                f['installed_sha256'] = sha(request)
+        manifest.write_text(json.dumps(data, indent=4), encoding='utf-8')
+        print('Leftover test-session request found and reset to neutral')
     sources = [(s, SCRIPTS / s.relative_to(root / 'src')) for s in sorted((root / 'src').rglob('*.lua'))]
     native = root / 'artifacts/build-native/Release/lisr_speech.dll'
     if not native.exists():

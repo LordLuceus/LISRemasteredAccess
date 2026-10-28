@@ -18,7 +18,11 @@ $gameDir=$manifest.game
 $exe=Join-Path $gameDir 'LiS-Win64-Shipping.exe'
 foreach($item in $manifest.files){
     $installed=Join-Path $gameDir $item.relative
-    if(-not(Test-Path -LiteralPath $installed) -or (Get-FileHash -LiteralPath $installed -Algorithm SHA256).Hash -ne $item.installed_sha256){throw "Installed prototype file changed: $($item.relative)"}
+    if(-not(Test-Path -LiteralPath $installed) -or (Get-FileHash -LiteralPath $installed -Algorithm SHA256).Hash -ne $item.installed_sha256){
+        # Nothing has been launched or changed yet: release the claim so a
+        # refused start does not block every later run.
+        Remove-Item -LiteralPath $operator -Recurse -ErrorAction SilentlyContinue
+        throw "Installed prototype file changed: $($item.relative) (claim released; run deploy_probe.py to repair a leftover request)"}
 }
 $before=@{}
 foreach($folder in @('SaveGames','Config/WindowsNoEditor')){
