@@ -36,7 +36,9 @@ end
 --   cell (cm, default 50); maxdz (largest height change between neighbours,
 --   default 45); reach (cm: end within this horizontal distance of the target,
 --   default 60); reach_dz (default 150); max_samples (default 6000);
---   radius (cm from start, default 4000); corner(a,b) -> true when Max can
+--   radius (cm from start, default 4000); corridor (cm: only cells within this
+--   distance of the straight line start->target, for short guided legs);
+--   corner(a,b) -> true when Max can
 --   step diagonally from cell a to cell b although a side cell is refused (a
 --   Max-sized sweep); without it diagonals past a refused cell are not taken.
 function M.new(start,target,opts)
@@ -48,6 +50,7 @@ function M.new(start,target,opts)
     -- The search area always contains the target, with room to go round.
     s.radius=math.max(opts.radius or 4000,dist+2000)
     s.why={};s.blockers={};s.step_rejects=0
+    s.corridor=opts.corridor
     s.best_d=math.huge -- closest reached cell to the target (cm, horizontal)
     s.samples=0;s.z={};s.g={};s.parent={};s.closed={};s.open={}
     s.ti=(target.X-start.X)/s.cell;s.tj=(target.Y-start.Y)/s.cell
@@ -55,6 +58,14 @@ function M.new(start,target,opts)
     push(s.open,{s:h(0,0),0,0})
     s.state="running"
     return s
+end
+-- Horizontal distance from (x,y) to the segment a-b.
+function M.segment_distance(x,y,a,b)
+    local dx,dy=b.X-a.X,b.Y-a.Y
+    local len2=dx*dx+dy*dy
+    local t=len2>0 and ((x-a.X)*dx+(y-a.Y)*dy)/len2 or 0
+    t=math.max(0,math.min(1,t))
+    return math.sqrt((x-a.X-dx*t)^2+(y-a.Y-dy*t)^2)
 end
 function M:h(i,j)
     local di,dj=math.abs(self.ti-i),math.abs(self.tj-j)
@@ -68,6 +79,7 @@ function M:ground(i,j,zref)
     if z==nil then
         local x,y=self:pos(i,j)
         if (x-self.start.X)^2+(y-self.start.Y)^2>self.radius^2 then z=false;self.why.radius=(self.why.radius or 0)+1
+        elseif self.corridor and M.segment_distance(x,y,self.start,self.target)>self.corridor then z=false;self.why.corridor=(self.why.corridor or 0)+1
         else
             self.samples=self.samples+1
             local why

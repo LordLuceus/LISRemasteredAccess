@@ -271,11 +271,44 @@ function M.exits()
     exits(out)
     return out
 end
+-- The ending nightmare's guide (nightmare/guide.lua): one entry, at the next
+-- step along the doe's route, worked out afresh from Max's position.
+M.guide=require("nightmare.guide")
+local function in_ending(controller)
+    local ok,name=pcall(function()return controller:GetWorld():GetFName():ToString()end)
+    return ok and name=="E1_6B"
+end
+M.in_ending=in_ending
+function M.guide_entry(controller)
+    if not in_ending(controller) then return nil end
+    local G=M.guide
+    local p=nil;pcall(function()p=point(controller.Pawn:K2_GetActorLocation())end)
+    if not p then return nil end
+    local is_active=availability.fact_reader(controller)
+    local held=function(h)if h=="logs" then return G.logs_held(function(f)return is_active(f)==true end) end end
+    local i=G.current(p,held)
+    local st=G.STEPS[i]
+    local name=M.text(st.label)
+    local label=M.text("guide_entry",{name=name})
+    -- name as well as label: the scanner list adds name, but a chained guide
+    -- walk takes this entry straight from here.
+    return {id="nightmare_guide",label=label,name=label,pos={X=st.X,Y=st.Y,Z=st.Z},
+        stand={X=st.X,Y=st.Y,Z=st.Z},kind="guide",through=st.through,persist=st.persist,reach=st.reach,wait_fact=st.wait_fact,step=i,steps=#G.STEPS,step_name=name,step_id=st.id}
+end
 function M.collect(controller)
     local out={}
     interactions(controller,out)
     goals(out)
     exits(out)
+    local ok,g=pcall(M.guide_entry,controller)
+    if ok and g then
+        -- The newspaper is the guide's last step: listed on its own only once
+        -- the guide has reached it, so the guide is the one entry until then.
+        if g.step_id~="newspaper" then
+            for i=#out,1,-1 do if out[i].kind=="interaction" then table.remove(out,i) end end
+        end
+        out[#out+1]=g
+    elseif not ok then report_once("guide","scanner_source guide_error="..tostring(g)) end
     return out
 end
 return M

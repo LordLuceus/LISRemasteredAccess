@@ -17,6 +17,9 @@ M.commands={
     -- Stopping an activity (the guitar, the drone, getting up): SkipPrimary,
     -- Space on the keyboard; B on a controller.
     stop_activity={keyboard="Space",controller="B"},
+    -- Rewind: hold (DefaultInput.ini RewindSecondary = R, RewindPrimary = right
+    -- mouse button; Rewind = left trigger on a controller).
+    rewind={keyboard="R",controller="the left trigger"},
 }
 -- Controller buttons for the interaction pop-up's four slots. From the pop-up's
 -- own code: slot 1 is its Left action, 2 Top, 3 Right, 4 Bottom; the game maps

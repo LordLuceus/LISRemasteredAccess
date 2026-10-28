@@ -86,7 +86,7 @@ M.sweep_blocker=sweep_blocker
 -- depending on where the search starts. A search that never got close (a
 -- walled-off area) is not retried, so a real "no route" stays quick.
 M.NEAR_MISS=400
-function M.planner(controller,pawn,start,target,reach)
+function M.planner(controller,pawn,start,target,reach,corridor)
     local sampler=function(x,y,zref)
         local z,why=ground(controller,pawn,x,y,zref+150)
         if not z then return nil,why end
@@ -95,7 +95,7 @@ function M.planner(controller,pawn,start,target,reach)
         return z
     end
     local corner=function(a,b)return sweep_blocker(controller,pawn,a,b)==nil end
-    local g=grid.new(start,target,{sample=sampler,corner=corner,reach=reach})
+    local g=grid.new(start,target,{sample=sampler,corner=corner,reach=reach,corridor=corridor})
     local p={g=g,controller=controller,pawn=pawn,retried=false,reports={}}
     -- Returns "running", "found" (p.waypoints) or "failed" (p.reason).
     function p:step(budget)
@@ -105,7 +105,7 @@ function M.planner(controller,pawn,start,target,reach)
             for _,line in ipairs(self.g:report(100)) do self.reports[#self.reports+1]=line end
             M.log(string.format("offmesh_plan retry closest=%.0f cell=35",self.g.best_d))
             self.first=self.g
-            self.g=grid.new(start,target,{sample=sampler,corner=corner,reach=reach,cell=35,max_samples=10000})
+            self.g=grid.new(start,target,{sample=sampler,corner=corner,reach=reach,corridor=corridor,cell=35,max_samples=10000})
             return "running"
         end
         if st=="found" then

@@ -91,7 +91,8 @@ local function walk_toggle()
     if autowalk.cancel() then return end
     if not playable() then return end
     local c=scanner.controller()
-    if c then autowalk.start(c,scanner.selected()) end
+    -- One value only: selected() also returns the list index.
+    if c then local e=scanner.selected();autowalk.start(c,e) end
 end
 bind_key(Key.HOME,{ModifierKey.SHIFT},on_game(walk_toggle))
 -- F faces the selected object; F1 help; F2 sound preview (help and preview
@@ -241,6 +242,119 @@ local function prompt_step()
         if text then say(text,true);log("activity_prompt spoken="..text) end
     end
 end
+-- Ending nightmare guide: hazard and shelter announcements from the game's
+-- own danger facts, while the scene is loaded.
+local guide=require("nightmare.guide")
+local guide_facts=nil
+local lighthouse_track=require("nightmare.rewind").tracker()
+local pending_guide_restart=false
+local lighthouse_closed_told=false
+local lighthouse_rewinding=false
+local lighthouse_let_go_said=false
+local lighthouse_done=false
+local lighthouse_matinee=nil
+-- The lighthouse falling sequence (not its reversed twin), or nil.
+local function lighthouse_obs()
+    local m=lighthouse_matinee
+    local ok=pcall(function()if not (m and m:IsValid()) then m=nil end end)
+    if not ok then m=nil end
+    if not m then
+        for _,a in ipairs(FindAllOf("MatineeActor") or {}) do
+            local n="";pcall(function()n=a:GetFullName()..";"..a.MatineeData:GetFullName()end)
+            if n:find("E1_6B",1,true) and n:find("LighthouseFalling",1,true) and not n:find("_REV",1,true) then m=a;break end
+        end
+        lighthouse_matinee=m
+    end
+    if not m then return nil end
+    local o={}
+    pcall(function()o.pos=m.InterpPosition;o.playing=m.bIsPlaying==true;o.reverse=m.bReversePlayback==true;o.rate=m.PlayRate end)
+    return o
+end
+-- Every 50 ms in the ending: being caught by the lighthouse, rewinding past
+-- its tree (let go), and walking again from the restart point.
+local function lighthouse_fast_step()
+    local c=scanner.controller()
+    if not c then return end
+    local sources=require("scanner.sources")
+    if not sources.in_ending(c) then lighthouse_done=false;return end
+    if lighthouse_done then return end
+    pcall(function()
+        local p=c.Pawn:K2_GetActorLocation()
+        if (p.X-guide.NEWSPAPER.X)^2+(p.Y-guide.NEWSPAPER.Y)^2<300^2 then lighthouse_done=true;log("guide_lighthouse done") end
+    end)
+    if lighthouse_done then return end
+    local cur={}
+    for _,f in ipairs({"LighthouseTree","LighthouseFallingDanger"}) do
+        local ok,v=pcall(function()return c:IsFactActive(FName(f))end);cur[f]=ok and v==true
+    end
+    -- Let go: on the near side, when the tree is standing again (Max is at
+    -- the game's restart point); past the hole, once the debris has passed.
+    local maxp=nil;pcall(function()maxp=c.Pawn:K2_GetActorLocation()end)
+    if lighthouse_rewinding and not lighthouse_let_go_said then
+        local o=lighthouse_obs()
+        if o and guide.let_go(o.pos,maxp,cur.LighthouseTree) then
+            lighthouse_let_go_said=true
+            say(l10n.text("guide_let_go"),true);log(string.format("guide_lighthouse let_go pos=%.2f past_hole=%s",o.pos or -1,tostring(guide.past_hole(maxp))))
+        end
+    end
+    -- The lighthouse: its sequence shows being caught (frozen), the rewind
+    -- (playing backwards) and its end. Rewound back before the tree, the game
+    -- puts Max before the tree; the guide then walks to the newspaper again.
+    -- (Pawn:IsRewinding stays false while rewinding - measured - so it is
+    -- not used.)
+    local obs=lighthouse_obs()
+    if obs then
+        local ev=lighthouse_track:update(obs)
+        if ev then log(string.format("guide_lighthouse event=%s pos=%.2f",ev,obs.pos)) end
+        if ev=="rewind_started" then lighthouse_rewinding=true;lighthouse_let_go_said=false elseif ev=="rewind_done" or ev=="caught" then lighthouse_rewinding=false end
+        if ev=="caught" then
+            autowalk.cancel_quiet()
+            say(l10n.text("guide_lighthouse_caught",{key=controls.name("rewind")}),true)
+        elseif ev=="rewind_done" and guide.past_hole(maxp) then
+            -- Past the hole: walk on now, whatever the tree is doing.
+            say(l10n.text("guide_rewound"),true)
+            local g=require("scanner.sources").guide_entry(c)
+            if g then g.wait_fact=nil;autowalk.start(c,g,true) end
+        elseif ev=="rewind_done" then
+            if cur.LighthouseTree then
+                say(l10n.text("guide_lighthouse_more",{key=controls.name("rewind")}),true)
+            else
+                say(l10n.text("guide_rewound"),true)
+                pending_guide_restart=true
+            end
+        end
+    end
+    -- Still on the near side when the floor drops: this fall can't be crossed.
+    if obs and obs.reverse~=true then
+        local p=nil;pcall(function()p=c.Pawn:K2_GetActorLocation()end)
+        if guide.lighthouse_closed(obs.pos,p) and not guide.past_hole(p) then
+            if not lighthouse_closed_told then
+                lighthouse_closed_told=true
+                autowalk.cancel_quiet()
+                say(l10n.text("guide_lighthouse_closed",{key=controls.name("rewind")}),true);log("guide_lighthouse closed")
+            end
+        elseif obs.pos and obs.pos<guide.FLOOR_DROP then lighthouse_closed_told=false end
+    end
+    if pending_guide_restart and cur.LighthouseTree and control:has_control() and not autowalk.walking() then
+        pending_guide_restart=false
+        local g=require("scanner.sources").guide_entry(c)
+        if g then autowalk.start(c,g,true) end
+    end
+end
+local function guide_step(c)
+    if not c then return end
+    local sources=require("scanner.sources")
+    if not sources.in_ending(c) then guide_facts=nil;return end
+    local cur={}
+    for _,f in ipairs(guide.FACTS) do
+        local ok,v=pcall(function()return c:IsFactActive(FName(f))end)
+        cur[f]=ok and v==true
+    end
+    for _,key in ipairs(guide.changes(guide_facts,cur)) do
+        say(l10n.text(key),true);log("guide_hazard "..key)
+    end
+    guide_facts=cur
+end
 -- New text messages, announced once when the HUD's notification appears.
 local function sms_step()
     local ok,text=pcall(sms.tick)
@@ -388,6 +502,14 @@ preview.play=function(file)return speech.play and speech.play(speech.audio_dir..
 autowalk.log=log
 autowalk.moving=function()return speech.moving and speech.moving() or false end
 autowalk.text=function(key,p)return l10n.text(key,p)end
+autowalk.next_guide=function(c)local ok,g=pcall(require("scanner.sources").guide_entry,c);return ok and g or nil end
+autowalk.fact_active=function(c,f)local ok,v=pcall(function()return c:IsFactActive(FName(f))end);return ok and v==true end
+autowalk.stalled_guide=function(_,result)
+    if result~="stalled" and result~="timeout" then return nil end
+    if guide_facts and guide_facts.LighthouseFallingDanger then return "",nil end
+    local key=guide_facts and guide.stall_message(guide_facts)
+    if key then log("guide_caught result="..result);return key,{key=controls.name("rewind")} end
+end
 -- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
 local function main_step()
@@ -410,6 +532,8 @@ local function main_step()
                 if speech.play then speech.play(speech.audio_dir..(event=="lost" and "control_lost.wav" or "control_back.wav")) end
             end
             autowalk.tick()
+            if c and control:has_control() then pcall(autowalk.continue_guide,c) end
+            pcall(guide_step,c)
             face.tick()
             if c and control:has_control() and not in_menu() then actions.tick(c);pcall(exit_step) end
             if face_probe_tick then face_probe_tick() end
@@ -465,6 +589,9 @@ LoopInGameThreadWithDelay(50,function()
         run_keys()
         run_delayed()
         pad_step()
+        -- The lighthouse rewind cue needs a fresh reading: the rewind runs at
+        -- twice speed and the safe moment to let go is short (measured).
+        pcall(lighthouse_fast_step)
         if beat%5==0 then
             if (beat//5)%2==0 then menu_step() else main_step() end
             -- Facing corrections need a fresh camera reading every 250 ms.

@@ -1478,5 +1478,194 @@ do
     check("a new photo is not a message",not S.is_new(a,{hud=1,sms=false,playing=true,sender="Chloe",count="1"}))
     package.loaded["hud.sms"]=nil
 end
+-- Ending nightmare guide: steps follow Max's position, reversibly.
+do
+    package.loaded["nightmare.guide"]=nil
+    local G=require("nightmare.guide")
+    local never=function()return false end
+    check("at the start the first step is current",G.current(G.START,never)==1)
+    check("past the rocks trigger, the tree is next",G.current({X=3470,Y=1300},never)==2)
+    check("rewound back before the rocks, the rocks are current again",G.current({X=3530,Y=2300},never)==1)
+    local s=G.STEPS
+    local shelter;for i,v in ipairs(s) do if v.id=="shelter" then shelter=i end end
+    local held=function(h)return h=="logs" end
+    check("waiting in the shelter holds the guide there",G.current({X=s[shelter].X,Y=s[shelter].Y},held)==shelter)
+    check("once the logs have passed, the next step",G.current({X=s[shelter].X,Y=s[shelter].Y},never)==shelter+1)
+    check("standing at the newspaper, it is the last step",G.current({X=-1453,Y=566},never)==#s)
+    -- Every step, from just short of it on its own leg: that step is current.
+    local ok=true
+    local prev=G.START
+    for i,v in ipairs(s) do
+        local p={X=prev.X+(v.X-prev.X)*0.5,Y=prev.Y+(v.Y-prev.Y)*0.5}
+        if G.current(p,never)~=i then ok=false;print("step",i,v.id,"got",G.current(p,never)) end
+        prev=v
+    end
+    check("each leg leads to its own step",ok)
+    local shortest=math.huge;prev=G.START
+    for _,v in ipairs(s) do shortest=math.min(shortest,math.sqrt((v.X-prev.X)^2+(v.Y-prev.Y)^2));prev=v end
+    check("reach is under half the shortest leg",G.REACH<shortest/2,shortest)
+    check("only the crossing to the newspaper keeps trying",(function()local n=0;for _,v in ipairs(s) do if v.persist then n=n+1;if v.id~="newspaper" then return false end end end;return n==1 end)())
+    check("no step stops at the hole's edge",(function()for _,v in ipairs(s) do if v.id=="hole" then return false end end;return true end)())
+    check("reaching a step moves to the next",G.current({X=s[3].X,Y=s[3].Y},never)==4)
+    check("ran past the shelter while the logs roll: back to the shelter",G.current({X=s[shelter+1].X*0.5+s[shelter].X*0.5,Y=s[shelter+1].Y*0.5+s[shelter].Y*0.5},held)==shelter)
+    local f={RollingLogsBegin=true,RollingLogsDanger=true}
+    check("logs rolling: hold",G.logs_held(function(k)return f[k]==true end))
+    f.RollingLogsDanger=false
+    check("logs passed: go on",not G.logs_held(function(k)return f[k]==true end))
+    check("logs not yet started: hold",G.logs_held(function()return false end))
+    local c=G.changes({},{RollingLogsDanger=true})
+    check("logs start: get into the shelter",c[1]=="guide_logs")
+    c=G.changes({SafePlace=true},{SafePlace=true,RollingLogsDanger=true})
+    check("logs start while in the shelter: stay",c[1]=="guide_logs_stay")
+    c=G.changes({RollingLogsDanger=true,SafePlace=true},{SafePlace=true})
+    check("logs over",c[1]=="guide_logs_passed")
+    c=G.changes({},{LighthouseDebrisDanger=true,LighthouseFallingDanger=true})
+    check("lighthouse said once",#c==1 and c[1]=="guide_lighthouse")
+    check("tree falling is not announced as let go",#G.changes({},{LighthouseTree=true})==0)
+    local paper;for _,v in ipairs(s) do if v.id=="newspaper" then paper=v end end
+    -- 27 Oct: the search reached ground 81-99 cm from the newspaper and failed at 60.
+    check("newspaper reach covers the measured approach",paper.reach and paper.reach>=100)
+    check("way closed: floor dropped, Max short of the hole",G.lighthouse_closed(11.0,{X=-582,Y=170}))
+    check("newspaper position matches its step",G.NEWSPAPER.X==paper.X and G.NEWSPAPER.Y==paper.Y)
+    local main_src=io.open("src/main.lua"):read("a")
+    check("Shift+Home passes the entry alone",main_src:find("local e=scanner.selected();autowalk.start(c,e)",1,true)~=nil)
+    check("not closed before the floor drops",not G.lighthouse_closed(9.0,{X=-582,Y=170}))
+    check("not closed once past the hole",not G.lighthouse_closed(12.0,{X=-1191,Y=66}))
+    -- 28 Oct playtest: caught past the hole at (-1273,242); let go after the debris.
+    check("near side: let go when the tree stands again",G.let_go(3.0,{X=-814,Y=-102},false) and not G.let_go(5.0,{X=-814,Y=-102},true))
+    check("past the hole: let go by 6 s, not at 8",G.let_go(5.9,{X=-1273,Y=242},true) and not G.let_go(8.0,{X=-1273,Y=242},true))
+    check("past the hole means the newspaper side",G.past_hole({X=-1273,Y=242}) and not G.past_hole({X=-1036,Y=-22}) and not G.past_hole({X=-814,Y=-102}))
+    check("first reading says nothing",#G.changes(nil,{RollingRock01Danger=true})==0)
+    check("caught during the rocks",G.stall_message({RollingRock01Danger=true})=="guide_caught")
+    check("stalled with no danger is just blocked",G.stall_message({SafePlace=true})==nil)
+    check("logs begin alone is not a danger",G.danger({RollingLogsBegin=true})==nil)
+    local en=require("lang.en")
+    local missing={};for _,h in ipairs(G.HAZARDS) do for _,k in ipairs({h.on,h.off}) do if k and not en[k] then missing[#missing+1]=k end end end
+    for _,v in ipairs(s) do if not en[v.label] then missing[#missing+1]=v.label end end
+    for _,k in ipairs({"guide_logs_stay","guide_entry","guide_done","guide_caught","guide_rewound"}) do if not en[k] then missing[#missing+1]=k end end
+    check("every guide phrase is in the catalogue",#missing==0,table.concat(missing,","))
+    package.loaded["nightmare.guide"]=nil
+end
+-- Guide walks carry on to the next step on arrival, and stop at the shelter.
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+    local loops={}
+    _G.LoopInGameThreadWithDelay=function(_,fn)loops[#loops+1]=fn;return #loops end
+    _G.CancelDelayedAction=function(h)loops[h]=false end
+    local function pump()for _,f in ipairs(loops) do if f then f() end end end
+    local ff={active=nil};ff.ready=function()return true end;ff.start=function()end;ff.stop=function()end;ff.tick=function()end
+    package.loaded["nav.follow"]=ff
+    package.loaded["nav.route"]={project=function(_,p)return false,p end}
+    package.loaded["nav.doors"]={plan=function()return false end}
+    local walked=nil
+    package.loaded["nav.offmesh"]={
+        planner=function()return {g={samples=0},waypoints={{X=1,Y=0,Z=0}},step=function()return "found" end} end,
+        walk=function(_,_,wps,done)walked=done end,cancel=function()return false end,ground_below=function(_,_,p)return p.Z end}
+    local aw=require("autowalk.autowalk")
+    local spoken={};aw.say=function(t)spoken[#spoken+1]=t end
+    aw.text=function(k,p)return k..(p and p.name and (":"..p.name) or "")..(p and p.index and (":"..p.index) or "") end
+    local pawn={CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=100}end,GetScaledCapsuleHalfHeight=function()return 84 end}}
+    local c={Pawn=pawn}
+    local step=1
+    local function entry(i,id)return {name="Guide",kind="guide",step=i,steps=15,step_name="follow the doe",step_id=id or "x",stand={X=i,Y=0,Z=0},pos={X=i,Y=0,Z=0}} end
+    aw.next_guide=function()return entry(step,step==8 and "shelter" or "x") end
+    aw.start(c,entry(1));pump()
+    step=2;walked("arrived_test_region",10)
+    check("arrival queues the next step",spoken[#spoken]=="guide_next:follow the doe:2" and not aw.walking())
+    local before=#spoken
+    aw.continue_guide(c);pump()
+    check("next step walked without repeating 'Walking to'",aw.walking() and #spoken==before)
+    -- Walking toward the shelter (step 8); arriving there, the guide still says 8.
+    step=8;walked("arrived_test_region",10);aw.continue_guide(c);pump()
+    walked("arrived_test_region",10)
+    check("arriving at the shelter waits there",spoken[#spoken]=="guide_wait" and not aw.walking(),spoken[#spoken])
+    aw.continue_guide(c)
+    check("nothing walks on from the shelter by itself",not aw.walking())
+    -- 28 Oct: Shift+Home passed scanner.selected()'s list index as the third
+    -- argument, which silenced "Walking to" for every walk.
+    local n_before=#spoken
+    aw.start(c,entry(5),3);pump()
+    check("a stray third argument does not silence the start",spoken[#spoken]~=nil and spoken[#spoken]:find("^walk_start")~=nil and #spoken>n_before,spoken[#spoken])
+    walked("cancelled",0)
+    -- 27 Oct: an entry with only a label (straight from sources) crashed the start.
+    local before_n=#spoken
+    check("an entry with only a label starts",aw.start(c,{label="Guide",kind="guide",step=3,steps=15,stand={X=3,Y=0,Z=0},pos={X=3,Y=0,Z=0}})==true)
+    pump();walked("cancelled",0)
+    -- Caught by a hazard: the guide says to rewind instead of "blocked".
+    aw.stalled_guide=function(_,r)if r=="stalled" then return "guide_caught",{key="R"} end end
+    aw.start(c,entry(4));pump();walked("stalled",900)
+    check("caught by a hazard says rewind",spoken[#spoken]=="guide_caught" and not aw.walking())
+    aw.stalled_guide=function()return nil end
+    -- A keep-trying step (the lighthouse crossing): no way yet -> wait and retry.
+    local plan_state="failed"
+    package.loaded["nav.offmesh"].planner=function()return {g={samples=0,report=function()return {} end},waypoints={{X=1,Y=0,Z=0}},step=function(self)self.reason="no_path";return plan_state end} end
+    local hole=entry(14,"hole");hole.persist=true
+    step=14;aw.next_guide=function()return hole end
+    local n0=#spoken
+    aw.start(c,hole);pump()
+    check("no way yet: told to wait",spoken[#spoken]=="guide_waiting" and aw.walking())
+    local clock=os.clock;local fake=clock()+5;os.clock=function()return fake end
+    plan_state="found";pump();pump();os.clock=clock
+    check("the way opens: the guide goes",walked~=nil and aw.walking())
+    walked("cancelled",0)
+    check("waiting said once",(function()local k=0;for i=n0+1,#spoken do if spoken[i]=="guide_waiting" then k=k+1 end end;return k==1 end)())
+    aw.next_guide=function()return entry(step,step==8 and "shelter" or "x") end
+    -- The lighthouse crossing waits for the tree to fall, then walks at once.
+    local tree_down=false
+    aw.fact_active=function(_,f)return f=="LighthouseTree" and tree_down end
+    plan_state="found";walked=nil
+    package.loaded["nav.offmesh"].planner=function()return {g={samples=0},waypoints={{X=1,Y=0,Z=0}},step=function()return plan_state end} end
+    local cross=entry(14,"hole");cross.persist=true;cross.wait_fact="LighthouseTree"
+    aw.next_guide=function()local e=entry(14,"hole");e.persist=true;e.wait_fact="LighthouseTree";return e end
+    aw.start(c,cross);pump();pump()
+    check("waits for the tree",aw.walking() and walked==nil and spoken[#spoken]=="guide_waiting")
+    tree_down=true;pump();pump();pump()
+    check("tree down: walks at once",walked~=nil)
+    walked("cancelled",0)
+    aw.fact_active=function()return true end    aw.start(c,entry(9));pump();walked("stalled",200)
+    check("a blocked guide walk stops and says so",spoken[#spoken]:find("^walk_blocked") and not aw.walking())
+    aw.continue_guide(c);check("and does not carry on",not aw.walking())
+    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+end
+-- In the ending nightmare the guide is the only entry until its last step.
+do
+    package.loaded["scanner.sources"]=nil
+    local S=require("scanner.sources")
+    local real=S.guide_entry
+    local orig_collect=S.collect
+    -- Exercise only the merge: interactions + the guide entry.
+    local out={{kind="interaction",label="Newspaper"},{kind="exit",label="Way out"}}
+    local function merge(g)
+        local o={};for _,e in ipairs(out) do o[#o+1]=e end
+        if g.step_id~="newspaper" then for i=#o,1,-1 do if o[i].kind=="interaction" then table.remove(o,i) end end end
+        o[#o+1]=g;return o
+    end
+    local m=merge({kind="guide",step_id="rocks"})
+    local has_paper=false;for _,e in ipairs(m) do if e.label=="Newspaper" then has_paper=true end end
+    check("newspaper hidden behind the guide",not has_paper and m[#m].kind=="guide")
+    m=merge({kind="guide",step_id="newspaper"})
+    has_paper=false;for _,e in ipairs(m) do if e.label=="Newspaper" then has_paper=true end end
+    check("newspaper listed at the last step",has_paper)
+    local src=io.open("src/scanner/sources.lua"):read("a")
+    check("sources merges the same way",src:find('if g.step_id~="newspaper" then',1,true)~=nil)
+    package.loaded["scanner.sources"]=nil
+end
+-- Rewind cues from a hazard's own sequence (measured 27 Oct, lighthouse).
+do
+    package.loaded["nightmare.rewind"]=nil
+    local R=require("nightmare.rewind")
+    local t=R.tracker()
+    local seq={
+        {pos=5.2,playing=true,rate=1},{pos=10.03,playing=true,rate=0},{pos=10.03,playing=true,rate=0},
+        {pos=8.6,playing=true,rate=2,reverse=true},{pos=4.4,playing=true,rate=2,reverse=true},
+        {pos=3.99,playing=true,rate=0.6},{pos=4.48,playing=true,rate=1}}
+    local ev={};for _,o in ipairs(seq) do local e=t:update(o);if e then ev[#ev+1]=e end end
+    check("caught, rewinding, rewind done, once each",table.concat(ev,",")=="caught,rewind_started,rewind_done",table.concat(ev,","))
+    check("no sequence, no state",R.state(nil)==nil and R.state({})==nil)
+    local en=require("lang.en")
+    check("lighthouse phrases present",en.guide_lighthouse_caught and en.guide_lighthouse_more and en.guide_rewound=="Rewound. Going again.")
+    package.loaded["nightmare.rewind"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
