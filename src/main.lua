@@ -107,6 +107,9 @@ local tooltip=require("hud.tooltip")
 local sms=require("hud.sms")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
+local choice_stats=require("menus.choice_stats")
+local stats_cursor=choice_stats.cursor()
+local stats_open=false
 local journal_cursor=journal.cursor()
 local journal_open=false
 local journal_move -- defined with the journal step below
@@ -142,6 +145,27 @@ for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
 end
 bind_key(Key.UP_ARROW,on_game(function()journal_move(-1)end),{["repeat"]=true})
 bind_key(Key.DOWN_ARROW,on_game(function()journal_move(1)end),{["repeat"]=true})
+-- Choices screen: Space switches World / Friends stats (Y on a controller;
+-- the game has no keyboard key for it). Space does nothing else there.
+bind_key(Key.SPACE,on_game(function()
+    if not stats_open then return end
+    if choice_stats.swap() then
+        -- The flag flips a moment later (the swap is the game's own event); say
+        -- the new mode as soon as the screen reports it, or after half a second.
+        local before=stats_cursor.page and stats_cursor.page.world
+        local tries=0
+        local h
+        h=LoopInGameThreadWithDelay(100,function()
+            tries=tries+1
+            local ok,p=pcall(choice_stats.page)
+            if ok and p and (p.world~=before or tries>=5) then
+                CancelDelayedAction(h)
+                local text=stats_cursor:update(p) or stats_cursor:current()
+                if text then say(text,true);log("choice_stats swap spoken="..text) end
+            elseif tries>=10 then CancelDelayedAction(h) end
+        end)
+    end
+end))
 
 bind_key(Key.F1,on_game(show_help))
 bind_key(Key.F2,on_game(next_preview))
@@ -170,6 +194,7 @@ end
 local tracker=require("menus.tracker").new()
 require("core.text").report=log
 reread=function()
+    if stats_open then return stats_cursor:current() end
     local snap=menu.snapshot()
     if not snap or not snap.label or snap.label=="" then return nil end
     return require("core.text").join(snap.label,snap.value)
@@ -384,6 +409,15 @@ end
 -- Journal: a new tab or page is announced with its first item; Up/Down
 -- (D-pad up/down) step through items one at a time.
 local function journal_step()
+    local sok,sp=pcall(choice_stats.page)
+    stats_open=sok and sp~=nil
+    if stats_open then
+        local text=stats_cursor:update(sp)
+        if text then say(text,true);log("choice_stats spoken="..text) end
+        journal_open=true
+        return
+    end
+    stats_cursor:update(nil)
     local ok,page=pcall(journal.page)
     if not ok then return end
     journal_open=page~=nil
@@ -395,6 +429,11 @@ local function journal_step()
 end
 journal_move=function(direction)
     if not journal_open then return false end
+    if stats_open then
+        local text=stats_cursor:move(direction)
+        if text then say(text,true) end
+        return true
+    end
     local text=journal_cursor:move(direction)
     if text then say(text,true) end
     return true
@@ -467,6 +506,9 @@ journal.text=function(key,p)return l10n.text(key,p)end
 journal.clean=require("core.text").clean
 journal.translate=function(key)return require("scanner.sources").translate(key)end
 journal.say=function(text)say(text,true)end
+choice_stats.text=function(key,p)return l10n.text(key,p)end
+choice_stats.clean=require("core.text").clean
+choice_stats.log=log
 journal.log=log
 -- Diary paragraphs in authored order: the game's text for each authored key,
 -- translated once per language, maps a shown paragraph back to its key.

@@ -1667,5 +1667,63 @@ do
     check("lighthouse phrases present",en.guide_lighthouse_caught and en.guide_lighthouse_more and en.guide_rewound=="Rewound. Going again.")
     package.loaded["nightmare.rewind"]=nil
 end
+-- Choice statistics: decisions read one at a time (rows from the 28 Oct capture).
+do
+    package.loaded["menus.choice_stats"]=nil
+    local S=require("menus.choice_stats")
+    local en=require("lang.en")
+    S.text=function(k,p)return (en[k]:gsub("{(%w+)}",function(n)return tostring(p[n]) end)) end
+    local rows={
+        {text="You comforted Victoria.",pct="77",player=true,group="VerticalBox_1"},
+        {text="You reported Nathan.",pct="61",player=true,group="VerticalBox_0"},
+        {text="You hid the truth.",pct="39",player=false,group="VerticalBox_0"},
+        {text="You made fun of Victoria.",pct="23",player=false,group="VerticalBox_1"}}
+    local d=S.group(rows)
+    check("rows grouped by decision, in first-seen order",#d==2 and d[1][1].text=="You comforted Victoria." and #d[2]==2)
+    check("decision spoken with percent and your choice",S.decision(d[2])=="You reported Nathan. 61 percent your choice. You hid the truth. 39 percent")
+    check("blank percentage while loading is not 0",S.outcome({text="You saved the bird.",pct="",player=false})=="You saved the bird.")
+    local p={episode="Chrysalis",world=true,major=true,decisions=d}
+    local c=S.cursor()
+    local first=c:update(p)
+    check("entering says the context once, then the first decision",first:find("^Chrysalis, Major choices, World stats ")~=nil and first:find("1 of 2$")~=nil,first)
+    check("browse down",c:move(1):find("2 of 2$")~=nil)
+    check("end of list",c:move(1)==en.journal_last)
+    -- Percentages refresh in place (measured): no re-announcement, place kept.
+    local p2={episode="Chrysalis",world=true,major=true,decisions=S.group({
+        {text="You comforted Victoria.",pct="54",player=true,group="VerticalBox_1"},{text="You made fun of Victoria.",pct="46",player=false,group="VerticalBox_1"},
+        {text="You reported Nathan.",pct="70",player=true,group="VerticalBox_0"},{text="You hid the truth.",pct="30",player=false,group="VerticalBox_0"}})}
+    check("refreshed figures are silent",c:update(p2)==nil and c.index==2)
+    check("and reading them gives the new figures",c:move(-1):find("54 percent")~=nil)
+    local p3={episode="Chrysalis",world=true,major=false,decisions=S.group({{text="You saved the bird.",pct="51",player=true,group="m1"}})}
+    check("switching to minor announces it",c:update(p3):find("Minor choices")~=nil)
+    local p4={episode="Chrysalis",world=false,major=false,decisions=p3.decisions}
+    check("switching to friends announces it",c:update(p4):find("Friends stats")~=nil)
+    -- Minor page: both columns, found as the content box's children (the
+    -- second column has no field of its own). Fake widget tree from the capture.
+    local function W(name,kids,extra)local w={name=name,kids=kids or {}};for k,v in pairs(extra or {}) do w[k]=v end
+        w.IsValid=function()return true end;w.IsVisible=function()return true end;w.IsInViewport=function()return true end
+        w.GetParent=function()return {}end;w.GetFName=function()return {ToString=function()return name end}end
+        w.GetChildrenCount=function()return #w.kids end;w.GetChildAt=function(_,i)return w.kids[i+1] end;return w end
+    local function T(s)return {IsValid=function()return true end,GetText=function()return {ToString=function()return s end}end} end
+    local function R(t,pct,mine)return W("row",nil,{TextBlock_Choice=T(t),ChoicePercent=T(pct),IsPlayerChoice=mine}) end
+    local function D(n,a,b)return W(n,nil,{VerticalBox_Choices=W("vb",{R(a,"50",true),R(b,"50",false)})}) end
+    local col1,col2={},{}
+    for i=1,5 do col1[i]=D("L"..i,"Left "..i,"Not left "..i);col2[i]=D("R"..i,"Right "..i,"Not right "..i) end
+    local page=W("page",nil,{HorizontalBox_ContentWrapper=W("wrap",{W("VerticalBox_0",col1),W("VerticalBox_1",col2)}),VerticalBox_0=W("VerticalBox_0",col1)})
+    local wrap=W("wrapper",nil,{IsMajor=false,IsGlobal=true,IsFriendFacts=false,TextBlock_Episode=T("Chrysalis")})
+    _G.FindAllOf=function(n)
+        if n=="DiaryChoicesWrapperWidget_C" then return {wrap} end
+        if n=="DiaryChoicesMinorPageWidget_C" then return {page} end
+        return {}
+    end
+    local mp=S.page()
+    check("minor page reads both columns (10 decisions)",mp and #mp.decisions==10,mp and #mp.decisions)
+    check("left column first, then right",mp and mp.decisions[5][1].text=="Left 5" and mp.decisions[6][1].text=="Right 1")
+    check("world while IsFriendFacts is false",mp.world==true)
+    -- 28 Oct: toggling to Friends left IsGlobal true; IsFriendFacts is what changes.
+    wrap.IsFriendFacts=true
+    check("friends when IsFriendFacts is true, whatever IsGlobal says",S.page().world==false)
+    _G.FindAllOf=nil    package.loaded["menus.choice_stats"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
