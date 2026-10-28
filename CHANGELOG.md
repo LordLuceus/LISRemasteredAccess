@@ -2,6 +2,18 @@
 
 Player-facing changes, newest first.
 
+## 2026-10-28
+
+### In play
+- The cliff nightmare at the end of Episode 1 can be played through. The
+  scanner offers one entry, "Guide", which always points at the next step along
+  the doe's route; walk to it with Shift+Home and it carries on from step to
+  step. It warns you about each hazard, waits with you in the shelter while the
+  logs roll past, and tells you when to rewind and when to let go at the
+  lighthouse.
+- Starting autowalk with Shift+Home says "Walking to" again. It had gone silent
+  for every walk.
+
 ## 2026-10-27
 
 ### In play

@@ -80,6 +80,28 @@ hasn't opened yet also say "No route".
 In the opening nightmare, select the Lighthouse and walk to it: the scene goes on
 when you reach it.
 
+### The cliff nightmare (end of Episode 1)
+
+This scene has no walking paths and only one object, the newspaper at the end,
+so the scanner offers a single entry instead: **Guide**. It always points at your
+next step along the doe's route, and walking to it with Shift+Home carries on by
+itself from step to step ("Next: follow the doe, step 3 of 14"). The newspaper is
+listed on its own once you reach it.
+
+- **Hazards** are announced as they happen: falling rocks, the falling tree,
+  rolling logs and the lighthouse. If one catches you, the guide says
+  "Caught" and tells you to rewind; rewinding back to an earlier step puts the
+  guide back on that step.
+- **The logs:** the guide takes you into the shelter and waits there. When it
+  says the logs have passed, start it again.
+- **The lighthouse:** the guide waits for the tree to fall, then goes. You will
+  probably be caught at the hole the first time. Hold rewind (R, or the left
+  trigger) when the guide says so, and let go when it says "Let go"; the game
+  puts you back before the tree, and the guide walks again by itself. If you are
+  caught again close to the newspaper, rewind and let go when told once more.
+  Running makes no difference here.
+- At the newspaper the guide says so: read it to finish the episode.
+
 ### When the game takes over
 
 A soft descending tone plays when a cutscene takes control of Max, and an
