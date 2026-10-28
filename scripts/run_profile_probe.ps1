@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare','classroom','campus','dorms')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[switch]$ScannerKeys,[switch]$AutowalkKeys,[switch]$FaceKeys,[switch]$ActionKeys,[switch]$IdleActions,[switch]$ClassroomFace,[switch]$TutorialKeys,[switch]$GateTrace,[switch]$ReaderTrace,[switch]$CampusWalk,[switch]$NavmeshProbe,[switch]$OffmeshProbe,[switch]$NavmeshRebuild,[switch]$PumpWalk,[switch]$PolledKeys,[switch]$JournalCrash,[switch]$JournalCrashProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
+param([Parameter(Mandatory=$true)][string]$SessionName,[ValidateSet('inspect','garage','junkyard','nightmare','classroom','campus','dorms','ending')][string]$Scene='inspect',[switch]$Follow,[switch]$KeepOpen,[switch]$VerifyKeys,[ValidatePattern('^[A-Za-z0-9_]*$')][string]$TargetActor='',[switch]$FaceTarget,[switch]$InspectWidgets,[switch]$InspectMenus,[switch]$Menus,[switch]$SettingsProbe,[switch]$DialogProbe,[switch]$EpisodeProbe,[switch]$ChapterProbe,[switch]$PauseProbe,[switch]$NightmareWalk,[switch]$ScannerProbe,[switch]$ScannerKeys,[switch]$AutowalkKeys,[switch]$FaceKeys,[switch]$ActionKeys,[switch]$IdleActions,[switch]$ClassroomFace,[switch]$TutorialKeys,[switch]$GateTrace,[switch]$ReaderTrace,[switch]$CampusWalk,[switch]$NavmeshProbe,[switch]$EndingProbe,[switch]$LighthouseProbe,[switch]$GuideMode,[switch]$OffmeshProbe,[switch]$NavmeshRebuild,[switch]$PumpWalk,[switch]$GuideWalk,[switch]$PolledKeys,[switch]$JournalCrash,[switch]$JournalCrashProbe,[ValidatePattern('^[A-Za-z0-9_,]*$')][string]$ActionPatterns='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteCandidates='',[ValidatePattern('^[-0-9.,; ]*$')][string]$RouteWaypoints='',[ValidatePattern('^[-0-9.,]*$')][string]$AutoGoal='',[ValidateRange(60,300)][int]$DurationSeconds=60)
 $ErrorActionPreference='Stop'
 if($SessionName -notmatch '^profile-probe-[a-z0-9-]+$'){throw 'Invalid session name'}
 if(Get-Process 'LiS-Win64-Shipping' -ErrorAction SilentlyContinue){throw 'Close the remaster before a profile probe'}
@@ -67,6 +67,7 @@ if($ActionPatterns){$list=(($ActionPatterns -split ',') | Where-Object {$_} | Fo
 if($AutoGoal){if(-not $Follow){throw 'AutoGoal requires -Follow'};$g=(ConvertTo-LuaPoints $AutoGoal);$requestText=(Add-RequestField $requestText)+", auto_goal=$($g.Substring(1,$g.Length-2))}"}
 if($PolledKeys){$requestText=(Add-RequestField $requestText)+", live=true}"}
 if($PumpWalk){$requestText=(Add-RequestField $requestText)+", live=true}"}
+if($GuideWalk){$requestText=(Add-RequestField $requestText)+", live=true}"}
 if($JournalCrash){$requestText=(Add-RequestField $requestText)+", live=true"+$(if($JournalCrashProbe){', trace_reader=true'}else{''})+"}"}
 if($CampusWalk){$requestText=(Add-RequestField $requestText)+", live=true}"}
 if($ReaderTrace){$requestText=(Add-RequestField $requestText)+", live=true, trace_reader=true}"}
@@ -80,6 +81,9 @@ if($AutowalkKeys){if($Scene -eq 'inspect'){throw 'AutowalkKeys needs a scene'};$
 if($ScannerKeys){if($Scene -eq 'inspect'){throw 'ScannerKeys needs a scene'};$requestText=(Add-RequestField $requestText)+", live=true}"}
 if($ScannerProbe){$requestText=(Add-RequestField $requestText)+", scanner_probe=true}"}
 if($NavmeshProbe){$requestText=(Add-RequestField $requestText)+", navmesh_probe=true, live=true}"}
+if($EndingProbe){$requestText=(Add-RequestField $requestText)+", ending_probe=true, live=true}"}
+if($LighthouseProbe){$requestText=(Add-RequestField $requestText)+", lighthouse_probe=true, live=true}"}
+if($GuideMode){$requestText=(Add-RequestField $requestText)+", guide_mode=true}"}
 if($OffmeshProbe){$requestText=(Add-RequestField $requestText)+", offmesh_probe=true, live=true}"}
 if($NavmeshRebuild){$requestText=(Add-RequestField $requestText)+", navmesh_rebuild=true}"}
 if($NightmareWalk){if($Scene -ne 'nightmare' -or -not $Follow){throw 'NightmareWalk needs -Scene nightmare -Follow'};$requestText=(Add-RequestField $requestText)+", nightmare_walk=true}"}
@@ -111,6 +115,12 @@ $command=(Get-CimInstance Win32_Process -Filter "ProcessId=$($game.Id)").Command
 $profileArgumentPresent=$command -like '*UserDir*'
 if($command.Replace('\','/').IndexOf($profile.Replace('\','/'),[StringComparison]::OrdinalIgnoreCase) -lt 0){throw 'Game does not carry this operator profile; will not control it'}
 $keyVerification='not_requested'
+if($GuideWalk){
+    try{& (Join-Path $PSScriptRoot 'guide_walk_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
+if($LighthouseProbe){
+    try{& (Join-Path $PSScriptRoot 'lighthouse_rewind_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
+}
 if($PumpWalk){
     try{& (Join-Path $PSScriptRoot 'pump_walk_keys.ps1') -Game $game -LogPath (Join-Path $gameDir $manifest.loader_log)}catch{Write-Warning $_.Exception.Message}
 }

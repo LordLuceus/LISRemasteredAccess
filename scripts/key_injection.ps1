@@ -38,6 +38,18 @@ public static class LISKeyTest {
   }finally{SendInput(1,new INPUT[]{sh[1]},Marshal.SizeOf(typeof(INPUT)));}
   return true;
  }
+ // Key down / key up separately (a test holds rewind until a condition).
+ public static bool Down(uint expectedPid,ushort key) {
+  uint pid;GetWindowThreadProcessId(GetForegroundWindow(),out pid);if(pid!=expectedPid)return false;
+  INPUT[] k=new INPUT[1];k[0].type=1;k[0].value.key.vk=key;
+  if(key>=0x21&&key<=0x28||key==0x2D||key==0x2E){k[0].value.key.flags|=1;}
+  return SendInput(1,k,Marshal.SizeOf(typeof(INPUT)))==1;
+ }
+ public static bool Up(ushort key) {
+  INPUT[] k=new INPUT[1];k[0].type=1;k[0].value.key.vk=key;k[0].value.key.flags=2;
+  if(key>=0x21&&key<=0x28||key==0x2D||key==0x2E){k[0].value.key.flags|=1;}
+  return SendInput(1,k,Marshal.SizeOf(typeof(INPUT)))==1;
+ }
  // Holds one key down for holdMs (tests key repeat), then releases it.
  public static bool Hold(uint expectedPid,ushort key,int holdMs) {
   uint pid;GetWindowThreadProcessId(GetForegroundWindow(),out pid);if(pid!=expectedPid)return false;

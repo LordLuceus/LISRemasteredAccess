@@ -45,12 +45,15 @@ local scenes = {
     nightmare={title="$GT_Menus_Journal_Episode1Sub1",map="E1_1A",path="/Game/Maps/Episode01/Sequence01/E1_1A"},
     classroom={title="$GT_Menus_Journal_Episode1Sub2",map="E1_2A",path="/Game/Maps/Episode01/Sequence02/E1_2A"},
     campus={title="$GT_Menus_Journal_Episode1Sub3",map="E1_3A",path="/Game/Maps/Episode01/Sequence03/E1_3A"},
-    dorms={title="$GT_Menus_Journal_Episode1Sub4",map="E1_3B",path="/Game/Maps/Episode01/Sequence03/E1_3B"}
+    dorms={title="$GT_Menus_Journal_Episode1Sub4",map="E1_3B",path="/Game/Maps/Episode01/Sequence03/E1_3B"},
+    ending={title="$GT_Menus_Journal_Episode1Sub13",map="E1_6B",path="/Game/Maps/Episode01/Sequence06/E1_6B"}
 }
 local native_controls_passed = false
 local travel_requested = false
 local nav_checked = false
 local return_requested = false
+local ending_probed=false
+local lighthouse_probed=false
 local scene_announced,menu_announced=false,false
 local waiting_announced=false
 local follow_cancelled=false
@@ -217,6 +220,26 @@ poll_handle = LoopInGameThreadWithDelay(5000, function()
                     refresh_settings(controller)
                     if scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
                         and not scene_announced and controller.Pawn:IsValid() then scene_announced=true;say(request.scene) end
+                    -- Lighthouse stage probe (test copy only): once, when Max is controllable.
+                    if request.lighthouse_probe and not lighthouse_probed and scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
+                        and controller.Pawn:IsValid() and controller.Pawn:GetClass():GetFName():ToString():find("Max",1,true) then
+                        lighthouse_probed=true
+                        local c=controller
+                        local lok,lerr=pcall(function()local lp=require("dev.lighthouse_probe");lp.guide_mode=request.guide_mode==true;lp.run(c,emit)end)
+                        if not lok then emit("lighthouse_probe_error="..tostring(lerr)) end
+                    end
+                    -- Ending nightmare probe: once, when the scene's Max is controllable.
+                    if request.ending_probe and not ending_probed and scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
+                        and controller.Pawn:IsValid() and controller.Pawn:GetClass():GetFName():ToString():find("Max",1,true) then
+                        ending_probed=true
+                        local eok,eerr=pcall(function()
+                            local ep=require("dev.ending_probe")
+                            local c=controller
+                            ep.run(c,emit)
+                            LoopInGameThreadWithDelay(500,function()pcall(ep.tick,c,emit)end)
+                        end)
+                        if not eok then emit("ending_probe_error="..tostring(eerr)) end
+                    end
                     if return_requested and not menu_announced and world:GetFName():ToString()=="WhatIf_Menu" then menu_announced=true;say("menu") end
                     if request.return_menu==true and poll>=(request.return_poll or 9) and travel_requested and not return_requested
                         and world:GetFName():ToString()==scenes[request.scene].map then
