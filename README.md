@@ -185,6 +185,24 @@ Not narrated yet: Extras and the keybinding editor. In play, nothing beyond the
 pause menu is narrated yet.
 
 
+### The Choices screen
+
+Extras > Choices (and the screen after an episode) compares your choices with
+everyone else's. On opening, and whenever the episode, the page or the stats
+change, the mod says where you are ("Chrysalis, Major choices, World stats"),
+then the first decision.
+
+| Keyboard | Controller | Action |
+|---|---|---|
+| Up / Down | D-pad up / down | Previous / next decision, with its outcomes and percentages |
+| Left / Right | as in the game | Major / minor choices |
+| Space | Y | Switch between World and Friends stats |
+| Home | | Read the current decision again |
+
+Each outcome is read with the percentage the game shows and "your choice" for
+the one you picked. Friends stats come from Steam friends who have played; with
+none, every outcome reads 0 percent.
+
 ## Planned order
 
 1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*

@@ -4,6 +4,13 @@ Player-facing changes, newest first.
 
 ## 2026-10-28
 
+### Menus
+- The Choices screen (Extras > Choices, and after an episode) is read. Up and
+  Down go through the decisions one at a time, each with its outcomes, the
+  percentages shown and which one was yours. Space switches between World and
+  Friends stats (Y on a controller); Left and Right switch between major and
+  minor choices as before.
+
 ### In play
 - The cliff nightmare at the end of Episode 1 can be played through. The
   scanner offers one entry, "Guide", which always points at the next step along
