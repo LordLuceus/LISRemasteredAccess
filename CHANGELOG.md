@@ -12,6 +12,9 @@ Player-facing changes, newest first.
   minor choices as before.
 
 ### In play
+- Object prompts are read even when the game is holding Max, such as the alarm
+  at the start of Episode 2: "Cell Phone. 1, Snooze." The number keys work
+  there too.
 - The cliff nightmare at the end of Episode 1 can be played through. The
   scanner offers one entry, "Guide", which always points at the next step along
   the doe's route; walk to it with Shift+Home and it carries on from step to

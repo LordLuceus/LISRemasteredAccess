@@ -139,7 +139,10 @@ for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
         -- An open dialogue choice takes the number keys (control is not
         -- required: the game holds Max during conversations).
         if choices.read() then choices.choose(n);return end
-        if not playable() then return end
+        -- An open pop-up takes the number keys too, with or without control.
+        local c0=scanner.controller()
+        local pop=false;pcall(function()local _,open=actions.focused(c0);pop=open==true end)
+        if not pop and not playable() then return end
         local c=scanner.controller();if c then actions.trigger(c,n) end
     end))
 end
@@ -577,7 +580,11 @@ local function main_step()
             if c and control:has_control() then pcall(autowalk.continue_guide,c) end
             pcall(guide_step,c)
             face.tick()
-            if c and control:has_control() and not in_menu() then actions.tick(c);pcall(exit_step) end
+            -- The focused object's pop-up is announced whenever the game opens
+            -- one, even while it holds Max (the alarm at the start of Episode 2:
+            -- "Snooze" while she lies in bed, before control returns).
+            if c and not in_menu() then actions.tick(c) end
+            if c and control:has_control() and not in_menu() then pcall(exit_step) end
             if face_probe_tick then face_probe_tick() end
             if face_probe_tick_reader then face_probe_tick_reader() end
         end)
