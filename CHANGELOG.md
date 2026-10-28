@@ -12,6 +12,8 @@ Player-facing changes, newest first.
   minor choices as before.
 
 ### In play
+- The butterfly and new-fact icons are announced: "This action will have
+  consequences." and "You learned something useful."
 - Object prompts are read even when the game is holding Max, such as the alarm
   at the start of Episode 2: "Cell Phone. 1, Snooze." The number keys work
   there too.

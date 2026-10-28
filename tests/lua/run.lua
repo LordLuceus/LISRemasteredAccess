@@ -1725,5 +1725,19 @@ do
     check("friends when IsFriendFacts is true, whatever IsGlobal says",S.page().world==false)
     _G.FindAllOf=nil    package.loaded["menus.choice_stats"]=nil
 end
+-- Story icons: announced once when they appear.
+do
+    package.loaded["hud.icons"]=nil
+    local I=require("hud.icons")
+    local a=I.appeared({},{ButterflyIcon_C=true})
+    check("butterfly appearing is announced",#a==1 and a[1].key=="icon_consequences")
+    check("still showing is not repeated",#I.appeared({ButterflyIcon_C=true},{ButterflyIcon_C=true})==0)
+    a=I.appeared({ButterflyIcon_C=true},{NewFactIcon_C=true})
+    check("new fact appearing is announced",#a==1 and a[1].key=="icon_new_fact")
+    check("shown again after hiding",#I.appeared({ButterflyIcon_C=false},{ButterflyIcon_C=true})==1)
+    local en=require("lang.en")
+    check("icon phrases present",en.icon_consequences and en.icon_new_fact)
+    package.loaded["hud.icons"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

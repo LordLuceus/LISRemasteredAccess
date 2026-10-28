@@ -105,6 +105,7 @@ local preview=require("core.preview")
 local tutorial=require("hud.tutorial")
 local tooltip=require("hud.tooltip")
 local sms=require("hud.sms")
+local icons=require("hud.icons")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -384,6 +385,14 @@ local function guide_step(c)
     guide_facts=cur
 end
 -- New text messages, announced once when the HUD's notification appears.
+-- Consequence butterfly and new-fact icons: queued after current speech, so
+-- they never cut off the line or choice that caused them.
+local function icons_step()
+    if in_menu() then icons.reset();return end
+    local ok,lines=pcall(icons.tick)
+    if not ok then return end
+    for _,t in ipairs(lines) do say(t,false);log("icon spoken="..t) end
+end
 local function sms_step()
     local ok,text=pcall(sms.tick)
     if ok and text then say(text,true);log("sms_notification trigger="..tostring(sms.trigger).." spoken="..text) end
@@ -454,6 +463,7 @@ local function menu_step()
             tooltip_step()
             prompt_step()
             sms_step()
+            icons_step()
             viewer_step()
             journal_step()
             if settings_tick%8==1 then refresh_settings() end
@@ -532,6 +542,9 @@ do
     end
 end
 sms.text=function(key,p)return l10n.text(key,p)end
+icons.text=function(key,p)return l10n.text(key,p)end
+icons.clean=require("core.text").clean
+icons.translate=function(key)return require("scanner.sources").translate(key)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
 -- The widget's own key text on the keyboard (it follows the player's binding);
 -- the controller button by name, since the controller shows a picture.

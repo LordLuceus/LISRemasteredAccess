@@ -120,6 +120,8 @@ return {
     journal_no_items="Nothing to read on this page.",
     journal_first="First item.",
     journal_last="Last item.",
+    icon_consequences="This action will have consequences.",
+    icon_new_fact="You learned something useful.",
     stats_major="Major choices",
     stats_minor="Minor choices",
     stats_world="World stats",
