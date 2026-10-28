@@ -12,6 +12,8 @@ Player-facing changes, newest first.
   minor choices as before.
 
 ### In play
+- Max's thoughts no longer cut off what is being read, such as a list of
+  answers; they are read straight after it.
 - The butterfly and new-fact icons are announced: "This action will have
   consequences." and "You learned something useful."
 - Object prompts are read even when the game is holding Max, such as the alarm

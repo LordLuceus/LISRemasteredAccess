@@ -403,7 +403,9 @@ local function tooltip_step()
     if not ok then return end
     if text~=last_tooltip then
         last_tooltip=text
-        if text then say(text,true);log("tooltip source="..tostring(tooltip.source).." spoken="..text) end
+        -- Queued, not interrupting: a new thought often appears at the same
+        -- moment as a choice list, and cut it off (28 Oct, diner).
+        if text then say(text,false);log("tooltip source="..tostring(tooltip.source).." spoken="..text) end
     end
 end
 -- Object viewer: each page read when it is shown (Ctrl+Home repeats).
