@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- Autowalk says "Arrived" when Max stops right against the object, instead of
+  "Something is blocking the way".
 - "Major choice" is said only for the game's real major choices, the ones with
   their own music. Small choices such as the jukebox tune, telling Chloe where
   to aim, and the railtracks wires are now read as ordinary choices.

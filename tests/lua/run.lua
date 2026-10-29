@@ -547,6 +547,9 @@ do
     check("last leg arrival announces",r.done and r.say=="walk_arrived" and r.params.name=="Lighthouse")
     check("nothing after finish",w:next_leg()==nil)
     local function single(result)local x=W.new("Mail",{{X=1}});x:next_leg();return x:leg_result(result) end
+check("stalled against the object counts as arrival",(function()local x=W.new("Bed",{{X=1}});x:next_leg();return x:leg_result("stalled",38).say=="walk_arrived" end)())
+check("stalled well short is still blocked",(function()local x=W.new("Dana",{{X=1}});x:next_leg();return x:leg_result("stalled",586).say=="walk_blocked" end)())
+check("stalled near a middle point is not arrival",(function()local x=W.new("Dana",{{X=1},{X=2}});x:next_leg();return x:leg_result("stalled",20).say=="walk_blocked" end)())
     check("cancel",single("cancelled").say=="walk_stopped")
     check("cutscene takes over",single("cinematic_movement_track").say=="walk_interrupted")
     check("paused takes over",single("paused").say=="walk_interrupted")
@@ -647,7 +650,10 @@ do
     check("cutscene with unknown distance is hand-over",single("cinematic_movement_track",nil).say=="walk_interrupted")
     local y=W.new("Tools",{{X=1},{X=2}});y:next_leg()
     check("cutscene near an intermediate point is not arrival",y:leg_result("cinematic_movement_track",10).say=="walk_interrupted")
-    check("stall near goal is still blocked",single("stalled",20).say=="walk_blocked")
+    -- 29 Oct (Episode 3 dorm): stalls 32-40 cm from the point were at the
+    -- object and usable; within 60 cm of the final point a stall is arrival.
+    check("stall at the goal is arrival",single("stalled",20).say=="walk_arrived")
+    check("stall with unknown distance is still blocked",single("stalled",nil).say=="walk_blocked")
 end
 -- Control tracking: settle time, silent first state, unknown ignored.
 do

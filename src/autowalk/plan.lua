@@ -27,9 +27,14 @@ end
 -- A cutscene that takes over within NEAR of the final point counts as arrival:
 -- reaching a story goal is usually what starts its cutscene.
 M.NEAR=150
+M.STALL_ARRIVED=60
 function M:leg_result(result,remaining)
     if self.finished then return {done=true} end
     if HANDED_OVER[result] and remaining and remaining<=(self.near or M.NEAR) and self.index>=#self.legs then result="arrived" end
+    -- Stopped by a wall or furniture just short of the final point: that is
+    -- arriving. 29 Oct (Episode 3 dorm): 13 of 18 "blocked" walks ended 32-40
+    -- cm from the point, against the object, which the player could use.
+    if result=="stalled" and remaining and remaining<=M.STALL_ARRIVED and self.index>=#self.legs then result="arrived" end
     if ARRIVED[result] then
         if self.index<#self.legs then return {continue=true} end
         self.finished=true
