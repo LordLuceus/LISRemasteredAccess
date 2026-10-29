@@ -572,6 +572,11 @@ tooltip.prompt_key=function(shown)
 end
 choices.text=function(key,p)return l10n.text(key,p)end
 choices.log=log
+choices.is_major=function()
+    local c=scanner.controller();if not c then return nil end
+    local ok,v=pcall(function()return c:IsFactActive(FName("MajorChoiceOn"))end)
+    if ok and type(v)=="boolean" then return v end
+end
 choices.say=function(text)say(text,true)end
 preview.say=function(text)say(text,true)end
 preview.play=function(file)return speech.play and speech.play(speech.audio_dir..file) end

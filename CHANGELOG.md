@@ -5,6 +5,9 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- "Major choice" is said only for the game's real major choices, the ones with
+  their own music. Small choices such as the jukebox tune, telling Chloe where
+  to aim, and the railtracks wires are now read as ordinary choices.
 - Helping Chloe aim at the first two bottles: right after she fires, the mod
   says where her shot went, so you can work out where to tell her to aim.
 - Helping Chloe shoot in the junkyard: when you choose what she shoots, the

@@ -969,6 +969,14 @@ do
     check("after an empty screen the same answers count again",C.set_all({nil,"Do I have to?","I didn't have any time...",nil},false)==2)
     C.clear("test")    C.update(0,"Banjo tune",true);C.update(1,"Guitar tune",true);t=3
     check("major wording and layout",(C.due(true) or ""):find("^Major choice: X, Banjo tune")~=nil)
+    -- 29 Oct: the layout flag is true for the jukebox; the game's MajorChoiceOn fact decides the label.
+    C.is_major=function()return false end
+    check("not major when the game's fact is off; layout keys kept",(C.current(true) or ""):find("^Choose: X, Banjo tune")~=nil)
+    C.is_major=function()return true end
+    check("major when the fact is on",(C.current(true) or ""):find("^Major choice:")~=nil)
+    C.is_major=function()return nil end
+    check("falls back to the layout flag when the fact cannot be read",(C.current(true) or ""):find("^Major choice:")~=nil)
+    C.is_major=nil
     check("out-of-range slot ignored",not C.update(7,"x",false) and not C.update(nil,"x",false))
     check("no doubled full stop after a question",C.announce_text({{text="Why?",key="1"}},false)=="Choose: 1, Why?")
     check("full stop added after a bare answer",C.announce_text({{text="Sure",key="1"}},false)=="Choose: 1, Sure.")

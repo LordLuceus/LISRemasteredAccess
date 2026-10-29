@@ -101,13 +101,27 @@ function M.options()
     if #out==0 then return nil end
     return out,major
 end
+-- Whether to call the list a major choice. The view's IsMajorChoice only
+-- selects its button layout (it is true for the jukebox tune, Chloe's aiming
+-- and the railtracks wires); the game's real major choices - the ones with the
+-- sound loop - set the story fact MajorChoiceOn while they are up (confirmed
+-- 29 Oct: Frank's gun choice true, the conversation after it false). Set by
+-- main.lua; falls back to the layout flag when the fact cannot be read.
+M.is_major=nil
+local function label_major(layout)
+    if M.is_major then
+        local ok,v=pcall(M.is_major)
+        if ok and type(v)=="boolean" then return v end
+    end
+    return layout
+end
 -- Returns the text to speak when a settled list is new, else nil.
 function M.due(gamepad)
     if not changed_at or M.clock()-changed_at<M.SETTLE then return nil end
     local opts,maj=M.options()
     if not opts then return nil end
     M.keys(opts,gamepad,maj)
-    local text=M.announce_text(opts,maj)
+    local text=M.announce_text(opts,label_major(maj))
     if text==spoken then return nil end
     spoken=text
     return text,opts
@@ -117,7 +131,7 @@ function M.current(gamepad)
     local opts,maj=M.options()
     if not opts then return nil end
     M.keys(opts,gamepad,maj)
-    return M.announce_text(opts,maj)
+    return M.announce_text(opts,label_major(maj))
 end
 function M.read()return M.options() end
 -- Hooks (game side). They run on the game thread inside the view's own

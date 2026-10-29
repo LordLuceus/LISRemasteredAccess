@@ -142,8 +142,8 @@ after you look at the photo.
 ### Dialogue choices
 
 When answers appear in a conversation, the mod reads them with their keys:
-"Choose: 1, You're asking me?, 2, I did know..." Major choices start with "Major
-choice". Each list is read once, when all its answers are shown. Press the number
+"Choose: 1, You're asking me?, 2, I did know..." Major choices (the ones the
+game marks with its own music) start with "Major choice". Each list is read once, when all its answers are shown. Press the number
 to answer; Home or Ctrl+Home repeats the list. On a controller the face button
 for each answer is named instead, and pressing it works as usual.
 
