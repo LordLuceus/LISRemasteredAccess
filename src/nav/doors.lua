@@ -76,7 +76,16 @@ local function blockers(controller,pawn,from,to)
     for _,v in ipairs(hits) do
         local hit=v:get();local c=hit.Component:Get()
         if valid(c) and capsule:GetCollisionResponseToChannel(c:GetCollisionObjectType())==2 and c:GetCollisionResponseToChannel(channel)==2 then
-            found[#found+1]=name(hit.Actor:Get())
+            -- Only a door the story can move closes a doorway (the garage
+            -- door in Episode 1 is an animated SkeletalMeshActorMAT the
+            -- navigation mesh treats as open). Static meshes in a doorway were
+            -- there when the navigation mesh was built, so its routes already
+            -- account for them: 29 Oct, Dana's open door (ST_Doors_Interior03,
+            -- a StaticMeshActor) was judged closed and no route was offered.
+            local actor=hit.Actor:Get()
+            local movable=false
+            pcall(function()movable=valid(actor) and not actor:IsA("/Script/Engine.StaticMeshActor") end)
+            if movable then found[#found+1]=name(actor) end
         end
     end
     return found

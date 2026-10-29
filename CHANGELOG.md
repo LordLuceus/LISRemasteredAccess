@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- Autowalk no longer refuses routes through open doorways that have a door
+  standing in them, such as Dana's room in Episode 3.
 - Autowalk to an object you can already use says "<object> is within reach."
   instead of looking for a route.
 - Autowalk says "Arrived" when Max stops right against the object, instead of
