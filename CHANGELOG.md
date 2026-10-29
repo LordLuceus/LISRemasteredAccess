@@ -12,6 +12,10 @@ Player-facing changes, newest first.
   minor choices as before.
 
 ### In play
+- Dialogue choices are read reliably and no longer crash the game. The old
+  reader could crash during conversations and sometimes missed answer lists;
+  the new one reads each list once, when all its answers are shown. Home now
+  repeats the answers too.
 - Max's thoughts no longer cut off what is being read, such as a list of
   answers; they are read straight after it.
 - The butterfly and new-fact icons are announced: "This action will have

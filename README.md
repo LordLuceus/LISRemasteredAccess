@@ -129,8 +129,9 @@ after you look at the photo.
 
 When answers appear in a conversation, the mod reads them with their keys:
 "Choose: 1, You're asking me?, 2, I did know..." Major choices start with "Major
-choice". Press the number to answer; Ctrl+Home repeats the list. On a controller
-the face button for each answer is named instead, and pressing it works as usual.
+choice". Each list is read once, when all its answers are shown. Press the number
+to answer; Home or Ctrl+Home repeats the list. On a controller the face button
+for each answer is named instead, and pressing it works as usual.
 
 ### Tutorial prompts
 
@@ -283,7 +284,11 @@ artifacts\lua-5.4.7\lua54.exe tests\lua\run.lua
 The installation is pinned to Steam build 11330282 and experimental UE4SS
 3.0.1-1181-g83330635, with a measured virtual-table correction in
 `compatibility/VTableLayout.ini`. The speech module links against that exact
-loader's exported functions. It is not a general installer.
+loader's exported functions. It is not a general installer. The loader's
+UE4SS-settings.ini has every optional hook off except HookEngineTick,
+HookProcessInternal, HookProcessLocalScriptFunction and
+HookUObjectProcessEvent; the last three let the mod listen to the game's own
+scripts, which the dialogue choice reader needs. HookLoadMap must stay off.
 
 To uninstall, close the game and run `scripts/rollback_ue4ss.ps1`. It checks
 hashes before changing anything and never restores old saves.
