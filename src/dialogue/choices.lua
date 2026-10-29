@@ -6,12 +6,14 @@
 -- times, 26-28 Oct, all in FFieldClassVariant::GetFName while reading a
 -- button); it also missed answers ("silent choices").
 --
--- Now the game tells us. The view (BP_LiSDialogWidget_View) fills each answer
--- through its UpdateTextImplementable(ItemType, Text) event: ItemType is the
--- button slot (0-3) and Text the answer, already in the player's language (it
--- goes straight to the button's UpdateButton). A hook on that event records
--- plain values while the game is running the view's own code, so the view is
--- alive. Between hook calls the mod holds only Lua strings and numbers.
+-- Now the buttons are read only inside a hook on the view's own Tick
+-- (BP_LiSDialogWidget_View), at most four times a second: the game is running
+-- the view's code then, so the view and its buttons are alive (proven 29 Oct:
+-- Jefferson's question read and answered with key 1 in a test copy, then many
+-- conversations in play). Between reads the mod holds only Lua strings and
+-- numbers. Script hooks need HookProcessInternal,
+-- HookProcessLocalScriptFunction and HookUObjectProcessEvent on in the
+-- loader's UE4SS-settings.ini.
 --
 -- The list is spoken once the updates have settled (no new answer for
 -- SETTLE seconds); an unchanged refill is silent. It is cleared when an
@@ -136,12 +138,10 @@ function M.install()
     local a=function_address()
     if not a or a==hooked then return hooked~=nil end
     local ok,err=pcall(function()
-        RegisterHook(FN,function(self,item,text)
-            local slot=nil;pcall(function()slot=unwrap(item)end)
-            local s=nil;pcall(function()local x=unwrap(text);s=type(x)=="string" and x or x:ToString()end)
-            local maj=false;pcall(function()maj=unwrap(self):IsMajorChoice()==true end)
-            if M.update(tonumber(slot),s,maj) then M.log(string.format("choice_update slot=%s major=%s text=%q",tostring(slot),tostring(maj),tostring(s))) end
-        end)
+        -- UpdateTextImplementable is NOT hooked: it is redundant (the Tick read
+        -- below supplies the same answers) and the first time it ever fired -
+        -- the railtracks wire puzzle, 29 Oct - the game crashed right after it,
+        -- with the hook calling IsMajorChoice inside the game's own event.
         -- A choice made by any route (controller, mouse, the mod's keys) runs
         -- the view's ChooseSentense; the next list then starts empty.
         RegisterHook(VIEW..":ChooseSentense",function()M.clear("chosen_event") end)
