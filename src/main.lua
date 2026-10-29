@@ -139,7 +139,7 @@ for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
         if in_menu() then return end
         -- An open dialogue choice takes the number keys (control is not
         -- required: the game holds Max during conversations).
-        if choices.read() then choices.choose(n);return end
+        if choices.options() then choices.choose(n);return end
         -- An open pop-up takes the number keys too, with or without control.
         local c0=scanner.controller()
         local pop=false;pcall(function()local _,open=actions.focused(c0);pop=open==true end)
@@ -199,6 +199,7 @@ local tracker=require("menus.tracker").new()
 require("core.text").report=log
 reread=function()
     if stats_open then return stats_cursor:current() end
+    if choices.options() then return choices.current(controls.using_gamepad()) end
     local snap=menu.snapshot()
     if not snap or not snap.label or snap.label=="" then return nil end
     return require("core.text").join(snap.label,snap.value)
@@ -218,18 +219,21 @@ local function tutorial_step()
     end
 end
 -- Dialogue choices: announced once when a new set of answers appears.
-local last_choices=nil
+local choice_install_tick=0
 local function choices_step()
-    if in_menu() then last_choices=nil;return end
-    local ok,options,major=pcall(choices.read)
-    if not ok or not options then last_choices=nil;return end
-    choices.keys(options,controls.using_gamepad(),major)
-    local text=choices.announce_text(options,major)
-    if text~=last_choices then
-        last_choices=text
+    -- Hook the dialogue view's events (once its class is loaded; re-checked
+    -- every two seconds in case the game loads a new copy).
+    choice_install_tick=choice_install_tick+1
+    -- Every step until hooked (the class appears with the first conversation),
+    -- then every two seconds in case the game loads a new copy.
+    if not choices.hooked() or choice_install_tick%8==1 then choices.install() end
+    if in_menu() then return end
+    choices.tick()
+    local text,options=choices.due(controls.using_gamepad())
+    if text then
         say(text,true)
-        local d={};for _,o in ipairs(options) do d[#d+1]=tostring(o.slot)..":"..tostring(o.index)..":"..tostring(o.direction)..":"..tostring(o.position) end
-        log("choice_announce slots="..table.concat(d,",").." major="..tostring(major).." spoken="..text)
+        local d={};for _,o in ipairs(options) do d[#d+1]=tostring(o.slot) end
+        log("choice_announce slots="..table.concat(d,",").." spoken="..text)
     end
 end
 -- Prompts: the game's tooltip line (thoughts such as "I need to get Victoria

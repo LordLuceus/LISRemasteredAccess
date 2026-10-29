@@ -1,44 +1,39 @@
--- Dialogue choices (BP_LiSDialogWidget_View). The view holds four answer
--- buttons (DialogButtons_Array, BP_LiS_DialogButton_Widget). Each shown button
--- has its answer in DialogText, the game's choice index in ActionIndex and its
--- screen position in OptionPosition. The controller face buttons choose by
--- calling the pressed button's ClickButton, which asks the dialogue to choose
--- that button's ActionIndex; the mod's keys call the same ClickButton.
--- Plain values are copied out of the game inside each call.
+-- Dialogue choices, redesigned 28 Oct.
+--
+-- The old reader polled the dialogue view's four answer buttons several times
+-- a second and read their fields. The game replaces those widgets between
+-- conversations, and a poll landing in that moment crashed the loader (four
+-- times, 26-28 Oct, all in FFieldClassVariant::GetFName while reading a
+-- button); it also missed answers ("silent choices").
+--
+-- Now the game tells us. The view (BP_LiSDialogWidget_View) fills each answer
+-- through its UpdateTextImplementable(ItemType, Text) event: ItemType is the
+-- button slot (0-3) and Text the answer, already in the player's language (it
+-- goes straight to the button's UpdateButton). A hook on that event records
+-- plain values while the game is running the view's own code, so the view is
+-- alive. Between hook calls the mod holds only Lua strings and numbers.
+--
+-- The list is spoken once the updates have settled (no new answer for
+-- SETTLE seconds); an unchanged refill is silent. It is cleared when an
+-- answer is chosen by any route (the view's ChooseSentense), when the view is
+-- destroyed, or when no dialogue view is on screen.
 local M={}
 M.text=function(key,p)return key end
 M.log=function(_)end
-M.trace=false
--- Objects being destroyed are skipped too: reading a field of a dialogue button
--- the game is tearing down crashed the loader (traced 26 Oct: inside the read of
--- DialogButtons_Array as a conversation changed).
-local DYING=EObjectFlags and (EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed) or nil
-local function valid(o)
-    local ok,r=pcall(function()return o~=nil and o:IsValid() and not (DYING and o:HasAnyFlags(DYING))end)
-    return ok and r==true
-end
-local function visible(o)
-    local ok,r=pcall(function()return o:IsVisible()end)
-    return ok and r==true
-end
--- Face button for each direction icon (the pad's positions: top Y, left X,
--- right B, bottom A, as the interaction pop-up uses).
-M.DIRECTION_BUTTONS={Up="Y",Left="X",Right="B",Down="A"}
--- Key names for options: numbers on the keyboard, face buttons on a controller
--- when the direction is known. Pure.
--- When the direction icons are hidden (they are in keyboard mode), the face
--- button comes from the button's slot, as the view's face handlers map it (each
+M.say=function(_)end
+M.SETTLE=0.15
+-- Reads of the view's buttons per second, done on its own Tick.
+M.READ_RATE=4
+M.next_read=0
+-- Face button for each slot, as the view's face handlers map it (each
 -- branches on IsMajorChoice; 07 is jump-if-NOT):
 --   minor: Top slot 1, Left slot 2, Right slot 3, Bottom slot 4
 --   major: Left slot 1, Right slot 2, Top slot 3, Bottom slot 4
--- Minor confirmed in play (slot 2 X, slot 3 B); major is from the code only.
+-- Minor confirmed in play (slot 2 X, slot 3 B); major from the code.
 M.SLOT_BUTTONS={minor={"Y","X","B","A"},major={"X","B","Y","A"}}
 function M.keys(options,gamepad,major)
     local map=M.SLOT_BUTTONS[major and "major" or "minor"]
-    for i,o in ipairs(options) do
-        local b=o.direction and M.DIRECTION_BUTTONS[o.direction] or map[o.slot or 0]
-        o.key=(gamepad and b) or tostring(i)
-    end
+    for i,o in ipairs(options) do o.key=(gamepad and map[o.slot or 0]) or tostring(i) end
     return options
 end
 -- Spoken list. options: {text=,key=} in order. Pure.
@@ -51,80 +46,170 @@ function M.announce_text(options,major)
     if not s:find("[%.!%?]$") and not s:find("\226\128\166$") then s=s.."." end
     return s
 end
--- The dialogue view on screen, if any.
-local function view()
+-- State: answers by slot (1-4), plain values only.
+local answers,major,changed_at,spoken={},false,nil,nil
+M.clock=function()return os.clock() end
+-- Pure: record one update. Blank text hides that slot. Returns true if the
+-- list changed.
+function M.update(slot,text,is_major)
+    if type(slot)~="number" or slot<0 or slot>3 then return false end
+    local s=slot+1
+    if type(text)=="string" then text=text:gsub("^%s+",""):gsub("%s+$","") end
+    if text=="" then text=nil end
+    if answers[s]==text and major==(is_major==true) then return false end
+    answers[s]=text;major=is_major==true;changed_at=M.clock()
+    return true
+end
+local stale=nil -- the answers just chosen, still on the buttons for a moment
+local function key_of(list)
+    local t={}
+    for s=1,4 do t[s]=list[s] or "" end
+    return table.concat(t,"\31")
+end
+function M.clear(why)
+    if next(answers) then M.log("choice_cleared why="..tostring(why)) end
+    if why=="chosen" or why=="chosen_event" then
+        if next(answers) then stale=key_of(answers) end
+    else stale=nil end
+    answers,changed_at,spoken={},nil,nil
+end
+-- Pure: the whole screen at once (texts by slot 1-4, nil/"" = hidden), as
+-- the Tick read sees it. The list just chosen is ignored until the buttons
+-- show something else; an empty screen ends that. Returns slots updated.
+function M.set_all(texts,is_major)
+    local clean={}
+    for s=1,4 do
+        local x=texts[s]
+        if type(x)=="string" then x=x:gsub("^%s+",""):gsub("%s+$","") end
+        if x=="" then x=nil end
+        clean[s]=x
+    end
+    local k=key_of(clean)
+    if k==key_of({}) then stale=nil end
+    if stale and k==stale then return 0 end
+    stale=nil
+    local n=0
+    for s=1,4 do if M.update(s-1,clean[s] or "",is_major) then n=n+1 end end
+    return n
+end
+-- Current answers in slot order: {slot=,text=} (slot 1-4), or nil.
+function M.options()
+    local out={}
+    for s=1,4 do if answers[s] then out[#out+1]={slot=s,text=answers[s]} end end
+    if #out==0 then return nil end
+    return out,major
+end
+-- Returns the text to speak when a settled list is new, else nil.
+function M.due(gamepad)
+    if not changed_at or M.clock()-changed_at<M.SETTLE then return nil end
+    local opts,maj=M.options()
+    if not opts then return nil end
+    M.keys(opts,gamepad,maj)
+    local text=M.announce_text(opts,maj)
+    if text==spoken then return nil end
+    spoken=text
+    return text,opts
+end
+-- The answer list for rereading (Home): always the full current list.
+function M.current(gamepad)
+    local opts,maj=M.options()
+    if not opts then return nil end
+    M.keys(opts,gamepad,maj)
+    return M.announce_text(opts,maj)
+end
+function M.read()return M.options() end
+-- Hooks (game side). They run on the game thread inside the view's own
+-- event (the view is alive then) and copy out plain values only.
+local VIEW="/Game/Packages/Widgets/BP_LiSDialogWidget_View.BP_LiSDialogWidget_View_C"
+local FN=VIEW..":UpdateTextImplementable"
+local hooked=nil -- address of the function object hooked
+local function unwrap(p)local ok,v=pcall(function()return p:get()end);if ok then return v end;return p end
+local function function_address()
+    local a=nil
+    pcall(function()local f=StaticFindObject(FN);if f and f:IsValid() then a=f:GetAddress() end end)
+    return a
+end
+-- Called regularly: hooks the view's events once its class is loaded, and
+-- again if the game loads a new copy of it.
+function M.install()
+    if not RegisterHook then return false end
+    local a=function_address()
+    if not a or a==hooked then return hooked~=nil end
+    local ok,err=pcall(function()
+        RegisterHook(FN,function(self,item,text)
+            local slot=nil;pcall(function()slot=unwrap(item)end)
+            local s=nil;pcall(function()local x=unwrap(text);s=type(x)=="string" and x or x:ToString()end)
+            local maj=false;pcall(function()maj=unwrap(self):IsMajorChoice()==true end)
+            if M.update(tonumber(slot),s,maj) then M.log(string.format("choice_update slot=%s major=%s text=%q",tostring(slot),tostring(maj),tostring(s))) end
+        end)
+        -- A choice made by any route (controller, mouse, the mod's keys) runs
+        -- the view's ChooseSentense; the next list then starts empty.
+        RegisterHook(VIEW..":ChooseSentense",function()M.clear("chosen_event") end)
+        RegisterHook(VIEW..":Destruct",function()M.clear("destruct") end)
+        -- Main read: on the view's own Tick (the game is running the view's
+        -- code, so the view and its buttons are alive), at most READ_RATE
+        -- times a second. The answers already on screen when the hooks are
+        -- first installed are caught this way too (28 Oct: the class only
+        -- loads with the first conversation, after its answers were filled).
+        RegisterHook(VIEW..":Tick",function(self)
+            local now=M.clock()
+            if now<M.next_read then return end
+            M.next_read=now+1/M.READ_RATE
+            local v=unwrap(self)
+            local maj=false;pcall(function()maj=v:IsMajorChoice()==true end)
+            local texts={}
+            pcall(function()
+                v.DialogButtons_Array:ForEach(function(i,e)
+                    if i>4 then return end
+                    local b=e:get()
+                    local on=false;pcall(function()on=b:IsVisible()end)
+                    if on then pcall(function()texts[i]=b.DialogText:GetText():ToString()end) end
+                end)
+            end)
+            local n=M.set_all(texts,maj)
+            if n>0 then M.log("choice_tick_read updated="..n) end
+        end)
+    end)
+    if ok then hooked=a;M.next_read=0;M.log(string.format("choice_hooks installed fn=%x",a)) else M.log("choice_hooks error="..tostring(err)) end
+    return ok
+end
+function M.hooked()return hooked~=nil end
+-- The dialogue view on screen, found fresh each time (never kept).
+local function view_up()
     local found=nil
     pcall(function()
         for _,w in ipairs(FindAllOf("BP_LiSDialogWidget_View_C") or {}) do
-            local ok,on=pcall(function()return valid(w) and w:IsInViewport() and w:IsVisible()end)
+            local ok,on=pcall(function()return w:IsValid() and w:IsInViewport() and w:IsVisible()end)
             if ok and on then found=w;break end
         end
     end)
     return found
 end
--- Shown answers: {slot=,text=,index=,position=,direction=} in button order.
--- Everything is read INSIDE the walk over DialogButtons_Array, and no game
--- object reference is kept afterwards - the same rule as scanner/actions.lua
--- ("element references from a game array must not outlive it"). Two crashes
--- during conversations (26 Oct, traced with debug symbols) happened in a
--- field read on an answer button this reader had taken out of the array and
--- read later; the object can be replaced by the game between those steps.
--- choose() re-finds the button by its slot at the moment it is pressed.
-local function each_button(v,fn)
-    v.DialogButtons_Array:ForEach(function(i,e)
-        local ok,b=pcall(function()return e:get()end)
-        if ok and valid(b) then fn(i,b) end
-    end)
+-- Only while answers are held: clear them once the view has gone.
+function M.tick()
+    if next(answers) and not view_up() then M.clear("closed") end
 end
-function M.read()
-    local v=view()
-    if not v then return nil end
-    local out={}
-    local walked,err=pcall(function()
-        each_button(v,function(i,b)
-            if not visible(b) then return end
-            local text=nil
-            pcall(function()local d=b.DialogText;if valid(d) then text=d:GetText():ToString() end end)
-            if not (text and text:find("%S")) then return end
-            local idx,pos=nil,nil
-            pcall(function()idx=b.ActionIndex end)
-            pcall(function()pos=b.OptionPosition end)
-            -- The button shows one direction icon (Image_Up/Left/Right/Down)
-            -- for the face button that picks it on a controller.
-            local dir=nil
-            for _,d in ipairs({"Up","Left","Right","Down"}) do
-                if not dir then pcall(function()local img=b["Image_"..d];if valid(img) and visible(img) then dir=d end end) end
-            end
-            out[#out+1]={slot=i,text=text,index=idx,position=pos,direction=dir}
-        end)
-    end)
-    -- Never fail silently: a read that stops part-way is logged (once per
-    -- distinct error), so a vanished choice list can be explained afterwards.
-    if not walked and tostring(err)~=M.last_error then
-        M.last_error=tostring(err)
-        M.log("choice_read_error="..tostring(err))
-    end
-    if #out==0 then return nil end
-    local major=false;pcall(function()major=v:IsMajorChoice()==true end)
-    return out,major
-end
--- Chooses the n-th announced answer through the game's own button.
+-- Chooses the n-th announced answer: the slot's button, pressed through the
+-- view found at this moment (the game's own face-button path).
 function M.choose(n)
-    local options=M.read()
-    if not options then M.say(M.text("choice_none"));return false end
-    local o=options[n]
+    local opts=M.options()
+    if not opts then M.say(M.text("choice_none"));return false end
+    local o=opts[n]
     if not o then M.say(M.text("choice_no_option",{index=n}));return false end
-    local v=view()
-    local ok,err=false,"answer gone"
+    local v=view_up()
+    local ok,err=false,"view gone"
     if v then
         pcall(function()
-            each_button(v,function(i,b)
-                if i==o.slot and not ok then ok,err=pcall(function()b:ClickButton()end) end
+            v.DialogButtons_Array:ForEach(function(i,e)
+                if i==o.slot and not ok then
+                    local b=e:get()
+                    ok,err=pcall(function()b:ClickButton()end)
+                end
             end)
         end)
     end
-    M.log("choice_chosen n="..n.." slot="..o.slot.." index="..tostring(o.index).." ok="..tostring(ok)..(ok and "" or " err="..tostring(err)))
+    M.log("choice_chosen n="..n.." slot="..o.slot.." ok="..tostring(ok)..(ok and "" or " err="..tostring(err)))
+    if ok then M.clear("chosen") end
     return ok
 end
-M.say=function(_)end
 return M
