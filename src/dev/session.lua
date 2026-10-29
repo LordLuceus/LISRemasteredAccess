@@ -54,6 +54,7 @@ local nav_checked = false
 local return_requested = false
 local ending_probed=false
 local lighthouse_probed=false
+local hook_probed,hook_wait=false,0
 local scene_announced,menu_announced=false,false
 local waiting_announced=false
 local follow_cancelled=false
@@ -220,6 +221,15 @@ poll_handle = LoopInGameThreadWithDelay(5000, function()
                     refresh_settings(controller)
                     if scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
                         and not scene_announced and controller.Pawn:IsValid() then scene_announced=true;say(request.scene) end
+                    -- Script-hook probe: once, 10 polls after the scene is up.
+                    if request.hook_probe and not hook_probed and scene_announced then
+                        hook_wait=(hook_wait or 0)+1
+                        if hook_wait>=3 then
+                            hook_probed=true
+                            local hok,herr=pcall(function()require("dev.hook_probe").run(emit)end)
+                            if not hok then emit("hook_probe_error="..tostring(herr)) end
+                        end
+                    end
                     -- Lighthouse stage probe (test copy only): once, when Max is controllable.
                     if request.lighthouse_probe and not lighthouse_probed and scenes[request.scene] and world:GetFName():ToString()==scenes[request.scene].map
                         and controller.Pawn:IsValid() and controller.Pawn:GetClass():GetFName():ToString():find("Max",1,true) then
