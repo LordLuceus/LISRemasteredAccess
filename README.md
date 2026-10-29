@@ -104,6 +104,11 @@ listed on its own once you reach it.
 
 ### Helping Chloe shoot (Episode 2, junkyard)
 
+For the first two bottles you tell Chloe where to aim after seeing her miss.
+Right after she fires, the mod says where the shot went ("Chloe's shot went
+wide, to the left of the bottle."); rewind and choose the direction. It does
+not name the answer.
+
 For the third and fourth bottles you choose what Chloe shoots by aiming the
 camera at it. While you choose, the scanner lists only the things she can
 shoot (the blue plank, monitors, barrel and rim; then the gas tank, bumper,

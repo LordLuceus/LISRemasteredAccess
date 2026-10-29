@@ -116,6 +116,7 @@ local tutorial=require("hud.tutorial")
 local tooltip=require("hud.tooltip")
 local sms=require("hud.sms")
 local icons=require("hud.icons")
+local shooting=require("scenes.junkyard_shooting")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -559,6 +560,7 @@ do
 end
 sms.text=function(key,p)return l10n.text(key,p)end
 icons.text=function(key,p)return l10n.text(key,p)end
+shooting.text=function(key,p)return l10n.text(key,p)end
 icons.clean=require("core.text").clean
 icons.translate=function(key)return require("scanner.sources").translate(key)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
@@ -587,6 +589,16 @@ end
 -- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
 local function main_step()
+    -- Junkyard shooting: describe where Chloe's shot went, just after she
+    -- fires (bottles 1 and 2). Every main step (four times a second): the
+    -- moment is read from the shot sequence's own position.
+    do
+        local c0=scanner.controller()
+        if c0 then
+            local ok,lines=pcall(shooting.tick,c0)
+            if ok then for _,k in ipairs(lines) do local t=l10n.text(k);say(t,true);log("shooting spoken="..t) end end
+        end
+    end
         local ok,err=pcall(function()
             local state="unknown"
             local c=scanner.controller()

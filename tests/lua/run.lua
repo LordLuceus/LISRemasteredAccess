@@ -1754,5 +1754,22 @@ do
     check("icon phrases present",en.icon_consequences and en.icon_new_fact)
     package.loaded["hud.icons"]=nil
 end
+-- Junkyard shooting: the shot is described just after Chloe fires.
+do
+    package.loaded["scenes.junkyard_shooting"]=nil
+    local S=require("scenes.junkyard_shooting")
+    local b1=S.SHOTS.E2_3A_Junkyard_LD_Bottle01_FailChloe
+    local b2=S.SHOTS.E2_3A_Junkyard_LD_Bottle02_FailChloe
+    check("not before she fires",S.fired(b1,6.0,7.5,false)==nil)
+    check("just after she fires",S.fired(b1,7.6,8.1,false)=="shoot_miss_left")
+    check("once: not again later in the shot",S.fired(b1,8.1,8.6,false)==nil)
+    check("not while rewinding back through it",S.fired(b1,8.6,7.6,true)==nil and S.fired(b1,9,7.9,true)==nil)
+    check("again when the shot plays again",S.fired(b1,7.5,8.0,false)=="shoot_miss_left")
+    check("not on the first reading (no crossing seen)",S.fired(b1,nil,9.0,false)==nil)
+    check("bottle 2",S.fired(b2,7.7,8.2,false)=="shoot_miss_low")
+    local en=require("lang.en")
+    check("descriptions never name the answer",not en.shoot_miss_left:find("[Rr]ight") and not en.shoot_miss_low:find("[Uu]p"))
+    package.loaded["scenes.junkyard_shooting"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

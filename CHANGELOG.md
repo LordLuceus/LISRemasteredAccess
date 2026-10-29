@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- Helping Chloe aim at the first two bottles: right after she fires, the mod
+  says where her shot went, so you can work out where to tell her to aim.
 - Helping Chloe shoot in the junkyard: when you choose what she shoots, the
   scanner lists just the targets, and F turns the camera to the one you pick,
   so the keyboard works there too.
