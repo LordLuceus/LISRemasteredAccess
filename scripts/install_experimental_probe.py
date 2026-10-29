@@ -27,6 +27,11 @@ ini=STAGE/'ue4ss/UE4SS-settings.ini'
 s=ini.read_text(encoding='utf-8-sig')
 s=re.sub(r'(?m)^(Hook\w+)[ \t]*=[ \t]*1[ \t]*$',r'\1 = 0',s)
 s=s.replace('HookEngineTick = 0','HookEngineTick = 1')
+# Script hooks (RegisterHook on Blueprint functions, used by the dialogue
+# choice reader) need these three; with ProcessInternal alone no hook fires
+# (measured 29 Oct). HookLoadMap stays off: it broke startup.
+for h in ('HookProcessInternal','HookProcessLocalScriptFunction','HookUObjectProcessEvent'):
+    s=s.replace(h+' = 0',h+' = 1')
 assert 'DefaultExecuteInGameThreadMethod = EngineTick' in s
 assert 'EngineTickResolveMethod = Scan' in s
 ini.write_text(s,encoding='utf-8')
