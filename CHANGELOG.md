@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- Autowalk to an object you can already use says "<object> is within reach."
+  instead of looking for a route.
 - Autowalk says "Arrived" when Max stops right against the object, instead of
   "Something is blocking the way".
 - "Major choice" is said only for the game's real major choices, the ones with

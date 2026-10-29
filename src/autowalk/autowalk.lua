@@ -19,6 +19,8 @@ M.text=function(key,p)return key end
 -- Movement input (WASD, arrows, left stick) cancels a walk. Supplied by the
 -- caller; returns true while the player is moving Max by hand.
 M.moving=function()return false end
+-- in_reach(controller,entry) -> true when the game lists the object as actionable.
+M.in_reach=function()return nil end
 -- The follower reports how each leg ended as "follow_end=<reason>".
 local last_result,last_remaining=nil,nil
 local function emit(line)
@@ -219,6 +221,14 @@ function M.start(controller,entry,quiet)
     local pawn=controller.Pawn
     local ready,reason=follow.ready(controller,pawn)
     if not ready then speak(plan.refusal(reason));emit("refused reason="..tostring(reason));return false end
+    -- Already within reach of the object (the game lists it as actionable):
+    -- there is nothing to walk to. 29 Oct (Episode 3 dorm): next to objects
+    -- against walls the route search ran and was cancelled, or failed, while
+    -- the player could already use the object.
+    if entry.actor and quiet~=true and entry.kind=="interaction" then
+        local rok,near=pcall(M.in_reach,controller,entry)
+        if rok and near==true then emit("start target="..entry.name.." already_in_reach");speak("walk_in_reach",{name=entry.name});return false end
+    end
     local sok,start=route.project(controller,feet(pawn))
     local target=entry.stand or entry.pos
     -- Pass-through goals: aim `through` cm beyond the centre, along the line

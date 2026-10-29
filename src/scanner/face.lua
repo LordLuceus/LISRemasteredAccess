@@ -104,6 +104,12 @@ local function judge(controller,entry)
     end)
     return focused,in_reach
 end
+-- Whether the game already lists the entry's object as within reach (its
+-- inner, actionable zone). nil when unknown.
+function M.in_reach(controller,entry)
+    local ok,_,r=pcall(judge,controller,entry)
+    if ok then return r end
+end
 -- Turns the camera toward the entry. Returns false when refused.
 function M.start(controller,entry)
     if not entry then M.say(M.text("walk_no_target"));return false end

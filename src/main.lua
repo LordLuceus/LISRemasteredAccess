@@ -582,6 +582,7 @@ preview.say=function(text)say(text,true)end
 preview.play=function(file)return speech.play and speech.play(speech.audio_dir..file) end
 autowalk.log=log
 autowalk.moving=function()return speech.moving and speech.moving() or false end
+autowalk.in_reach=function(c,e)return require("scanner.face").in_reach(c,e) end
 autowalk.text=function(key,p)return l10n.text(key,p)end
 autowalk.next_guide=function(c)local ok,g=pcall(require("scanner.sources").guide_entry,c);return ok and g or nil end
 autowalk.fact_active=function(c,f)local ok,v=pcall(function()return c:IsFactActive(FName(f))end);return ok and v==true end

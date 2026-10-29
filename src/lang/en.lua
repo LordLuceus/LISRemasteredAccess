@@ -54,6 +54,7 @@ return {
     guide_waiting="Wait here; the guide goes as soon as the way opens.",
     walk_arrived="Arrived at {name}.",
     walk_stopped="Walking stopped.",
+    walk_in_reach="{name} is within reach.",
     walk_interrupted="Walking stopped. The game took over.",
     walk_blocked="Walking stopped. Something is blocking the way to {name}.",
     walk_timeout="Walking stopped before reaching {name}.",
