@@ -295,9 +295,44 @@ function M.guide_entry(controller)
     return {id="nightmare_guide",label=label,name=label,pos={X=st.X,Y=st.Y,Z=st.Z},
         stand={X=st.X,Y=st.Y,Z=st.Z},kind="guide",through=st.through,persist=st.persist,reach=st.reach,wait_fact=st.wait_fact,step=i,steps=#G.STEPS,step_name=name,step_id=st.id}
 end
+-- While Max chooses a shooting target, only the targets: objects whose
+-- enabled action is "Shoot" (the plank, monitors, barrel and rim; then the gas
+-- tank, bumper, windshield and tire), in the scanner's usual order.
+M.shoot_action=function(actor)
+    local found=false
+    pcall(function()
+        actor.Actions:ForEach(function(_,v)
+            local ok,x=pcall(function()return v:get()end)
+            if ok and not found then
+                local on=false;pcall(function()on=x.bEnabled==true end)
+                -- The pop-up says "Shoot" from the action's display override
+                -- ($GT_HUD_Action_Shoot); its ActionName may be a generic one.
+                local n,o="",""
+                pcall(function()n=x.ActionName:ToString()end)
+                pcall(function()o=x.OverrideDisplayName:ToString()end)
+                if on and (n:find("Shoot") or o:find("Shoot")) then found=true end
+            end
+        end)
+    end)
+    return found
+end
 function M.collect(controller)
     local out={}
     interactions(controller,out)
+    local aok,aiming=pcall(require("scenes.junkyard_shooting").aiming,controller)
+    if aok and aiming then
+        local before=#out
+        local names={}
+        for i=#out,1,-1 do
+            local e=out[i]
+            local keep=false;pcall(function()keep=M.shoot_action(e.actor)end)
+            if not keep then names[#names+1]=tostring(e.label);table.remove(out,i) end
+        end
+        -- Never fail silently: once per aiming phase, what was kept and dropped.
+        local line="scanner_aiming before="..before.." kept="..#out.." dropped="..table.concat(names,"|")
+        if M.last_aiming~=line then M.last_aiming=line;M.report(line) end
+        return out
+    end
     goals(out)
     exits(out)
     local ok,g=pcall(M.guide_entry,controller)

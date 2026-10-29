@@ -49,6 +49,16 @@ local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
 local control=require("core.control").new()
 local control_world=nil
 local function playable()return not in_menu() and control:has_control() end
+-- The scanner, facing and Home also work while Max chooses a shooting target
+-- in the junkyard (the game holds her, but the camera aims; keyboard players
+-- have no other way to turn it).
+local function can_scan()
+    if playable() then return true end
+    if in_menu() then return false end
+    local c=nil;pcall(function()c=scanner.controller()end)
+    local ok,on=pcall(require("scenes.junkyard_shooting").aiming,c)
+    return ok and on==true
+end
 -- Keyboard shortcuts are polled by the game-thread loop below (core/keys.lua):
 -- no mod code ever runs on the loader's input thread. bind_key keeps the
 -- loader's call shape: bind_key(key, fn) or bind_key(key, {modifier}, fn).
@@ -74,7 +84,7 @@ local function run_keys()
     end
 end
 bind_key(Key.HOME,on_game(function()
-    if not playable() then
+    if not can_scan() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
         speech.say(text or last_speech,true)
@@ -83,8 +93,8 @@ bind_key(Key.HOME,on_game(function()
     end
 end))
 bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
-bind_key(Key.PAGE_DOWN,on_game(function()if playable() then scanner.command("next") end end),{["repeat"]=true})
-bind_key(Key.PAGE_UP,on_game(function()if playable() then scanner.command("previous") end end),{["repeat"]=true})
+bind_key(Key.PAGE_DOWN,on_game(function()if can_scan() then scanner.command("next") end end),{["repeat"]=true})
+bind_key(Key.PAGE_UP,on_game(function()if can_scan() then scanner.command("previous") end end),{["repeat"]=true})
 -- Shift+Home walks to the selected object; pressing it again while walking stops.
 local autowalk=require("autowalk.autowalk")
 local function walk_toggle()
@@ -116,7 +126,7 @@ local journal_open=false
 local journal_move -- defined with the journal step below
 local choices=require("dialogue.choices")
 local function face_selected()
-    if not playable() then return end
+    if not can_scan() then return end
     local c=scanner.controller()
     if c then face.start(c,scanner.selected()) end
 end
@@ -630,7 +640,7 @@ local function pad_step()
             else pad:reader_reset() end
             -- While the journal is open the D-pad reads it; scanner commands
             -- (D-pad down = autowalk) must not fire behind it.
-            local active=buttons>=0 and playable() and not journal_open
+            local active=buttons>=0 and can_scan() and not journal_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
                 if cmd=="repeat" then speech.say(last_speech,true)
                 elseif cmd=="autowalk" then walk_toggle()

@@ -102,6 +102,15 @@ listed on its own once you reach it.
   Running makes no difference here.
 - At the newspaper the guide says so: read it to finish the episode.
 
+### Helping Chloe shoot (Episode 2, junkyard)
+
+For the third and fourth bottles you choose what Chloe shoots by aiming the
+camera at it. While you choose, the scanner lists only the things she can
+shoot (the blue plank, monitors, barrel and rim; then the gas tank, bumper,
+windshield and tire). Select one with Page Up or Page Down and press F to turn
+the camera to it; the game then names it ("Rim. 1, Shoot.") and 1 shoots. The
+mod does not say which one works.
+
 ### When the game takes over
 
 A soft descending tone plays when a cutscene takes control of Max, and an

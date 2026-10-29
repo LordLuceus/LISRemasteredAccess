@@ -2,6 +2,13 @@
 
 Player-facing changes, newest first.
 
+## 2026-10-29
+
+### In play
+- Helping Chloe shoot in the junkyard: when you choose what she shoots, the
+  scanner lists just the targets, and F turns the camera to the one you pick,
+  so the keyboard works there too.
+
 ## 2026-10-28
 
 ### Menus
