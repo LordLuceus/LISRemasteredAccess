@@ -125,6 +125,7 @@ return {
     shoot_miss_low="Chloe's shot hit below the bottle.",
     icon_consequences="This action will have consequences.",
     icon_new_fact="You learned something useful.",
+    icon_saving="Saving.",
     stats_major="Major choices",
     stats_minor="Minor choices",
     stats_world="World stats",

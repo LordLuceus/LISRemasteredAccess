@@ -2,7 +2,8 @@
 -- * the butterfly (ButterflyIcon): "This action will have consequences...";
 --   the widget's ConsequencesText is set from the game's own localized line
 --   ($GT_HUD_Tuto_Tuto26), which is what is spoken;
--- * the new-fact bubble (NewFactIcon): pictures only.
+-- * the new-fact bubble (NewFactIcon): pictures only;
+-- * the save icon (AutosaveIcon, the animated pen): pictures only.
 -- Each is announced once when it appears (hidden or absent -> visible).
 local M={}
 M.text=function(key)return key end
@@ -18,11 +19,16 @@ end
 -- state - not the widget's own visibility - says the icon is showing.
 local SHOWING=3
 M.state=function(_)end
-local function visible(class)
-    for _,w in ipairs(FindAllOf(class) or {}) do
+local function visible(icon)
+    for _,w in ipairs(FindAllOf(icon.class) or {}) do
         if on_screen(w) then
+            -- The save icon is the other way round: the HUD hides the whole
+            -- widget when it is built (BP_Widget_HUD_View: AutosaveIcon
+            -- SetVisibility Hidden) and the widget itself only steps through
+            -- its frames, so the widget being shown is the signal.
+            if icon.whole then return w end
             local v=nil;pcall(function()v=w.Switcher:GetVisibility()end)
-            M.state(class,v)
+            M.state(icon.class,v)
             if v==SHOWING then return w end
         end
     end
@@ -32,6 +38,7 @@ M.translate=function(key)return nil end
 M.ICONS={
     {class="ButterflyIcon_C",key="icon_consequences",game="$GT_HUD_Tuto_Tuto26"},
     {class="NewFactIcon_C",key="icon_new_fact"},
+    {class="AutosaveIcon_C",key="icon_saving",whole=true},
 }
 -- Pure: which icons just appeared. now/prev: {class=bool}.
 function M.appeared(prev,now)
@@ -41,11 +48,15 @@ function M.appeared(prev,now)
     end
     return out
 end
-local prev={}
+local prev=nil
 -- Returns the lines to speak for icons that appeared since the last call.
+-- The first reading after starting (or after a menu) is only a baseline: an
+-- icon already showing then is not news. 29 Oct: "Saving." was spoken the
+-- moment the game launched, before any save was loaded.
 function M.tick()
     local now={}
-    for _,i in ipairs(M.ICONS) do now[i.class]=visible(i.class)~=nil end
+    for _,i in ipairs(M.ICONS) do now[i.class]=visible(i)~=nil end
+    if prev==nil then prev=now;return {} end
     local lines={}
     for _,i in ipairs(M.appeared(prev,now)) do
         local s=nil
@@ -55,5 +66,5 @@ function M.tick()
     prev=now
     return lines
 end
-function M.reset()prev={} end
+function M.reset()prev=nil end
 return M

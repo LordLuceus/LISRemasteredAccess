@@ -1765,7 +1765,9 @@ do
     check("new fact appearing is announced",#a==1 and a[1].key=="icon_new_fact")
     check("shown again after hiding",#I.appeared({ButterflyIcon_C=false},{ButterflyIcon_C=true})==1)
     local en=require("lang.en")
-    check("icon phrases present",en.icon_consequences and en.icon_new_fact)
+    check("icon phrases present",en.icon_consequences and en.icon_new_fact and en.icon_saving)
+    a=I.appeared({},{AutosaveIcon_C=true})
+    check("save icon appearing is announced",#a==1 and a[1].key=="icon_saving")
     package.loaded["hud.icons"]=nil
 end
 -- Junkyard shooting: the shot is described just after Chloe fires.
@@ -1784,6 +1786,17 @@ do
     local en=require("lang.en")
     check("descriptions never name the answer",not en.shoot_miss_left:find("[Rr]ight") and not en.shoot_miss_low:find("[Uu]p"))
     package.loaded["scenes.junkyard_shooting"]=nil
+end
+-- Icons: the first reading after start is a baseline (no "Saving." at launch).
+do
+    package.loaded["hud.icons"]=nil
+    local I=require("hud.icons")
+    local shown={AutosaveIcon_C=true}
+    _G.FindAllOf=function(c)if shown[c] then return {{IsValid=function()return true end,IsVisible=function()return true end,IsInViewport=function()return true end}} end;return {} end
+    check("icon already showing at start is not announced",#I.tick()==0)
+    shown={};I.tick();shown={AutosaveIcon_C=true}
+    check("save icon appearing later is announced",#I.tick()==1)
+    _G.FindAllOf=nil;package.loaded["hud.icons"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
