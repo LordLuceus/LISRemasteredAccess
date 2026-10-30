@@ -127,13 +127,34 @@ local function closed_crossing(points,list)
     for _,d in ipairs(list) do if d.state=="blocked" and crosses(points,d) then return d end end
     return nil
 end
+-- Pure: is a point inside an exit's trigger volume (centre pos, half-size
+-- extent), kept `inset` cm inside its sides? Walking into the volume is what
+-- the exit needs; its centre may be off the walkable ground.
+function M.inside(p,entry,inset)
+    local e=entry and entry.extent
+    if not (p and e and entry.pos) then return false end
+    inset=inset or 0
+    return math.abs(p.X-entry.pos.X)<=e.X-inset and math.abs(p.Y-entry.pos.Y)<=e.Y-inset
+        and math.abs(p.Z-entry.pos.Z)<=e.Z+100
+end
 -- Returns nil for the direct native path, a waypoint list for a detour, or false.
-function M.plan(controller,pawn,start,goal,emit)
+-- accept(point): optional; a partial route ending at an accepted point (inside
+-- an exit's volume) is used as a route to that point.
+function M.plan(controller,pawn,start,goal,emit,accept)
     local list=M.survey(controller,pawn,emit)
     local ok,len,pts=route.query(controller,pawn,"direct",start,goal,emit)
+    local moved=nil
+    if not ok and accept and pts and #pts>=2 and accept(pts[#pts]) then
+        -- 29 Oct (Episode 3, outside the dorms): the route to "Go To The Main
+        -- Campus" ended 56 cm from the volume's centre, inside it, but was
+        -- partial, so no route was offered.
+        local e=pts[#pts]
+        emit(string.format("door_plan=partial_inside_target end=%.0f,%.0f,%.0f",e.X,e.Y,e.Z))
+        goal={X=e.X,Y=e.Y,Z=e.Z};moved={{e.X,e.Y,e.Z}};ok=true
+    end
     if not ok then emit("door_plan=no_direct_path");return false end
     local closed=closed_crossing(pts,list)
-    if not closed then emit("door_plan=direct length="..string.format("%.0f",len));return nil end
+    if not closed then emit("door_plan=direct length="..string.format("%.0f",len));return moved end
     emit("door_plan=direct_crosses_closed doorway="..closed.index.." blocker="..tostring(closed.blocker))
     local best,best_len=nil,math.huge
     for _,d in ipairs(list) do

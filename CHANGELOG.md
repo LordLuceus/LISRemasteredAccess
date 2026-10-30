@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-29
 
 ### In play
+- Autowalk reaches exits whose route stops just short of their centre, such as
+  "Go To The Main Campus" outside the dorms in Episode 3.
 - The game's save icon is announced: "Saving."
 - Autowalk no longer refuses routes through open doorways that have a door
   standing in them, such as Dana's room in Episode 3.

@@ -1798,5 +1798,19 @@ do
     check("save icon appearing later is announced",#I.tick()==1)
     _G.FindAllOf=nil;package.loaded["hud.icons"]=nil
 end
+-- Exits: a route ending inside the exit's volume is good enough.
+do
+    _G.EObjectFlags=_G.EObjectFlags or {RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    package.loaded["nav.doors"]=nil
+    local ok,D=pcall(require,"nav.doors")
+    if ok then
+        local exit={pos={X=208,Y=-2496,Z=88},extent={X=150,Y=100,Z=88}}
+        check("route end 56 cm from the exit centre is inside",D.inside({X=208,Y=-2440,Z=6},exit,20))
+        check("outside the volume is not",not D.inside({X=208,Y=-2300,Z=6},exit,20))
+        check("near the edge is not, with the inset",not D.inside({X=208,Y=-2410,Z=6},exit,20))
+        check("no extent: never",not D.inside({X=208,Y=-2496,Z=88},{pos={X=208,Y=-2496,Z=88}},20))
+    else check("nav.doors loads offline",false,tostring(D)) end
+    package.loaded["nav.doors"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -241,7 +241,10 @@ function M.start(controller,entry,quiet)
         return start_offmesh(controller,pawn,entry,target,"unprojected",quiet)
     end
     -- Direct route, or a detour around a closed door; false means no route.
-    local ok,legs=pcall(doors.plan,controller,pawn,start,goal,emit)
+    -- An exit only needs Max inside its volume: a partial route that ends in it will do.
+    local accept=nil
+    if entry.kind=="exit" and entry.extent then accept=function(p)return doors.inside(p,entry,20) end end
+    local ok,legs=pcall(doors.plan,controller,pawn,start,goal,emit,accept)
     if not ok then emit("plan_error="..tostring(legs));legs=nil end
     if legs==false then return start_offmesh(controller,pawn,entry,target,"no_navmesh_route",quiet) end
     local list={}
