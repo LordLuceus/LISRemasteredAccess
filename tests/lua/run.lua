@@ -1812,5 +1812,30 @@ do
     else check("nav.doors loads offline",false,tostring(D)) end
     package.loaded["nav.doors"]=nil
 end
+-- Principal's office: door-line side, the other-side point, and the unlock window.
+do
+    package.loaded["scenes.principal_office"]=nil
+    local O=require("scenes.principal_office")
+    local door={X=46,Y=-2004,Z=108}
+    -- Positions from the 30 Oct log: the outer office before the bomb and
+    -- straight after it (said "inside" wrongly), the hat in the outer office.
+    check("outer office before the bomb is outside",O.side({X=48,Y=-2590},door)=="outside")
+    check("right after the blast is outside",O.side({X=-223,Y=-2518},door)=="outside")
+    check("by the hat is outside",O.side({X=-341,Y=-2229},door)=="outside")
+    check("by the principal's computer is inside",O.side({X=-429,Y=-1602},door)=="inside")
+    check("in the doorway: no change",O.side({X=46,Y=-2000},door)==nil)
+    local t,where=O.other_side({X=49,Y=-2119},door)
+    check("from outside, the point is inside past the door",where=="inside" and t.Y>door.Y+100 and O.side(t,door)=="inside")
+    t,where=O.other_side({X=0,Y=-1700},door)
+    check("from inside, the point is outside",where=="outside" and O.side(t,door)=="outside")
+    check("no point from the doorway",O.other_side({X=46,Y=-1990},door)==nil)
+    check("first reading is only a baseline",#O.changes({},{open=true})==0)
+    local c=O.changes({open=false},{open=true})
+    check("the unlock window is announced",#c==1 and c[1]=="office_door_unlockable")
+    check("no repeat while it stays open",#O.changes({open=true},{open=true})==0)
+    local en=require("lang.en")
+    check("office phrases",en.office_door_unlockable and en.office_other_side and not en.office_inside)
+    package.loaded["scenes.principal_office"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -319,6 +319,8 @@ end
 function M.collect(controller)
     local out={}
     interactions(controller,out)
+    -- Episode 3 principal's office: walk through the door to its other side.
+    do local ok,e=pcall(require("scenes.principal_office").entry,controller);if ok and e then out[#out+1]=e end end
     local aok,aiming=pcall(require("scenes.junkyard_shooting").aiming,controller)
     if aok and aiming then
         local before=#out

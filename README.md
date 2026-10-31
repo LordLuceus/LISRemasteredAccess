@@ -116,6 +116,15 @@ windshield and tire). Select one with Page Up or Page Down and press F to turn
 the camera to it; the game then names it ("Rim. 1, Shoot.") and 1 shoots. The
 mod does not say which one works.
 
+### The principal's office (Episode 3)
+
+After Chloe blows the office door, select "Other side of the principal's door"
+in the scanner and autowalk: Max walks through the doorway. After you rewind,
+the mod says "You can unlock the door now." when the door can be opened from
+the inside; face the door with the scanner and F if its prompt does not come
+up. Do not use the "other side" entry after the rewind: the door is closed
+again.
+
 ### When the game takes over
 
 A soft descending tone plays when a cutscene takes control of Max, and an

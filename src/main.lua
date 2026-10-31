@@ -117,6 +117,7 @@ local tooltip=require("hud.tooltip")
 local sms=require("hud.sms")
 local icons=require("hud.icons")
 local shooting=require("scenes.junkyard_shooting")
+local office=require("scenes.principal_office")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -561,6 +562,8 @@ end
 sms.text=function(key,p)return l10n.text(key,p)end
 icons.text=function(key,p)return l10n.text(key,p)end
 shooting.text=function(key,p)return l10n.text(key,p)end
+office.log=function(line)log(line)end
+office.text=function(key,p)return l10n.text(key,p)end
 icons.clean=require("core.text").clean
 icons.translate=function(key)return require("scanner.sources").translate(key)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
@@ -603,6 +606,11 @@ local function main_step()
         if c0 then
             local ok,lines=pcall(shooting.tick,c0)
             if ok then for _,k in ipairs(lines) do local t=l10n.text(k);say(t,true);log("shooting spoken="..t) end end
+            -- Principal's office (Episode 3): when the door can be unlocked
+            -- from the inside.
+            local ok2,lines2=pcall(office.tick,c0,os.clock())
+            if ok2 then for _,k in ipairs(lines2) do local t=l10n.text(k);say(t,k=="office_door_unlockable");log("office spoken="..t) end
+            elseif lines2 then log("office_error="..tostring(lines2)) end
         end
     end
         local ok,err=pcall(function()

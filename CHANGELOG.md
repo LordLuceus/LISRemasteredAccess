@@ -2,6 +2,14 @@
 
 Player-facing changes, newest first.
 
+## 2026-10-31
+
+### In play
+- Getting into the principal's office (Episode 3): the scanner has an entry
+  "Other side of the principal's door" that walks Max through the blown door,
+  and after the rewind the mod says "You can unlock the door now." when the
+  door can be opened from the inside.
+
 ## 2026-10-29
 
 ### In play

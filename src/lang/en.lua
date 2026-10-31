@@ -121,6 +121,8 @@ return {
     journal_no_items="Nothing to read on this page.",
     journal_first="First item.",
     journal_last="Last item.",
+    office_other_side="Other side of the principal's door",
+    office_door_unlockable="You can unlock the door now.",
     shoot_miss_left="Chloe's shot went wide, to the left of the bottle.",
     shoot_miss_low="Chloe's shot hit below the bottle.",
     icon_consequences="This action will have consequences.",
