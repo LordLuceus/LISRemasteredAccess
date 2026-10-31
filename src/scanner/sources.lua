@@ -6,6 +6,7 @@
 -- 2. Scene goals the game has no interaction for (the opening nightmare's
 --    lighthouse), from a small table keyed by the scene's level and actor name.
 local M={}
+local rooms=require("scanner.rooms")
 local function valid(o)
     local ok,r=pcall(function()return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end)
     return ok and r==true
@@ -175,11 +176,16 @@ local function interactions(controller,out)
             local key=a.objectName:ToString()
             if key=="" or key=="None" then return nil end
             local label=M.translate(key)
+            local id=a:GetFullName()
+            -- Doors are named for the room they lead to ("Science lab door").
+            local door=rooms.door_label(id)
+            if door then label=M.text("door_label",{name=door}) end
             -- Where to stand: the game's authored approach point, else the actor.
             local stand=nil
             local dummy=a.TapToMoveActor
             if valid(dummy) then stand=point(dummy:K2_GetActorLocation()) end
-            return {id=a:GetFullName(),label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction"}
+            return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",
+                sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01"}
         end)
         if ok and entry then out[#out+1]=entry elseif not ok then report_once("read:"..tostring(#out),"scanner_source read_error="..tostring(entry)) end
     end
@@ -316,9 +322,18 @@ M.shoot_action=function(actor)
     end)
     return found
 end
+-- The room Max is in (sub-level key) after the last collect, and its spoken name.
+M.room=nil
 function M.collect(controller)
     local out={}
     interactions(controller,out)
+    -- Only the current room's objects, plus doors and everything else.
+    local p=nil;pcall(function()p=point(controller.Pawn:K2_GetActorLocation())end)
+    if p then
+        local room=rooms.current(out,p)
+        if room~=M.room then M.room=room;M.report("scanner_room="..tostring(room)) end
+        out=rooms.filter(out,room)
+    end
     -- Episode 3 principal's office: walk through the door to its other side.
     do local ok,e=pcall(require("scenes.principal_office").entry,controller);if ok and e then out[#out+1]=e end end
     local aok,aiming=pcall(require("scenes.junkyard_shooting").aiming,controller)

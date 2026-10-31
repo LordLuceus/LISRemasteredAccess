@@ -5,6 +5,9 @@ Player-facing changes, newest first.
 ## 2026-10-31
 
 ### In play
+- Indoors, the scanner lists only the room you are in plus its doors and
+  exits, and says the room's name when you enter another. Doors are named for
+  where they lead ("Science lab door").
 - Autowalk no longer walks into shut doors that have no named doorway, such
   as the locker-room doors at the pool: it says there is no route instead.
 - Getting into the principal's office (Episode 3): the scanner has an entry

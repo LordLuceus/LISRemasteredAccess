@@ -61,6 +61,14 @@ selection stays on the same object when the order changes.
 The controller commands work only in play, so the D-pad still works normally in
 menus.
 
+### Rooms
+
+Indoors, the scanner lists only the room you are in, plus every door and exit,
+so you can move between rooms. When you cross into another room the mod says
+its name ("Corridor.", "Max's room."). Doors are named for the room they lead
+to ("Science lab door"). Places built as one open space, such as the pool, the
+junkyard and the campus, are listed whole.
+
 ### Autowalk
 
 Shift+Home (or D-pad down) walks Max to the selected object, using the game's own

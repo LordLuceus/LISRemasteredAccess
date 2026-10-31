@@ -1,0 +1,104 @@
+-- Rooms. The game builds most indoor scenes from one sub-level per room
+-- (E3_1A_MaxRoom_LD, E3_1A_Corridor_LD, ...), and every actor's full name
+-- carries its sub-level ("/Game/Maps/Episode03/Sequence01/E3_1A_MaxRoom_LD.
+-- E3_1A_MaxRoom_LD:PersistentLevel.LiSInteractionActor_Bed_3"). The scanner
+-- lists only the current room's objects, plus the connections to other rooms
+-- (doors and exits), the user's design (31 Oct). Scenes built as one level
+-- (the pool, the junkyard, the diner, the campus) have one room and are not
+-- narrowed.
+--
+-- Which room Max is in: the room of the objects nearest her. Her own actor is
+-- in the persistent level, so it says nothing; the nearest few non-door objects
+-- vote. Doors are excluded from the vote because a door's sub-level is the
+-- room on one of its sides.
+--
+-- Names: a hand table from the sub-level and door actor names (the game ships
+-- no room or "door to" strings). Unlisted rooms fall back to the sub-level's
+-- own word ("MaxRoom"); unlisted doors keep the game's "Door".
+local M={}
+M.VOTERS=3
+-- Sub-level room word -> spoken name.
+M.ROOMS={
+    Corridor="corridor",MaxRoom="Max's room",DanaRoom="Dana's room",VicRoom="Victoria's room",
+    Bathroom="bathroom",Toilets="toilets",ArtClass="art classroom",PrinOffice="principal's office",
+    ChloeRoom="Chloe's room",ParentsRoom="parents' room",Garage="garage",Garden="garden",
+    LivingRoom="living room",SwimPool="swimming pool",Junkyard="junkyard",Diner="diner",
+    Railroad="railroad",CampusA="campus",CampusB="campus",CampusPark="campus park",
+    CHouseFront="front of Chloe's house",ChloeCar="Chloe's car",CliffNow="cliff",CliffFuture="cliff",
+}
+-- Door interaction actor name (without the trailing _N) -> label. Each from
+-- the level data; "door" is appended by the caller's text key.
+M.DOORS={
+    ArtClassDoor="Art classroom",ArtDoor="Art classroom",ScienceDoor="Science lab",SciDoor01="Science lab",
+    SciDoor02="Science lab",PrincipalDoor="Principal's office",LockDoor="Principal's office",
+    ToiletDoor="Toilet",LadiesRoomDoor="Ladies' room",SwimmingPoolDoor="Swimming pool",
+    JanitorDoor="Janitor's",KateDoor="Kate's",VicRoomDoor="Victoria's",MaxRoomDoor="Max's",
+    ChloeDoor="Chloe's",Door01="Garage",Door02="Garage",DinerDoor="Diner",DinerDoor2="Diner",
+    BoysDoor="Boys' locker room",GirlsDoor="Girls' locker room", -- read as "...locker room door"ShedDoor="Shed",DoorLock="Shed",
+}
+-- Pure: the sub-level key of an actor's full name, e.g. "E3_1A_MaxRoom_LD",
+-- or nil for actors in the persistent level (".../E3_1A.E3_1A:PersistentLevel").
+function M.sublevel(fullname)
+    if type(fullname)~="string" then return nil end
+    local lvl=fullname:match("/Game/Maps/[%w_/]-/([%w_]+)%.%1:PersistentLevel")
+    if not lvl then return nil end
+    if not lvl:find("_LD$") then return nil end
+    return lvl
+end
+-- Pure: the room word of a sub-level key ("E3_1A_MaxRoom_LD" -> "MaxRoom").
+function M.room_word(sublevel)
+    if not sublevel then return nil end
+    return sublevel:match("^E%d_%d%u_(.-)_LD$") or sublevel:match("^(.-)_LD$")
+end
+function M.room_name(sublevel)
+    local w=M.room_word(sublevel)
+    if not w then return nil end
+    return M.ROOMS[w] or w
+end
+-- Pure: the door label for an interaction actor name, or nil.
+function M.door_label(fullname)
+    if type(fullname)~="string" then return nil end
+    local short=fullname:match("LiSInteractionActor_([%w]+)_%d+$") or fullname:match("LiSInteractionActor_([%w]+)$")
+    if not short then return nil end
+    return M.DOORS[short]
+end
+-- Pure: which room Max is in. entries: {pos={X,Y,Z},sublevel=,is_door=};
+-- p: Max's position. The nearest VOTERS non-door entries with a sub-level
+-- vote, each weighted by 1/distance, so a corridor's one nearby object
+-- outweighs a furnished room's several behind the wall. nil when nothing has
+-- a sub-level.
+function M.current(entries,p)
+    local c={}
+    for _,e in ipairs(entries) do
+        if e.sublevel and not e.is_door and e.pos then
+            c[#c+1]={d=math.sqrt((e.pos.X-p.X)^2+(e.pos.Y-p.Y)^2),s=e.sublevel}
+        end
+    end
+    if #c==0 then return nil end
+    table.sort(c,function(a,b)return a.d<b.d end)
+    local votes,order={},{}
+    for i=1,math.min(M.VOTERS,#c) do
+        local s=c[i].s
+        if not votes[s] then votes[s]=0;order[#order+1]=s end
+        votes[s]=votes[s]+1/math.max(c[i].d,30)
+    end
+    local best=order[1]
+    for _,s in ipairs(order) do if votes[s]>votes[best] then best=s end end
+    return best
+end
+-- Pure: keep the current room's objects and every connection. Entries
+-- without a sub-level (goals, exits, scene entries) are kept. When the scene
+-- has only one sub-level among its objects, nothing is removed.
+function M.filter(entries,room)
+    if not room then return entries end
+    local levels={}
+    for _,e in ipairs(entries) do if e.sublevel then levels[e.sublevel]=true end end
+    local n=0;for _ in pairs(levels) do n=n+1 end
+    if n<2 then return entries end
+    local out={}
+    for _,e in ipairs(entries) do
+        if not e.sublevel or e.is_door or e.kind~="interaction" or e.sublevel==room then out[#out+1]=e end
+    end
+    return out
+end
+return M

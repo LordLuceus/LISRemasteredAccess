@@ -43,6 +43,7 @@ end
 -- announcement. Page Up/Down select scanner objects in play. Each key runs on
 -- the game thread; the loader only fires a binding for its exact modifiers.
 local reread=nil
+local room_tick,room_last,room_pending,room_spoken,room_announced_once=0,nil,nil,nil,false
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
 -- Scanner and autowalk work only while the player controls Max (see core/control.lua).
@@ -118,6 +119,7 @@ local sms=require("hud.sms")
 local icons=require("hud.icons")
 local shooting=require("scenes.junkyard_shooting")
 local office=require("scenes.principal_office")
+local rooms=require("scanner.rooms")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -606,6 +608,28 @@ local function main_step()
         if c0 then
             local ok,lines=pcall(shooting.tick,c0)
             if ok then for _,k in ipairs(lines) do local t=l10n.text(k);say(t,true);log("shooting spoken="..t) end end
+            -- Which room Max is in: re-read once a second from the objects
+            -- around her; announced when it has changed for two readings in a
+            -- row (a doorway can flip the vote for a moment).
+            room_tick=room_tick+1
+            if room_tick%4==0 and playable() then
+                local src=require("scanner.sources")
+                pcall(src.collect,c0)
+                local r=src.room
+                if r~=room_last then room_last=r;room_pending=1
+                elseif room_pending then
+                    room_pending=room_pending+1
+                    if room_pending>=2 then
+                        room_pending=nil
+                        if r~=room_spoken then
+                            room_spoken=r
+                            local name=rooms.room_name(r)
+                            if name and room_announced_once then say(l10n.text("room_changed",{name=name}));log("room spoken="..name) end
+                            room_announced_once=true
+                        end
+                    end
+                end
+            end
             -- Principal's office (Episode 3): when the door can be unlocked
             -- from the inside.
             local ok2,lines2=pcall(office.tick,c0,os.clock())

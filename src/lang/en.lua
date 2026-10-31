@@ -144,6 +144,8 @@ return {
     scanner_down="{value} metres down",
     scanner_position="{index} of {count}",
     scanner_empty="Nothing to select here.",
+    door_label="{name} door",
+    room_changed="{name}.",
     dir_ahead="ahead",
     ["dir_ahead right"]="ahead right",
     dir_right="right",

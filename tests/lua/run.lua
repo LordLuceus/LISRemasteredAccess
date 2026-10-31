@@ -1837,5 +1837,39 @@ do
     check("office phrases",en.office_door_unlockable and en.office_other_side and not en.office_inside)
     package.loaded["scenes.principal_office"]=nil
 end
+-- Rooms: sub-level from actor names, door labels, the current room, the filter.
+do
+    package.loaded["scanner.rooms"]=nil
+    local R=require("scanner.rooms")
+    local bed="LiSInteractionActor /Game/Maps/Episode03/Sequence01/E3_1A_MaxRoom_LD.E3_1A_MaxRoom_LD:PersistentLevel.LiSInteractionActor_Bed_3"
+    local dana="LiSInteractionActor /Game/Maps/Episode03/Sequence01/E3_1A_DanaRoom_LD.E3_1A_DanaRoom_LD:PersistentLevel.LiSInteractionActor_CHDana_0"
+    local kate="LiSInteractionActor /Game/Maps/Episode03/Sequence01/E3_1A_Corridor_LD.E3_1A_Corridor_LD:PersistentLevel.LiSInteractionActor_KateDoor_2"
+    local max="MaxCharacter_BP_C /Game/Maps/Episode03/Sequence01/E3_1A.E3_1A:PersistentLevel.MaxCharacter_BP_C_2147459678"
+    check("sub-level of a room object",R.sublevel(bed)=="E3_1A_MaxRoom_LD")
+    check("persistent-level actors have none",R.sublevel(max)==nil)
+    check("room name from the table",R.room_name("E3_1A_MaxRoom_LD")=="Max's room" and R.room_name("E3_1A_Corridor_LD")=="corridor")
+    check("unlisted room falls back to its word",R.room_name("E9_9A_Boiler_LD")=="Boiler")
+    check("door label from the actor name",R.door_label(kate)=="Kate's" and R.door_label("x LiSInteractionActor_SciDoor01_2")=="Science lab")
+    check("non-door has no label",R.door_label(bed)==nil)
+    local E={
+        {pos={X=0,Y=0},sublevel="E3_1A_MaxRoom_LD",kind="interaction"},
+        {pos={X=50,Y=0},sublevel="E3_1A_MaxRoom_LD",kind="interaction"},
+        {pos={X=120,Y=0},sublevel="E3_1A_Corridor_LD",kind="interaction",is_door=true},
+        {pos={X=400,Y=0},sublevel="E3_1A_Corridor_LD",kind="interaction"},
+        {pos={X=900,Y=0},sublevel="E3_1A_DanaRoom_LD",kind="interaction"},
+        {pos={X=950,Y=0},kind="exit"},
+    }
+    check("room is where the nearest objects are",R.current(E,{X=10,Y=0})=="E3_1A_MaxRoom_LD")
+    check("a door next to Max does not vote",R.current(E,{X=125,Y=0})=="E3_1A_MaxRoom_LD")
+    check("in the corridor",R.current(E,{X=420,Y=0})=="E3_1A_Corridor_LD")
+    local f=R.filter(E,"E3_1A_MaxRoom_LD")
+    check("filter keeps the room, the door and the exit",#f==4 and f[3].is_door and f[4].kind=="exit")
+    check("other rooms' objects are dropped",not (function()for _,e in ipairs(f) do if e.sublevel=="E3_1A_DanaRoom_LD" then return true end end end)())
+    check("one-level scenes are not narrowed",#R.filter({{pos={X=0,Y=0},sublevel="E3_3A_SwimPool_LD",kind="interaction"},{pos={X=9,Y=0},sublevel="E3_3A_SwimPool_LD",kind="interaction"}},"E3_3A_SwimPool_LD")==2)
+    check("no room: nothing removed",#R.filter(E,nil)==#E)
+    local en=require("lang.en")
+    check("door and room phrases",en.door_label and en.room_changed)
+    package.loaded["scanner.rooms"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
