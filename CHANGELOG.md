@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-31
 
 ### In play
+- Facing an object close by (F) keeps turning until the camera is on it,
+  instead of giving up part way.
 - An object's pop-up no longer lists the same action several times ("Speak"
   six times on Chloe at the pool).
 - Indoors, the scanner lists only the room you are in plus its doors and

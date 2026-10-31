@@ -747,10 +747,12 @@ do
     requests=0;focus_after=99;comp.ActorInteractionFocused=nil;announced=false
     F.start(c,{name="Mail",kind="interaction",pos={X=0,Y=100,Z=0},actor=mail})
     for i=1,40 do now=now+0.01;F.tick() end
-    check("gives up after 8 corrections",requests==9 and spoken[#spoken]=="face_turned_unfocused:Mail",tostring(requests))
+    -- The fake camera never moves, so the error never shrinks: it gives up
+    -- after STALL_STEPS corrections (31 Oct: was a fixed 8).
+    check("gives up when the error stops shrinking",requests==1+F.STALL_STEPS and spoken[#spoken]=="face_turned_unfocused:Mail",tostring(requests))
     -- Time limit.
     requests=0;F.start(c,{name="Mail",kind="interaction",pos={X=0,Y=100,Z=0},actor=mail})
-    now=now+3;F.tick();F.tick()
+    now=now+F.LIMIT+0.5;F.tick();F.tick()
     check("stops at the time limit",requests==1)
     setmetatable(orig,nil)    behaviour.IsA=function()return false end
     check("cutscene camera refused",F.start(c,{name="Mail",pos={X=0,Y=0,Z=0}})==false and spoken[#spoken]=="face_unsupported:Mail")
@@ -1870,6 +1872,21 @@ do
     local en=require("lang.en")
     check("door and room phrases",en.door_label and en.room_changed)
     package.loaded["scanner.rooms"]=nil
+end
+-- Facing: keep correcting while the error shrinks; stop when it stalls.
+do
+    package.loaded["scanner.face"]=nil
+    local ok,F=pcall(require,"scanner.face")
+    if ok then
+        local s,b=F.progress(nil,nil,60);check("first error sets the best",s==0 and b==60)
+        s,b=F.progress(s,b,50);check("shrinking error resets the stall count",s==0 and b==50)
+        s,b=F.progress(s,b,50);s,b=F.progress(s,b,50.2);check("no shrink counts up",s==2 and b==50)
+        local st={corrections=10,started=0,stalled=0}
+        check("more than 8 corrections allowed while progressing",F.should_correct(st,false,1)==true)
+        st.stalled=3;check("stalled: stop",F.should_correct(st,false,1)==false)
+        st.stalled=0;st.corrections=24;check("hard cap",F.should_correct(st,false,1)==false)
+    else check("scanner.face loads offline",false,tostring(F)) end
+    package.loaded["scanner.face"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

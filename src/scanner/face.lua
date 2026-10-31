@@ -11,8 +11,13 @@ local M={}
 M.say=function(_)end
 M.log=function(_)end
 M.text=function(key,p)return key end
-M.MAX_CORRECTIONS=8
-M.LIMIT=2.5
+-- 31 Oct (pool, Chloe 0.5 m away): each correction turned the camera only
+-- 5-10 degrees because the camera orbits Max, and a 60-degree turn to a close
+-- target ran out of corrections (8) still converging. Now: as many corrections
+-- as keep reducing the error, up to MAX_CORRECTIONS, within LIMIT seconds.
+M.MAX_CORRECTIONS=24
+M.LIMIT=6
+M.STALL_STEPS=3 -- give up when the yaw error has not shrunk for this many steps
 M.SETTLE_TICKS=0 -- extra ticks before re-measuring (the loop already waits 250 ms)
 M.clock=os.clock
 local function valid(o)
@@ -48,7 +53,15 @@ function M.should_correct(state,focused,now)
     if focused then return false end
     if state.corrections>=M.MAX_CORRECTIONS then return false end
     if now-state.started>=M.LIMIT then return false end
+    if state.stalled and state.stalled>=M.STALL_STEPS then return false end
     return true
+end
+-- Pure: track whether the yaw error is still shrinking. Returns the new
+-- stalled count.
+function M.progress(stalled,best,err)
+    err=math.abs(err)
+    if best==nil or err<best-0.5 then return 0,err end
+    return (stalled or 0)+1,best
 end
 local function behaviour_of(controller)
     local b=nil
@@ -156,6 +169,8 @@ function M.tick()
         return
     end
     p.last_actual=actual
+    p.stalled,p.best_error=M.progress(p.stalled,p.best_error,dyaw)
+    if p.stalled>=M.STALL_STEPS then return finish(p,false,in_reach,true) end
     send(behaviour,rotation,desired.native)
     p.requested=rotation
     p.corrections=p.corrections+1
