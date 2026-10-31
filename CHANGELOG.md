@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-31
 
 ### In play
+- Autowalk no longer walks into shut doors that have no named doorway, such
+  as the locker-room doors at the pool: it says there is no route instead.
 - Getting into the principal's office (Episode 3): the scanner has an entry
   "Other side of the principal's door" that walks Max through the blown door,
   and after the rewind the mod says "You can unlock the door now." when the

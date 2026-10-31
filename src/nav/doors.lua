@@ -45,7 +45,33 @@ function M.doorways(emit)
             end
         end
     end
-    emit(string.format("door_search found=%d valid=%d named=%d matched=%d bounded=%d",#actors,seen,named,matched,bounded))
+    -- Movable doors themselves (SkeletalMeshActorMAT with a door mesh). Where
+    -- the wall meshes are not named for their doorway, these are the only
+    -- sign of one: the swimming pool's two locker-room doors (SK_Doors_
+    -- SwimmingPooll01, 31 Oct) were never found, so autowalk kept routing
+    -- through them while they were shut. The door's bounds give the opening:
+    -- the longer horizontal side is its width, the shorter its thickness.
+    local doors=0
+    for _,a in ipairs(FindAllOf("SkeletalMeshActorMAT") or {}) do
+        if valid(a) then
+            local ok,mesh=pcall(function()
+                local comp=a.SkeletalMeshComponent
+                if not (comp and comp:IsValid()) then return nil end
+                local sm=comp.SkeletalMesh
+                if not (sm and sm:IsValid()) then return nil end
+                return sm:GetFName():ToString()
+            end)
+            if ok and type(mesh)=="string" and string.find(mesh,"Door",1,true) then
+                local bok,o,e=bounds(a)
+                if bok and (e.X>0 or e.Y>0) then
+                    doors=doors+1
+                    local nx,ny=1,0;if e.X>e.Y then nx,ny=0,1 end
+                    raw[#raw+1]={centre={X=o.X,Y=o.Y,Z=a:K2_GetActorLocation().Z},nx=nx,ny=ny,mesh=mesh,actor=a:GetFName():ToString()}
+                end
+            end
+        end
+    end
+    emit(string.format("door_search found=%d valid=%d named=%d matched=%d bounded=%d doors=%d",#actors,seen,named,matched,bounded,doors))
     -- Double-sided walls describe one doorway: merge nearby, same orientation.
     local list={}
     for _,w in ipairs(raw) do
