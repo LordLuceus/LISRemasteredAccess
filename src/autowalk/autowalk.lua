@@ -267,6 +267,13 @@ function M.tick()
         if not s.armed then s.armed=not moving
         elseif moving and follow.active then follow.stop("cancelled") end
     end
+    -- The point of walking to an object is to use it: once the game lists it
+    -- as within reach (its pop-up is up), stop there rather than walking on
+    -- to the standing point (user, 31 Oct). Final leg, objects only.
+    if s and follow.active and s.entry and s.entry.kind=="interaction" and s.entry.actor and s.walk.index>=#s.walk.legs then
+        local rok,near=pcall(M.in_reach,s.controller,s.entry)
+        if rok and near==true then follow.stop("arrived") end
+    end
     follow.tick()
     if not s or follow.active then return end
     local result=last_result or "observation_error";last_result=nil
