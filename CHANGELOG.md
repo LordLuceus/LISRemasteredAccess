@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-31
 
 ### In play
+- An object's pop-up no longer lists the same action several times ("Speak"
+  six times on Chloe at the pool).
 - Indoors, the scanner lists only the room you are in plus its doors and
   exits, and says the room's name when you enter another. Doors are named for
   where they lead ("Science lab door").

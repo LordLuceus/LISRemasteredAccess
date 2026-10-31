@@ -81,9 +81,18 @@ function M.available(actor)
     local desc={}
     for _,r in ipairs(raw) do desc[#desc+1]=string.format("%d:%s/%s/%s/%s",r.index,tostring(r.name),tostring(r.override),tostring(r.kind),tostring(r.sub)) end
     if M.trace_popup then M.log("focus_actions_raw "..table.concat(desc," ")) end
+    -- One entry per label. The game keeps separate actions for story phases
+    -- ("Speak" x6, "Look" x3 on Chloe at the pool, 31 Oct); its own pop-up
+    -- shows one of each, and so does the fallback list. The first is kept:
+    -- the number keys trigger by index, and the game runs whichever action
+    -- its facts allow.
+    local seen={}
     for _,r in ipairs(raw) do
         local key=M.label_key(r.name,r.override)
-        out[#out+1]={index=r.index,name=r.name,key=key,label=M.translate(key)}
+        if not seen[key] then
+            seen[key]=true
+            out[#out+1]={index=r.index,name=r.name,key=key,label=M.translate(key)}
+        end
     end
     return out
 end
