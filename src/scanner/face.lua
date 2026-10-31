@@ -144,6 +144,22 @@ local function finish(p,focused,in_reach,camera_ok)
     elseif M.focused_announce then M.focused_announce(p.controller) end
     M.log(string.format("face result=%s corrections=%d secs=%.2f",tostring(key or "focused"),p.corrections,M.clock()-p.started))
 end
+-- Turn Max's body (yaw only) toward the entry. The rotation crosses into the
+-- game as the game's own FRotator (MakeRotator), never a Lua table.
+function M.turn_body(p)
+    local ok,err=pcall(function()
+        local pawn=p.controller.Pawn
+        local from=pawn:K2_GetActorLocation()
+        local math_lib=StaticFindObject("/Script/Engine.Default__KismetMathLibrary")
+        local look=math_lib:FindLookAtRotation(from,p.entry.pos)
+        local before=pawn:K2_GetActorRotation().Yaw
+        local r=math_lib:MakeRotator(0,0,look.Yaw)
+        pawn:K2_SetActorRotation(r,false)
+        local after=pawn:K2_GetActorRotation().Yaw
+        M.log(string.format("face body_turn target=%s yaw_before=%.1f yaw_after=%.1f wanted=%.1f",p.entry.name,before,after,look.Yaw))
+    end)
+    if not ok then M.log("face body_turn_error="..tostring(err)) end
+end
 -- Called regularly on the game thread.
 function M.tick()
     local p=pending
@@ -165,6 +181,11 @@ function M.tick()
     local limited=p.last_actual and math.abs(actual.Pitch-p.last_actual.Pitch)<0.05 and math.abs(dyaw)<=1 and p.corrections>0
     if (math.abs(dyaw)<=1 and math.abs(dpitch)<=1) or limited or p.holding then
         if limited and not p.holding then M.log(string.format("face pitch_limit target=%s actual=%.1f wanted=%.1f",p.entry.name,actual.Pitch,desired.Pitch)) end
+        -- The camera points at it and the game still has not focused it:
+        -- turn Max's body to it too (31 Oct, Chloe at the pool: the camera
+        -- converged to within a degree, 11 corrections, and nothing; her
+        -- pop-up only came while walking, when the body turns). Once.
+        if not p.holding then M.turn_body(p) end
         p.holding=true
         return
     end

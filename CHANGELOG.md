@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-10-31
 
 ### In play
+- Facing a person who still does not react (Chloe at the pool) now turns
+  Max to face them as well, which is what brings their prompt up.
 - Facing an object close by (F) keeps turning until the camera is on it,
   instead of giving up part way.
 - An object's pop-up no longer lists the same action several times ("Speak"
