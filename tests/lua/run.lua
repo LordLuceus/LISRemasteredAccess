@@ -1907,5 +1907,36 @@ do
         _G.FindAllOf=old;package.loaded["hud.tooltip"]=nil
     end
 end
+-- No module writes or reads an undeclared global by accident (2 Nov: a local
+-- declared below its first use turned the pool's live hiding spot into a nil
+-- global). Lists every global each source file touches, against a whitelist.
+do
+    local allowed={}
+    for w in ("_G _ENV assert error ipairs pairs next pcall print rawget rawset require select setmetatable getmetatable tonumber tostring type unpack xpcall math os string table io utf8 coroutine package debug "..
+        "FindAllOf FindFirstOf StaticFindObject FName FText RegisterHook RegisterKeyBind RegisterConsoleCommandHandler ExecuteInGameThread ExecuteWithDelay LoopAsync NotifyOnNewObject "..
+        "LoopInGameThreadWithDelay CancelDelayedAction ExecuteAsync RegisterCustomEvent UEHelpers Key ModifierKey IsKeyBindRegistered print_lua CreateInvalidObject EObjectFlags StaticConstructObject FindObject FindObjects RegisterProcessConsoleExecPreHook RegisterProcessConsoleExecPostHook RegisterLoadMapPreHook RegisterLoadMapPostHook RegisterInitGameStatePreHook RegisterInitGameStatePostHook RegisterBeginPlayPreHook RegisterBeginPlayPostHook UnregisterHook"):gmatch("%S+") do allowed[w]=true end
+    local luac="artifacts\\lua-5.4.7\\luac54.exe"
+    local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua')
+    local bad={}
+    local listed=0
+    if list then
+        for path in list:lines() do
+            local h=io.popen(luac..' -l -p "'..path..'"')
+            if h then
+                for line in h:lines() do
+                    listed=listed+1
+                    local g=line:match('[GS]ETTABUP.-_ENV "([%w_]+)"')
+                    if g and not allowed[g] then bad[#bad+1]=path:match("[^\\]+$")..":"..g end
+                end
+                h:close()
+            end
+        end
+        list:close()
+    end
+    local scanned=0
+    do local h=io.popen('cmd /c dir /b /s src\\scenes\\*.lua');if h then for _ in h:lines() do scanned=scanned+1 end;h:close() end end
+    check("global scan actually ran (files found and compiler listing read)",scanned>0 and listed>0,tostring(scanned).."/"..tostring(listed))
+    check("no unexpected globals in scene, scanner, autowalk, nav and hud modules",#bad==0,table.concat(bad,", "))
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
