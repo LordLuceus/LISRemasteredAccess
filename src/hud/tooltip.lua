@@ -75,6 +75,29 @@ function M.prompt()
     end)
     return found
 end
+-- Button prompts: a scene's own "press X to ..." line, shown by the game's
+-- control-announcement system as a TextBlock named TextBlock_Button on some
+-- HUD widget (seen 31 Oct: " Leave The Swimming Pool" at the pool's double
+-- doors, the step that brings the guard; the exit-volume path never sees it).
+-- Read from any visible copy; the key is the interact key for the device.
+M.button_key=function()return nil end
+M.button_class=nil
+function M.button_prompt()
+    local found=nil
+    pcall(function()
+        for _,tb in ipairs(FindAllOf("TextBlock") or {}) do
+            if found then break end
+            pcall(function()
+                if not (tb:IsValid() and tb:IsVisible()) then return end
+                local full=tb:GetFullName()
+                if not full:find("%.TextBlock_Button$") then return end
+                local text=M.prompt_text(tb:GetText():ToString(),M.button_key())
+                if text then found=text;M.button_class=full:match("([%w_]+_C)_%d+%.WidgetTree") or full end
+            end)
+        end
+    end)
+    return found
+end
 M.source=nil
 local function shown(o)local ok,v=pcall(function()return o~=nil and o:IsValid() and o:IsVisible()end);return ok and v==true end
 function M.current()

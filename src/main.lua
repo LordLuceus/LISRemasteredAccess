@@ -279,14 +279,21 @@ local function exit_step()
 end
 -- Activity prompts are their own line: the thought line can stay on screen
 -- the whole time, so a shared "latest text" would never let the prompt through.
-local last_prompt=nil
+local last_prompt,last_button=nil,nil
 local function prompt_step()
-    if in_menu() then last_prompt=nil;return end
+    if in_menu() then last_prompt=nil;last_button=nil;return end
     local ok,text=pcall(tooltip.prompt)
     if not ok then return end
     if text~=last_prompt then
         last_prompt=text
         if text then say(text,true);log("activity_prompt spoken="..text) end
+    end
+    -- A scene's own button prompt ("Leave The Swimming Pool"): announced once
+    -- when it appears, interrupting, since taking it moves the story on.
+    local bok,btext=pcall(tooltip.button_prompt)
+    if bok and btext~=last_button then
+        last_button=btext
+        if btext then say(btext,true);log("button_prompt spoken="..btext.." widget="..tostring(tooltip.button_class)) end
     end
 end
 -- Ending nightmare guide: hazard and shelter announcements from the game's
@@ -571,6 +578,7 @@ icons.translate=function(key)return require("scanner.sources").translate(key)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
 -- The widget's own key text on the keyboard (it follows the player's binding);
 -- the controller button by name, since the controller shows a picture.
+tooltip.button_key=function()return controls.name("exit_confirm") end
 tooltip.prompt_key=function(shown)
     if controls.using_gamepad() or not shown or not shown:find("%S") then return controls.name("stop_activity") end
     return shown

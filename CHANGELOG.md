@@ -2,6 +2,12 @@
 
 Player-facing changes, newest first.
 
+## 2026-11-03
+
+### In play
+- Prompts a scene shows on screen, such as "Leave The Swimming Pool", are read
+  with their key.
+
 ## 2026-10-31
 
 ### In play

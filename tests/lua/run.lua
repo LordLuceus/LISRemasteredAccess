@@ -1888,5 +1888,24 @@ do
     else check("scanner.face loads offline",false,tostring(F)) end
     package.loaded["scanner.face"]=nil
 end
+-- Button prompts: the scene's own "press X" line (TextBlock_Button).
+do
+    do
+        package.loaded["hud.tooltip"]=nil
+        local T=require("hud.tooltip")
+        local old=_G.FindAllOf
+        local function tb(full,text,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,GetFullName=function()return full end,GetText=function()return {ToString=function()return text end} end} end
+        _G.FindAllOf=function(c)return {
+            tb("BP_Widget_HUD_View_C_1.WidgetTree_0.TextBlock_Tolltip","I need to get out",true),
+            tb("BP_SomePrompt_C_3.WidgetTree_0.TextBlock_Button"," Leave The Swimming Pool",true),
+            tb("BP_Other_C_4.WidgetTree_0.TextBlock_Button","Hidden one",false)} end
+        T.button_key=function()return "A" end
+        check("button prompt read with the key",T.button_prompt()=="Leave The Swimming Pool, A")
+        check("button prompt widget class recorded",T.button_class=="BP_SomePrompt_C")
+        _G.FindAllOf=function()return {tb("X_C_1.WidgetTree_0.TextBlock_Button","Hidden",false)} end
+        check("no visible button: nothing",T.button_prompt()==nil)
+        _G.FindAllOf=old;package.loaded["hud.tooltip"]=nil
+    end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
