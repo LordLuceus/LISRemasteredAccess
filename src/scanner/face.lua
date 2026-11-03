@@ -179,7 +179,12 @@ function M.tick()
     -- Aimed (within 1 degree) or at the camera's tilt limit: stop turning, but
     -- keep watching for focus until the time limit.
     local limited=p.last_actual and math.abs(actual.Pitch-p.last_actual.Pitch)<0.05 and math.abs(dyaw)<=1 and p.corrections>0
-    if (math.abs(dyaw)<=1 and math.abs(dpitch)<=1) or limited or p.holding then
+    -- Yaw right but pitch bouncing between two values (31 Oct, Chloe at the
+    -- pool: +-7.8 degrees every step, a camera that will not settle): the
+    -- left-right aim is what focus needs; stop correcting and hold.
+    local bouncing=p.last_actual and math.abs(dyaw)<=1 and p.corrections>=2 and p.prev_pitch and math.abs(actual.Pitch-p.prev_pitch)<0.5 and math.abs(actual.Pitch-p.last_actual.Pitch)>2
+    if (math.abs(dyaw)<=1 and math.abs(dpitch)<=1) or limited or bouncing or p.holding then
+        if bouncing and not p.holding then M.log(string.format("face pitch_bounce target=%s pitch=%.1f/%.1f",p.entry.name,actual.Pitch,p.last_actual.Pitch)) end
         if limited and not p.holding then M.log(string.format("face pitch_limit target=%s actual=%.1f wanted=%.1f",p.entry.name,actual.Pitch,desired.Pitch)) end
         -- The camera points at it and the game still has not focused it:
         -- turn Max's body to it too (31 Oct, Chloe at the pool: the camera
@@ -189,6 +194,7 @@ function M.tick()
         p.holding=true
         return
     end
+    p.prev_pitch=p.last_actual and p.last_actual.Pitch or nil
     p.last_actual=actual
     p.stalled,p.best_error=M.progress(p.stalled,p.best_error,dyaw)
     if p.stalled>=M.STALL_STEPS then return finish(p,false,in_reach,true) end
