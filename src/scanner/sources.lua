@@ -185,7 +185,8 @@ local function interactions(controller,out)
             local dummy=a.TapToMoveActor
             if valid(dummy) then stand=point(dummy:K2_GetActorLocation()) end
             return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",
-                sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01"}
+                sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01",
+                door_like=door~=nil or rooms.door_like(id,key,label)~=false}
         end)
         if ok and entry then out[#out+1]=entry elseif not ok then report_once("read:"..tostring(#out),"scanner_source read_error="..tostring(entry)) end
     end
@@ -324,16 +325,70 @@ M.shoot_action=function(actor)
 end
 -- The room Max is in (sub-level key) after the last collect, and its spoken name.
 M.room=nil
+-- Floors. Every room's floor is in that room's own geometry level, so the
+-- floor under a point names its room exactly (3 Nov: the object vote said
+-- "Chloe's room" well into the corridor, because her objects were still the
+-- nearest).
+local function floor_room(controller,p,ignore,depth)
+    local room=nil
+    pcall(function()
+        local lib=StaticFindObject("/Script/Engine.Default__KismetSystemLibrary")
+        local hit={}
+        local ok=lib:LineTraceSingle(controller,{X=p.X,Y=p.Y,Z=p.Z+60},{X=p.X,Y=p.Y,Z=p.Z-(depth or 300)},0,false,ignore or {},0,hit,true,{R=1,G=0,B=0,A=1},{R=0,G=1,B=0,A=1},0)
+        if ok then room=rooms.room_of(hit.Actor:Get():GetFullName()) end
+    end)
+    return room
+end
+M.floor_room=floor_room
+-- Rooms around each door-like object, measured once per level visit: floors
+-- 120 cm away in eight directions. Two or more rooms = a way between them.
+local joins_cache,joins_world={},nil
+local function joins_of(controller,e)
+    if joins_cache[e.id]~=nil then return joins_cache[e.id] or nil end
+    local keys={}
+    for i=0,7 do
+        local a=i*math.pi/4
+        keys[i+1]=floor_room(controller,{X=e.pos.X+math.cos(a)*120,Y=e.pos.Y+math.sin(a)*120,Z=e.pos.Z})
+    end
+    local set,isjoin=rooms.joins(keys,8)
+    joins_cache[e.id]=isjoin and set or false
+    if isjoin then
+        local names={};for k in pairs(set) do names[#names+1]=k end;table.sort(names)
+        M.report("scanner_door_joins "..tostring(e.label).." rooms="..table.concat(names,","))
+    end
+    return isjoin and set or nil
+end
+-- The room step of collect, on its own so it can be tested with a fake world:
+-- room from the floor under Max (the object vote where no room floor is
+-- found: open areas built as one level, or a missed trace), doors judged by
+-- the floors around them, then the filter.
+function M.by_room(controller,out,p)
+    local world=nil;pcall(function()world=controller:GetWorld():GetFName():ToString()end)
+    if world~=joins_world then joins_cache={};joins_world=world end
+    local pawn=nil;pcall(function()pawn=controller.Pawn end)
+    local room=floor_room(controller,p,{pawn})
+    local how="floor"
+    if not room then room=rooms.current(out,p);how="objects" end
+    for _,e in ipairs(out) do if e.door_like and e.kind=="interaction" then e.joins=joins_of(controller,e) end end
+    if room~=M.room then M.room=room;M.report("scanner_room="..tostring(room).." by="..how) end
+    local kept=rooms.filter(out,room)
+    -- When the room changes, which objects of that room were dropped and why
+    -- (3 Nov: the bathroom mirror was missing and no log said why).
+    if M.room_logged~=room then
+        M.room_logged=room
+        local shown={};for _,e in ipairs(kept) do shown[e]=true end
+        local hidden=0
+        for _,e in ipairs(out) do if not shown[e] and e.sublevel==room then hidden=hidden+1;M.report("scanner_room_hidden "..tostring(e.label).." joins="..tostring(e.joins~=nil)) end end
+        M.report(string.format("scanner_room_list room=%s shown=%d of=%d own_hidden=%d",tostring(room),#kept,#out,hidden))
+    end
+    return kept
+end
 function M.collect(controller)
     local out={}
     interactions(controller,out)
     -- Only the current room's objects, plus doors and everything else.
     local p=nil;pcall(function()p=point(controller.Pawn:K2_GetActorLocation())end)
-    if p then
-        local room=rooms.current(out,p)
-        if room~=M.room then M.room=room;M.report("scanner_room="..tostring(room)) end
-        out=rooms.filter(out,room)
-    end
+    if p then out=M.by_room(controller,out,p) end
     -- Episode 3 principal's office: walk through the door to its other side.
     do local ok,e=pcall(require("scenes.principal_office").entry,controller);if ok and e then out[#out+1]=e elseif not ok then report_once("office","scanner_source office_error="..tostring(e)) end end
     -- Episode 3 pool: the way to the hall and the hiding spot behind the lockers.

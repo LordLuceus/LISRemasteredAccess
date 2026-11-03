@@ -5,6 +5,11 @@ Player-facing changes, newest first.
 ## 2026-11-03
 
 ### In play
+- Room filtering knows which room you are in from the floor you stand on, so
+  the list changes as you cross a doorway rather than a few steps later. A
+  room's list shows only the doors out of it: no more doors from other rooms,
+  and the door you came in by is still there, such as the sliding door back
+  from the garden.
 - The pool in Episode 3: getting past the guard. The scanner leads you to the
   hall door, and its "Leave The Swimming Pool" prompt is announced with its
   key. By default the guard can't see you during his patrol. To hide from him

@@ -2191,5 +2191,85 @@ do
     check("retry: a stall without progress is reported as blocked",has("walk_blocked") and not has("walk_arrived"),table.concat(said,","))
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
 end
+-- Rooms by floor, doors by the floors around them (3 Nov, Chloe's house).
+do
+    package.loaded["scanner.rooms"]=nil
+    local R=require("scanner.rooms")
+    local function nm(lvl,actor)return "StaticMeshActor /Game/Maps/Episode03/Sequence05/"..lvl.."."..lvl..":PersistentLevel."..actor end
+    check("floor in a room's geometry level names the room",R.room_of(nm("E3_5A_ChloeRoom_GRC","StaticMeshActor_12"))=="E3_5A_ChloeRoom_LD")
+    check("second geometry level too",R.room_of(nm("E3_5A_Corridor_GR2","StaticMeshActor_3"))=="E3_5A_Corridor_LD")
+    check("object level maps to itself",R.room_of(nm("E3_5B_LivingRoom_LD","LiSInteractionActor_Fridge_0"))=="E3_5B_LivingRoom_LD")
+    check("persistent level is no room",R.room_of("StaticMeshActor /Game/Maps/Episode03/Sequence05/E3_5A.E3_5A:PersistentLevel.StaticMeshActor_1")==nil)
+    check("the sliding door counts as door-like (BayWindow, Window02)",R.door_like("x LiSInteractionActor_BayWindow_87","$GT_Sensen_Int_Window02","Sliding Door"))
+    check("a fridge is not door-like",not R.door_like("x LiSInteractionActor_Fridge_0","$GT_Sensen_Int_Refrigerator01","Fridge"))
+    local set,j=R.joins({"A","A",nil,"B"},4);check("two floors around a door, with a missed trace between: a connection",j and set.A and set.B)
+    local _,j1=R.joins({"A","A",nil});check("one floor: not a connection",not j1)
+    -- Chloe's house: Chloe's room, corridor, parents' room.
+    local CR,CO,PR="E3_5A_ChloeRoom_LD","E3_5A_Corridor_LD","E3_5A_ParentsRoom_LD"
+    local E={
+        {id="bed",kind="interaction",sublevel=CR},
+        {id="closet",kind="interaction",sublevel=CR,door_like=true},             -- floors: Chloe's room only
+        {id="room door",kind="interaction",sublevel=CR,door_like=true,joins={[CR]=true,[CO]=true}},
+        {id="parents door",kind="interaction",sublevel=CO,door_like=true,joins={[CO]=true,[PR]=true}},
+        {id="poster",kind="interaction",sublevel=CO},
+    }
+    local function ids(list)local o={};for _,e in ipairs(list) do o[#o+1]=e.id end;return table.concat(o,",") end
+    local f=ids(R.filter(E,CR))
+    check("in Chloe's room: her objects and her door; NOT the parents' door",f=="bed,closet,room door",f)
+    f=ids(R.filter(E,CO))
+    check("in the corridor: the way back to Chloe's room and the parents' door",f=="room door,parents door,poster",f)
+    -- Living room / garden: the sliding door (in the living room's level) is
+    -- the garden's way back.
+    local LR,GA="E3_5B_LivingRoom_LD","E3_5B_Garden_LD"
+    local H={{id="fridge",kind="interaction",sublevel=LR},{id="sliding door",kind="interaction",sublevel=LR,door_like=true,joins={[LR]=true,[GA]=true}},
+             {id="shed",kind="interaction",sublevel=GA}}
+    f=ids(R.filter(H,GA))
+    check("in the garden: the sliding door is still there (3 Nov: stranded)",f=="sliding door,shed",f)
+    package.loaded["scanner.rooms"]=nil
+end
+-- The room step of the live collect path (sources.by_room) with a fake world:
+-- floors decide the room and the doors; door floors are cached.
+do
+    package.loaded["scanner.sources"]=nil;package.loaded["scanner.rooms"]=nil
+    local S=require("scanner.sources")
+    local function lvl(name)return "/Game/Maps/Episode03/Sequence05/"..name.."."..name..":PersistentLevel." end
+    -- Chloe's room is y > -460, corridor -460..-900, parents' room below -900.
+    local function floor_at(y)
+        if y>-460 then return "E3_5A_ChloeRoom_GRC" elseif y>-900 then return "E3_5A_Corridor_GRC" else return "E3_5A_ParentsRoom_GRC" end
+    end
+    local traces=0
+    local oldS=_G.StaticFindObject
+    _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b,_,_,_,_,hit)
+        traces=traces+1
+        local n=floor_at(b.Y)
+        hit.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end}
+        return true end} end
+    S.report=function()end
+    local CR,CO="E3_5A_ChloeRoom_LD","E3_5A_Corridor_LD"
+    local function entries()return {
+        {id="bed",kind="interaction",sublevel=CR,pos={X=0,Y=0,Z=108}},
+        {id="room door",kind="interaction",sublevel=CR,pos={X=20,Y=-454,Z=108},door_like=true},
+        {id="parents door",kind="interaction",sublevel=CO,pos={X=-140,Y=-895,Z=108},door_like=true},
+        {id="poster",kind="interaction",sublevel=CO,pos={X=-300,Y=-800,Z=108}}} end
+    local c={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A" end} end} end,Pawn={}}
+    local function ids(list)local o={};for _,e in ipairs(list) do o[#o+1]=e.id end;return table.concat(o,",") end
+    local ok,res=pcall(function()
+        local a=ids(S.by_room(c,entries(),{X=0,Y=-100,Z=0}));local r1=S.room
+        local before=traces
+        S.by_room(c,entries(),{X=0,Y=-100,Z=0})
+        local second=traces-before
+        local b=ids(S.by_room(c,entries(),{X=-200,Y=-700,Z=0}));local r2=S.room
+        return {a,r1,second,b,r2}
+    end)
+    check("room step runs with a fake world",ok,tostring(res))
+    if ok then
+        check("in Chloe's room by floor: bed and her door, not the parents' door",res[1]=="bed,room door",res[1])
+        check("the room is named from the floor under Max",res[2]==CR and res[5]==CO,tostring(res[2]).."/"..tostring(res[5]))
+        check("door floors are cached: a repeat traces only Max's floor",res[3]==1,"traced "..tostring(res[3]))
+        check("in the corridor: the way back, the parents' door and the poster",res[4]=="room door,parents door,poster",res[4])
+    end
+    _G.StaticFindObject=oldS
+    package.loaded["scanner.sources"]=nil;package.loaded["scanner.rooms"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
