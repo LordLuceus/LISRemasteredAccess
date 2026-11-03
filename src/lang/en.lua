@@ -154,6 +154,7 @@ return {
     scanner_empty="Nothing to select here.",
     door_label="{name} door",
     room_changed="{name}.",
+    room_way="Way to {name}",
     dir_ahead="ahead",
     ["dir_ahead right"]="ahead right",
     dir_right="right",

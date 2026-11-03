@@ -2268,6 +2268,65 @@ do
         check("door floors are cached: a repeat traces only Max's floor",res[3]==1,"traced "..tostring(res[3]))
         check("in the corridor: the way back, the parents' door and the poster",res[4]=="room door,parents door,poster",res[4])
     end
+    -- An open doorway: corridor (y > -1000) and bathroom (y <= -1000) with no
+    -- door object between them (3 Nov: the bathroom was unreachable).
+    do
+        local CO,BA,PR="E3_5A_Corridor_LD","E3_5A_Bathroom_LD","E3_5A_ParentsRoom_LD"
+        _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b,_,_,_,_,hit)
+            local n=b.Y>-1000 and "E3_5A_Corridor_GRC" or "E3_5A_Bathroom_GRC"
+            if b.X>1000 then n="E3_5A_ParentsRoom_GRC" end
+            hit.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end}
+            return true end} end
+        -- Routes: straight lines; to the parents' room the route passes the bathroom first.
+        package.loaded["nav.route"]={project=function(_,q)return true,{X=q.X,Y=q.Y,Z=0} end,
+            query=function(_,_,_,a,b)
+                if b.X>1000 then return true,0,{a,{X=0,Y=-1200,Z=0},b} end
+                return true,0,{a,b} end}
+        local c3={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_way" end} end} end,Pawn={}}
+        local list={{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}},
+            {id="mirror",kind="interaction",sublevel=BA,pos={X=0,Y=-1150,Z=100}},
+            {id="bed",kind="interaction",sublevel=PR,pos={X=1200,Y=-1300,Z=100}}}
+        local got=S.by_room(c3,list,{X=0,Y=-700,Z=0})
+        local way=nil;local far=nil
+        for _,e in ipairs(got) do if e.id=="way:"..BA then way=e end;if e.id=="way:"..PR then far=e end end
+        check("an open doorway gets a way into the room",way~=nil and way.kind=="goal",ids(got))
+        check("the way's point is just inside the room",way and way.pos.Y<=-1000)
+        check("no way into a room reached only through another",far==nil)
+        check("mirror is not listed from the corridor",not ids(got):find("mirror"))
+        -- No bathroom object registered at all: the way still comes from its geometry.
+        local oldF=_G.FindAllOf
+        _G.FindAllOf=function(c)
+            if c=="StaticMeshActor" then return {{GetFullName=function()return "StaticMeshActor "..lvl("E3_5A_Bathroom_GRC").."StaticMeshActor_9" end,K2_GetActorLocation=function()return {X=0,Y=-1160,Z=0} end}} end
+            return {} end
+        local c4={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_geo" end} end} end,Pawn={}}
+        local got2=S.by_room(c4,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}}},{X=0,Y=-700,Z=0})
+        local way2=nil;for _,e in ipairs(got2) do if e.id=="way:"..BA then way2=e end end
+        check("a room with no registered object still gets a way (from its geometry)",way2~=nil,ids(got2))
+        -- No registered bathroom object, but its objects exist in the world (3 Nov
+        -- log: Bathroom_LD=6 in the world, none registered): aim at them.
+        _G.FindAllOf=function(c)
+            if c=="LiSInteractionActor" then return {{GetFullName=function()return "LiSInteractionActor "..lvl("E3_5A_Bathroom_LD").."LiSInteractionActor_Mirror_20" end,K2_GetActorLocation=function()return {X=239,Y=-1145,Z=105} end}} end
+            return {} end
+        local c5={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_world" end} end} end,Pawn={}}
+        local got3=S.by_room(c5,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}}},{X=0,Y=-700,Z=0})
+        local way3=nil;for _,e in ipairs(got3) do if e.id=="way:"..BA then way3=e end end
+        check("a room whose objects exist but are unregistered gets a way",way3~=nil,ids(got3))
+        -- The real failure (3 Nov log): the mirror is 1 m up a wall; the navmesh
+        -- only accepts points near floor height (|Z|<60) and within the search
+        -- box of the walkable floor (here: x<200). Default search is 50 cm.
+        package.loaded["nav.route"]={project=function(_,q,ext)
+                local reach=(ext and ext.X) or 50
+                if math.abs(q.Z)>60 then return false,{X=0,Y=0,Z=0} end
+                if q.X>200+reach then return false,{X=0,Y=0,Z=0} end
+                return true,{X=math.min(q.X,200),Y=q.Y,Z=0} end,
+            query=function(_,_,_,a,b)return true,0,{a,b} end}
+        local c6={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_wall" end} end} end,Pawn={}}
+        local got4=S.by_room(c6,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}}},{X=0,Y=-700,Z=0})
+        local way4=nil;for _,e in ipairs(got4) do if e.id=="way:"..BA then way4=e end end
+        check("a way is found when the room's object hangs on a wall off the walkable floor",way4~=nil,ids(got4))
+        _G.FindAllOf=oldF
+        package.loaded["nav.route"]=nil
+    end
     _G.StaticFindObject=oldS
     package.loaded["scanner.sources"]=nil;package.loaded["scanner.rooms"]=nil
 end

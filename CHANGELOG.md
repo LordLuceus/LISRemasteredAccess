@@ -10,6 +10,8 @@ Player-facing changes, newest first.
   room's list shows only the doors out of it: no more doors from other rooms,
   and the door you came in by is still there, such as the sliding door back
   from the garden.
+- Rooms you walk into through an open doorway are listed too, as "Way to the
+  bathroom" and so on; before, Chloe's upstairs bathroom could not be found.
 - The pool in Episode 3: getting past the guard. The scanner leads you to the
   hall door, and its "Leave The Swimming Pool" prompt is announced with its
   key. By default the guard can't see you during his patrol. To hide from him

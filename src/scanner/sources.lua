@@ -343,6 +343,125 @@ M.floor_room=floor_room
 -- Rooms around each door-like object, measured once per level visit: floors
 -- 120 cm away in eight directions. Two or more rooms = a way between them.
 local joins_cache,joins_world={},nil
+-- Neighbouring rooms without a door, per room, measured once per level visit.
+local ways_cache={}
+M.WAY_STEP=50     -- cm between floor samples along a route
+M.WAY_INTO=120    -- cm past the threshold for the entry's point
+M.WAY_TRIES=12    -- candidate points tried per room
+-- Rooms' geometry, measured once per level visit: for every room, the
+-- positions of its geometry actors (floors, walls). Lets a way be found into a
+-- room none of whose objects the game has registered (3 Nov: no bathroom
+-- object was ever in the list, so the first version had nothing to aim at).
+-- Also logs, once, how many interaction objects each room has in the world
+-- against how many the player's component registered.
+local geometry=nil
+local world_objects={}
+local function room_geometry(controller)
+    if geometry then return geometry end
+    geometry={}
+    pcall(function()
+        for _,a in ipairs(FindAllOf("StaticMeshActor") or {}) do
+            pcall(function()
+                local r=rooms.room_of(a:GetFullName())
+                if not r then return end
+                local g=geometry[r];if not g then g={};geometry[r]=g end
+                if #g<400 then local v=a:K2_GetActorLocation();g[#g+1]={X=v.X,Y=v.Y,Z=v.Z} end
+            end)
+        end
+    end)
+    world_objects={}
+    pcall(function()
+        local world={}
+        for _,a in ipairs(FindAllOf("LiSInteractionActor") or {}) do
+            pcall(function()
+                local r=rooms.sublevel(a:GetFullName());if not r then return end
+                world[r]=(world[r] or 0)+1
+                local v=a:K2_GetActorLocation()
+                -- Placeholders sit at the level origin (the bathroom bird at 0,-2).
+                if math.abs(v.X)+math.abs(v.Y)>50 then
+                    local l=world_objects[r];if not l then l={};world_objects[r]=l end
+                    l[#l+1]={X=v.X,Y=v.Y,Z=v.Z}
+                end
+            end)
+        end
+        local parts={}
+        for r,n in pairs(world) do parts[#parts+1]=r.."="..n end
+        table.sort(parts)
+        local g={};for r,list in pairs(geometry) do g[#g+1]=r.."="..#list end;table.sort(g)
+        M.report("scanner_rooms_world objects "..table.concat(parts,",").." | geometry "..table.concat(g,","))
+    end)
+    return geometry
+end
+-- Ways from `room` into each neighbouring room no listed door already joins.
+local function ways_from(controller,out,room,p)
+    if ways_cache[room] then return ways_cache[room] end
+    local found={}
+    ways_cache[room]=found
+    M.report("scanner_room_ways_check room="..tostring(room))
+    local route=require("nav.route")
+    -- Candidate points per other room: its registered objects, else its
+    -- objects in the world, else its geometry; nearest to Max first.
+    local cands={}
+    local function add(r,v)
+        if r==room then return end
+        local l=cands[r];if not l then l={};cands[r]=l end
+        l[#l+1]={d=(v.X-p.X)^2+(v.Y-p.Y)^2,pos=v}
+    end
+    for _,e in ipairs(out) do
+        if e.kind=="interaction" and e.sublevel and e.pos then add(e.sublevel,e.pos) end
+    end
+    local best={}
+    -- Rooms with no registered object: aim at their objects in the world (the
+    -- game had not registered any of the bathroom's six), else their geometry.
+    local geo=room_geometry(controller)
+    for r,list in pairs(world_objects) do for _,v in ipairs(list) do add(r,v) end end
+    for r,list in pairs(geo) do for _,v in ipairs(list) do add(r,v) end end
+    for r,l in pairs(cands) do table.sort(l,function(a,c)return a.d<c.d end);best[r]=l end
+    for target,list in pairs(best) do
+        local doored=false
+        for _,e in ipairs(out) do if e.joins and e.joins[room] and e.joins[target] then doored=true end end
+        if not doored then local okw,errw=pcall(function()
+            -- Objects hang on walls and above the floor (3 Nov: the mirror, 1 m
+            -- up a wall, never projected with a 50 cm search): try each
+            -- candidate at floor height with a 150 cm search, nearest first.
+            local okg,goal=false,nil
+            local tried=0
+            for _,c in ipairs(list) do
+                if tried>=M.WAY_TRIES then break end
+                tried=tried+1
+                local o,g=route.project(controller,{X=c.pos.X,Y=c.pos.Y,Z=p.Z},{X=150,Y=150,Z=300})
+                if o and g and rooms.room_of and floor_room(controller,{X=g.X,Y=g.Y,Z=g.Z+40},{})==target then okg,goal=true,g;break end
+            end
+            local oks,start=route.project(controller,p)
+            if not (okg and oks) then M.report(string.format("scanner_room_way_none %s -> %s reason=unprojected target=%s start=%s tried=%d",room,target,tostring(okg),tostring(oks),tried));return end
+            local _,_,pts=route.query(controller,controller.Pawn,"way",start,goal,function()end)
+            if not pts or #pts<2 then M.report(string.format("scanner_room_way_none %s -> %s reason=no_route",room,target));return end
+            -- Floor samples every WAY_STEP cm along the route.
+            local samples,keys={},{}
+            for i=2,#pts do
+                local a,c=pts[i-1],pts[i]
+                local len=math.sqrt((c.X-a.X)^2+(c.Y-a.Y)^2)
+                local steps=math.max(1,math.floor(len/M.WAY_STEP))
+                for s=0,steps-1 do
+                    local f=s/steps
+                    samples[#samples+1]={X=a.X+(c.X-a.X)*f,Y=a.Y+(c.Y-a.Y)*f,Z=a.Z+(c.Z-a.Z)*f}
+                end
+            end
+            samples[#samples+1]=pts[#pts]
+            for i,sp in ipairs(samples) do keys[i]=floor_room(controller,{X=sp.X,Y=sp.Y,Z=sp.Z+40},{}) end
+            local i,k=rooms.entered(keys,#samples,room)
+            if k~=target then M.report(string.format("scanner_room_way_none %s -> %s first=%s samples=%d",room,target,tostring(k),#samples)) end
+            if k==target then
+                local j=math.min(#samples,i+math.floor(M.WAY_INTO/M.WAY_STEP))
+                found[#found+1]={room=target,pos=samples[j]}
+                M.report(string.format("scanner_room_way %s -> %s at=%.0f,%.0f",room,target,samples[j].X,samples[j].Y))
+            end
+        end)
+        if not okw then M.report("scanner_room_way_none "..room.." -> "..target.." reason=error "..tostring(errw)) end
+        else M.report("scanner_room_way_skip "..room.." -> "..target.." reason=door") end
+    end
+    return found
+end
 local function joins_of(controller,e)
     if joins_cache[e.id]~=nil then return joins_cache[e.id] or nil end
     local keys={}
@@ -364,7 +483,7 @@ end
 -- the floors around them, then the filter.
 function M.by_room(controller,out,p)
     local world=nil;pcall(function()world=controller:GetWorld():GetFName():ToString()end)
-    if world~=joins_world then joins_cache={};joins_world=world end
+    if world~=joins_world then joins_cache={};joins_world=world;ways_cache={};geometry=nil end
     local pawn=nil;pcall(function()pawn=controller.Pawn end)
     local room=floor_room(controller,p,{pawn})
     local how="floor"
@@ -372,6 +491,13 @@ function M.by_room(controller,out,p)
     for _,e in ipairs(out) do if e.door_like and e.kind=="interaction" then e.joins=joins_of(controller,e) end end
     if room~=M.room then M.room=room;M.report("scanner_room="..tostring(room).." by="..how) end
     local kept=rooms.filter(out,room)
+    -- Ways into neighbouring rooms reached through an open doorway.
+    if room and how=="floor" then
+        for _,w in ipairs(ways_from(controller,out,room,p)) do
+            local name=rooms.room_name(w.room)
+            kept[#kept+1]={id="way:"..w.room,label=M.text("room_way",{name=rooms.way_name(name)}),pos=w.pos,stand=w.pos,kind="goal"}
+        end
+    end
     -- When the room changes, which objects of that room were dropped and why
     -- (3 Nov: the bathroom mirror was missing and no log said why).
     if M.room_logged~=room then

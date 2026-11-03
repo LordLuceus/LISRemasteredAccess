@@ -73,6 +73,21 @@ function M.joins(keys,count)
     for i=1,(count or 8) do local k=keys[i];if k and not set[k] then set[k]=true;n=n+1 end end
     return set,n>=2
 end
+-- Pure: the first room other than `current` met along a route, from the
+-- rooms of floors sampled along it (list of n keys, nils allowed for missed
+-- traces). Returns its index and key, or nil. A room reached this way, with
+-- no other room in between, is a neighbour even when no door joins them (3
+-- Nov: the upstairs bathroom has an open doorway, so nothing led there).
+function M.entered(keys,n,current)
+    for i=1,n do local k=keys[i];if k and k~=current then return i,k end end
+    return nil
+end
+-- Pure: "Way to the bathroom", "Way to Chloe's room".
+function M.way_name(name)
+    if not name then return nil end
+    if name:find("'",1,true) then return name end
+    return "the "..name
+end
 -- Pure: the room word of a sub-level key ("E3_1A_MaxRoom_LD" -> "MaxRoom").
 function M.room_word(sublevel)
     if not sublevel then return nil end

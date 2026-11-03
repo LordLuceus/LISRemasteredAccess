@@ -66,7 +66,9 @@ menus.
 
 Indoors, the scanner lists only the room you are in, plus its exits and the
 doors that lead out of it, including ones you have just come through, such as
-the sliding door back in from the garden. When you cross into another room the
+the sliding door back in from the garden. A room you enter through an open
+doorway, with no door, is listed as a way, such as "Way to the bathroom".
+When you cross into another room the
 mod says its name ("Corridor.", "Max's room."). Doors are named for the room
 they lead to ("Science lab door"). Places built as one open space, such as the
 pool, the junkyard and the campus, are listed whole.
