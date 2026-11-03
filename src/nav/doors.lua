@@ -153,6 +153,10 @@ local function closed_crossing(points,list)
     for _,d in ipairs(list) do if d.state=="blocked" and crosses(points,d) then return d end end
     return nil
 end
+-- Would a native path (points) cross a doorway the survey found closed?
+-- Exposed so other code can reject goals autowalk would refuse (2 Nov: the
+-- pool's hiding spot was reachable on the navmesh only through a shut door).
+function M.crosses_closed(points,list)return closed_crossing(points,list)~=nil end
 -- Pure: is a point inside an exit's trigger volume (centre pos, half-size
 -- extent), kept `inset` cm inside its sides? Walking into the volume is what
 -- the exit needs; its centre may be off the walkable ground.

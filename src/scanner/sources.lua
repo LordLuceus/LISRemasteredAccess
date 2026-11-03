@@ -335,7 +335,9 @@ function M.collect(controller)
         out=rooms.filter(out,room)
     end
     -- Episode 3 principal's office: walk through the door to its other side.
-    do local ok,e=pcall(require("scenes.principal_office").entry,controller);if ok and e then out[#out+1]=e end end
+    do local ok,e=pcall(require("scenes.principal_office").entry,controller);if ok and e then out[#out+1]=e elseif not ok then report_once("office","scanner_source office_error="..tostring(e)) end end
+    -- Episode 3 pool: the way to the hall and the hiding spot behind the lockers.
+    do local ok,list=pcall(require("scenes.pool_guard").entries,controller);if ok then for _,e in ipairs(list) do out[#out+1]=e end else report_once("pool_guard","scanner_source pool_guard_error="..tostring(list)) end end
     local aok,aiming=pcall(require("scenes.junkyard_shooting").aiming,controller)
     if aok and aiming then
         local before=#out

@@ -5,7 +5,7 @@
 --   D-pad down        autowalk
 --   Left-stick click  face, on release, unless used as a modifier:
 --   held + D-pad up   help;  held + D-pad right  repeat last announcement;
---   held + D-pad left sound preview.
+--   held + D-pad left sound preview;  held + D-pad down pool guard bypass.
 -- Scanner commands only in gameplay (the caller passes active=false otherwise);
 -- the left-stick chords work everywhere.
 local M={}
@@ -31,6 +31,7 @@ function M:update(buttons,active,now)
             if (edge&UP)~=0 then out[#out+1]="help" end
             if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
             if (edge&LEFT)~=0 then out[#out+1]="preview" end
+            if (edge&DOWN)~=0 then out[#out+1]="pool_bypass" end
         end
         self.thumb_started=false;self.repeat_at={}
         self.previous=buttons;return out
@@ -41,6 +42,7 @@ function M:update(buttons,active,now)
         if (edge&UP)~=0 then out[#out+1]="help" end
         if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
         if (edge&LEFT)~=0 then out[#out+1]="preview" end
+        if (edge&DOWN)~=0 then out[#out+1]="pool_bypass" end
         self.repeat_at={}
     else
         if (edge&UP)~=0 then out[#out+1]="describe" end

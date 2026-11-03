@@ -120,6 +120,7 @@ local icons=require("hud.icons")
 local shooting=require("scenes.junkyard_shooting")
 local office=require("scenes.principal_office")
 local rooms=require("scanner.rooms")
+local pool_guard=require("scenes.pool_guard")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -187,6 +188,12 @@ end))
 
 bind_key(Key.F1,on_game(show_help))
 bind_key(Key.F2,on_game(next_preview))
+-- Pool guard bypass (Episode 3): F3 during the patrol toggles whether he can see Max.
+local function toggle_pool_bypass()
+    if not pool_guard.in_patrol() then return end
+    say(l10n.text(pool_guard.toggle_bypass(),{key=controls.name("pool_bypass")}),true)
+end
+bind_key(Key.F3,on_game(toggle_pool_bypass))
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -573,6 +580,10 @@ icons.text=function(key,p)return l10n.text(key,p)end
 shooting.text=function(key,p)return l10n.text(key,p)end
 office.log=function(line)log(line)end
 office.text=function(key,p)return l10n.text(key,p)end
+pool_guard.log=log
+pool_guard.announce=function(key)say(l10n.text(key,{key=controls.name("pool_bypass")}),false)end
+pool_guard.text=function(key,p)return l10n.text(key,p)end
+pool_guard.play=function(file)if speech.play then speech.play(speech.audio_dir..file) end end
 icons.clean=require("core.text").clean
 icons.translate=function(key)return require("scanner.sources").translate(key)end
 tooltip.key_name=function(action)if action:lower()=="action_interact" then return controls.name("exit_confirm") end end
@@ -638,6 +649,8 @@ local function main_step()
                     end
                 end
             end
+            -- Pool guard (Episode 3): spotted / hidden cues while he patrols.
+            do local okp,errp=pcall(pool_guard.tick,c0,os.clock());if not okp then log("pool_guard_error="..tostring(errp)) end end
             -- Principal's office (Episode 3): when the door can be unlocked
             -- from the inside.
             local ok2,lines2=pcall(office.tick,c0,os.clock())
@@ -705,6 +718,7 @@ local function pad_step()
                 elseif cmd=="face" then face_selected()
                 elseif cmd=="help" then show_help()
                 elseif cmd=="preview" then next_preview()
+            elseif cmd=="pool_bypass" then toggle_pool_bypass()
                 else scanner.command(cmd) end
             end
         end)

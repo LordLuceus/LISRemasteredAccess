@@ -17,6 +17,8 @@ M.commands={
     -- Stopping an activity (the guitar, the drone, getting up): SkipPrimary,
     -- Space on the keyboard; B on a controller.
     stop_activity={keyboard="Space",controller="B"},
+    -- The mod's own pool-guard bypass toggle (Episode 3).
+    pool_bypass={keyboard="F3",controller="left stick and D-pad down"},
     -- Rewind: hold (DefaultInput.ini RewindSecondary = R, RewindPrimary = right
     -- mouse button; Rewind = left trigger on a controller).
     rewind={keyboard="R",controller="the left trigger"},

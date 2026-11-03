@@ -5,6 +5,13 @@ Player-facing changes, newest first.
 ## 2026-11-03
 
 ### In play
+- The pool in Episode 3: getting past the guard. The scanner leads you to the
+  hall door, and its "Leave The Swimming Pool" prompt is announced with its
+  key. By default the guard can't see you during his patrol. To hide from him
+  yourself, press F3 (or hold the left stick and press D-pad down): a sound
+  warns you a few seconds before he would see you, and "Hiding spot" in the
+  scanner leads somewhere he won't look.
+- The F2 sound preview includes the two new sounds, "spotted" and "hidden".
 - Prompts a scene shows on screen, such as "Leave The Swimming Pool", are read
   with their key.
 

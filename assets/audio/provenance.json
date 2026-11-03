@@ -16,12 +16,24 @@
       "prompt": "One soft low descending two-note tone signalling that control is taken away. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
       "source_bytes": 57600,
       "duration_seconds": 0.5,
-      "rms_dbfs": -21.95
+      "rms_dbfs": -22.17
     },
     "control_back": {
       "reverse_of": "control_lost",
       "duration_seconds": 0.5,
-      "rms_dbfs": -21.95
+      "rms_dbfs": -22.17
+    },
+    "sneak_spotted": {
+      "prompt": "One short sharp rising two-note alert tone, urgent, signalling you have just been seen. Dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.5,
+      "rms_dbfs": -22.18
+    },
+    "sneak_hidden": {
+      "prompt": "One soft calm low single tone that settles, signalling you are safely out of sight again. Gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.5,
+      "rms_dbfs": -20.66
     }
   }
 }

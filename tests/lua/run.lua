@@ -770,11 +770,12 @@ do
     check("every help line has English text",all)
     local P=require("core.preview");local said,played={},{}
     P.say=function(t)said[#said+1]=t end;P.play=function(f)played[#played+1]=f end;P.text=function(k)return k end
-    P.next();P.next();P.next()
-    check("preview cycles",played[1]=="control_lost.wav" and played[2]=="control_back.wav" and played[3]=="control_lost.wav")
+    for _=1,#P.cues+1 do P.next() end
+    check("preview cycles",played[1]=="control_lost.wav" and played[2]=="control_back.wav" and played[#P.cues+1]=="control_lost.wav")
+    check("every preview cue has a name",(function()local en=require("lang.en");for _,c in ipairs(P.cues) do if not en[c.key] then return false end end;return true end)())
     check("preview names each",said[2]=="cue_control_back" and en.cue_control_back~=nil)
-    local delayed=nil;P.next(function(f)delayed=f end)
-    check("sound waits for the name",#played==3 and delayed~=nil)
+    local before=#played;local delayed=nil;P.next(function(f)delayed=f end)
+    check("sound waits for the name",#played==before and delayed~=nil)
 end
 -- Controller: L3+left is preview.
 do
@@ -1887,6 +1888,201 @@ do
         st.stalled=0;st.corrections=24;check("hard cap",F.should_correct(st,false,1)==false)
     else check("scanner.face loads offline",false,tostring(F)) end
     package.loaded["scanner.face"]=nil
+end
+-- Pool guard: hiding point, sight cone, cue transitions.
+do
+    package.loaded["scenes.pool_guard"]=nil
+    local G=require("scenes.pool_guard")
+    local lockers={{X=-521,Y=-1690},{X=-361,Y=-1690},{X=-217,Y=-1690}}
+    local h=G.hide_point(lockers,{X=80,Y=-1360})
+    check("guard at the locker-room door: the west hiding volume's centre",h and h.X==-521 and h.Y==-1690)
+    h=G.hide_point(lockers,{X=-900,Y=-1690})
+    check("guard at the west end: the east volume",h and h.X==-217)
+    check("inside a hiding volume",G.in_hide(lockers,{X=-500,Y=-1700}) and not G.in_hide(lockers,{X=-882,Y=-1626}))
+    -- The game's own test (IA_Behavior_32 VisualDetection): 65-degree half-angle from its eye dummy.
+    check("game cone: 60 degrees off is seen",G.in_cone({X=0,Y=0},0,{X=50,Y=87}))
+    check("game cone: 70 degrees off is not",not G.in_cone({X=0,Y=0},0,{X=34,Y=94}))
+    check("no guard: no spot",G.hide_point(lockers,nil)==nil)
+    check("in front of the guard is in the cone",G.in_cone({X=0,Y=0},0,{X=100,Y=10}))
+    check("behind him is not",not G.in_cone({X=0,Y=0},0,{X=-100,Y=0}))
+    check("at 60 degrees is in a 70-degree cone",G.in_cone({X=0,Y=0},0,{X=50,Y=87},70))
+    check("spotted on becoming seen",G.cue("hidden","seen")=="sneak_spotted" and G.cue(nil,"seen")=="sneak_spotted")
+    check("hidden again after being seen",G.cue("seen","hidden")=="sneak_hidden")
+    check("starting hidden is silent",G.cue(nil,"hidden")==nil and G.cue("hidden","hidden")==nil)
+    -- The live entries function, with a fake game (31 Oct: a stale constant
+    -- made it raise, and pcall at the call site hid it: no entries at all).
+    local oldF,oldN,oldS=_G.FindAllOf,_G.FName,_G.StaticFindObject
+    _G.FindAllOf=function()return {} end;_G.FName=function(s)return s end;_G.StaticFindObject=function()return nil end
+    local c={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_3A" end} end} end,
+        IsFactActive=function()return false end,Pawn={K2_GetActorLocation=function()return {X=0,Y=-1500,Z=0} end}}
+    local ok,list=pcall(G.entries,c)
+    check("entries: no error with no actors",ok,tostring(list))
+    check("entries: the hall and the hiding spot are listed before the patrol",ok and #list==2 and list[1].id=="pool_hall_way" and list[2].id=="pool_hiding_spot")
+    local c2=setmetatable({IsFactActive=function()return true end},{__index=c})
+    ok,list=pcall(G.entries,c2)
+    check("entries: only the hiding spot while the patrol runs",ok and #list==1 and list[1].id=="pool_hiding_spot")
+    _G.FindAllOf,_G.FName,_G.StaticFindObject=oldF,oldN,oldS
+    -- The live tick with a fake game (1 Nov: a stale constant raised inside
+    -- the tick's pcall on every reading and a whole play run recorded nothing).
+    do
+        local oldF,oldN,oldS=_G.FindAllOf,_G.FName,_G.StaticFindObject
+        local function actor(name,x,y,z,yaw,mesh)
+            local a={GetFName=function()return {ToString=function()return name end} end,IsValid=function()return true end,
+                K2_GetActorLocation=function()return {X=x,Y=y,Z=z} end,K2_GetActorRotation=function()return {Yaw=yaw or 0,Pitch=0} end,
+                GetAddress=function()return name end,bIsPlaying=true,InterpPosition=5.0}
+            a.SkeletalMeshComponent={IsValid=function()return true end,SkeletalMesh={IsValid=function()return true end,GetFName=function()return {ToString=function()return mesh or "x" end} end},
+                GetAllSocketNames=function()return {ForEach=function()end} end,DoesSocketExist=function()return false end,
+                K2_GetComponentLocation=function()return {X=x,Y=y,Z=z} end,K2_GetComponentRotation=function()return {Yaw=yaw or 0} end}
+            return a
+        end
+        local guard=actor("SkeletalMeshActorMAT_2",80,-1360,0,180,"CH_L_DavidGuard01")
+        local eye=actor("FSMDummy_1",80,-1360,100,180);local close=actor("FSMDummy_2",0,-13,2,0)
+        local patrol=actor("E3_3A_SwimPool_LD_GuardPatrolInLocker",0,0,0)
+        _G.FindAllOf=function(c)
+            if c=="SkeletalMeshActorMAT" then return {guard} elseif c=="FSMDummy" then return {eye,close} elseif c=="MatineeActor" then return {patrol} elseif c=="DNEVolume" then return {} end
+            return {}
+        end
+        _G.FName=function(s)return s end
+        _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b)return b.Y<-1700 end} end
+        -- Fake navmesh: everything north of the locker-room door wall (y > -1360)
+        -- projects but is unreachable from the pool side.
+        -- Fake navmesh: everything is connected; a closed door at x=-150..-50 on the
+        -- wall y=-1360 makes goals north of it reachable only through that door.
+        package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=0} end,
+            query=function(_,_,_,from,goal)return true,0,{from,goal} end}
+        package.loaded["nav.doors"]={survey=function()return {{closed=true}} end,
+            crosses_closed=function(pts)local a,b=pts[1],pts[#pts];return (a.Y-(-1360))*(b.Y-(-1360))<0 end}
+        local logs={};G.log=function(s)logs[#logs+1]=s end
+        G.DEBUG=true -- the assertions read the per-reading log
+        -- These tests exercise the assisted mode (warning and hiding spot), so the
+        -- bypass is off; it has its own tests below.
+        G.BYPASS=false
+        -- The fake world has its own guard; keep the recorded real path out of it.
+        local real_path=G.PATH;G.PATH={}
+        local c={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_3A" end} end} end,
+            IsFactActive=function()return true end,Pawn=actor("Max",-400,-1380,0,0)}
+        local ok,err=pcall(G.tick,c,100);local ok2=pcall(G.tick,c,100.5)
+        local errs=0;for _,s in ipairs(logs) do if s:find("read_error") then errs=errs+1 end end
+        check("tick: no error with a fake game",ok and ok2 and errs==0,table.concat(logs," | "))
+        check("tick: a reading was logged with the game's eye",(function()for _,s in ipairs(logs) do if s:find("eye=80,%-1360") then return true end end end)())
+        -- Max is 480 cm west of the eye, which faces west (yaw 180): in range, in cone, trace clear -> seen.
+        check("tick: the game's test says seen",(function()for _,s in ipairs(logs) do if s:find("game_seen=true") then return true end end end)())
+        check("tick: the warning fires with the game's test",(function()for _,s in ipairs(logs) do if s:find("warn=true") then return true end end end)())
+        -- The chosen spot must be one the game's test cannot see from the eye
+        -- (80,-1360 facing west, 800 cm, 65 deg; the fake trace blocks y<-1700).
+        -- Scanner entry during the patrol is the live spot (2 Nov: globals made it nil).
+        local list=G.entries(c)
+        local live=nil;for _,e in ipairs(list) do if e.id=="pool_hiding_spot" then live=e end end
+        check("entries: the hiding spot is listed during the patrol and is the live spot",live~=nil and (function()for _,s in ipairs(logs) do local sx,sy=s:match("spot=([-%d]+),([-%d]+)");if sx and math.abs(tonumber(sx)-live.pos.X)<1 and math.abs(tonumber(sy)-live.pos.Y)<1 then return true end end end)(),live and string.format("%.0f,%.0f",live.pos.X,live.pos.Y) or "none")
+        -- The spot follows Max: move her 6 m and it must be re-chosen near her.
+        c.Pawn=actor("Max",-400,-2100,0,0)
+        pcall(G.tick,c,101);pcall(G.tick,c,101.5)
+        local lastspot=nil;for i=#logs,1,-1 do lastspot=logs[i]:match("spot=([-%d]+,[-%d]+)");if lastspot then break end end
+        check("spot follows Max when she moves away from it",(function()if not lastspot then return false end;local sx,sy=lastspot:match("([-%d]+),([-%d]+)");return math.sqrt((tonumber(sx)+400)^2+(tonumber(sy)+2100)^2)<=G.SPOT_STALE end)(),tostring(lastspot))
+        -- Rewind: after the patrol position goes back, the spot is chosen again.
+        do
+            local seqv=5.0
+            patrol.InterpPosition=20.0;pcall(G.tick,c,102);pcall(G.tick,c,102.5)
+            local before=#logs
+            patrol.InterpPosition=8.0;pcall(G.tick,c,103);pcall(G.tick,c,103.5)
+            local researched=false
+            for i=before+1,#logs do if logs[i]:find("spot_search reason=rewind") then researched=true end end
+            check("a rewind makes the spot be chosen again",researched,table.concat(logs," | ",before+1))
+            patrol.InterpPosition=5.0
+        end
+        -- Aim height: a fake low obstacle (a bench) blocks traces aimed below
+        -- 100 cm above the floor. Max standing behind it must still count as SEEN
+        -- (2 Nov run 19: knee-height spot traces read "safe" behind such cover).
+        do
+            local oldS=_G.StaticFindObject
+            _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b)return b.Z<100 end} end
+            c.Pawn=actor("Max",-400,-1380,88,0)
+            local n0=#logs
+            pcall(G.tick,c,104);pcall(G.tick,c,104.5)
+            local warned=false;for i=n0+1,#logs do if logs[i]:find("warn=true") then warned=true end end
+            check("a low obstacle does not hide Max from the warning (chest-height aim)",warned,table.concat(logs," | ",n0+1))
+            _G.StaticFindObject=oldS
+        end
+        -- Aim height: spots and Max are tested at the same height above the floor.
+        check("spot and Max share one aim height",G.AIM_HEIGHT and G.AIM_HEIGHT>=100)
+        check("warning looks at least 6 s ahead",G.WARN_AHEAD[#G.WARN_AHEAD]>=6)
+        check("spot must stay safe at least 10 s",G.SPOT_AHEAD[#G.SPOT_AHEAD]>=10)
+        -- Bypass (default on): the game's two detection markers are detached and
+        -- parked below the floor during the patrol; the toggle flips it.
+        do
+            local parked={}
+            local function dummy(name,x,y,z)
+                local a=actor(name,x,y,z,0)
+                a.K2_TeleportTo=function(self,loc)parked[name]=loc.Z;self.K2_GetActorLocation=function()return {X=loc.X,Y=loc.Y,Z=loc.Z} end end
+                a.K2_DetachFromActor=function()end
+                return a
+            end
+            local e1,e2=dummy("FSMDummy_1",80,-1360,100),dummy("FSMDummy_2",0,-13,2)
+            local oldF2=_G.FindAllOf
+            _G.FindAllOf=function(cname)if cname=="FSMDummy" then return {e1,e2} end;return oldF2(cname) end
+            local said=nil;G.announce=function(k)said=k end
+            G.BYPASS=true
+            pcall(G.tick,c,200);pcall(G.tick,c,200.5)
+            check("bypass is on by default",(function()package.loaded["scenes.pool_guard"]=nil;local fresh=require("scenes.pool_guard");local v=fresh.BYPASS;package.loaded["scenes.pool_guard"]=G;return v==true end)())
+            check("bypass parks the eye marker below the floor",parked["FSMDummy_1"]==G.PARK_Z)
+            check("bypass parks the close sensor too",parked["FSMDummy_2"]==G.PARK_Z)
+            local k=G.toggle_bypass()
+            check("toggle turns the bypass off and names it",G.BYPASS==false and k=="pool_bypass_off")
+            parked={};e1.K2_GetActorLocation=function()return {X=80,Y=-1360,Z=100} end
+            pcall(G.tick,c,201)
+            check("with the bypass off nothing is parked",parked["FSMDummy_1"]==nil)
+            -- Bypass on: no cues and no hiding spot (3 Nov: cues still played).
+            G.BYPASS=true;local played={};G.play=function(f)played[#played+1]=f end
+            c.Pawn=actor("Max",-400,-1380,88,0)
+            for k=1,4 do pcall(G.tick,c,210+k*0.5) end
+            check("bypass on: no cue plays",#played==0,table.concat(played,","))
+            local hs=nil;for _,e in ipairs(G.entries(c)) do if e.id=="pool_hiding_spot" then hs=e end end
+            check("bypass on: no hiding spot offered",hs==nil)
+            G.play=function()end
+            G.BYPASS=false;_G.FindAllOf=oldF2;G.announce=nil
+            local en=require("lang.en")
+            check("bypass phrases exist and name the key",en.pool_bypass_on:find("{key}") and en.pool_bypass_off:find("{key}"))
+        end
+        check("tick: the safe spot is out of the eye's view",(function()
+            for _,s in ipairs(logs) do
+                local sx,sy=s:match("spot=([-%d]+),([-%d]+)")
+                if sx then
+                    sx,sy=tonumber(sx),tonumber(sy)
+                    local far=(sx-80)^2+(sy+1360)^2>800*800
+                    local out=not G.in_cone({X=80,Y=-1360},180,{X=sx,Y=sy},65)
+                    if far or out or sy<-1700 then return true end
+                end
+            end
+        end)(),table.concat(logs," | "))
+        check("unreachable candidates are dropped",(function()for _,s in ipairs(logs) do local n=s:match("unreachable=(%d+)");if n and tonumber(n)>0 then return true end end end)(),table.concat(logs," | "))
+        check("the chosen spot is reachable (south of the door wall)",(function()for _,s in ipairs(logs) do local sy=s:match("spot=[-%d]+,([-%d]+)");if sy and tonumber(sy)>-1360 then return false end end;return true end)())
+        check("tick: candidate spots were projected",(function()for _,s in ipairs(logs) do if s:find("spots=%d") and not s:find("spots=0") then return true end end end)(),table.concat(logs," | "))
+        -- Pure pieces of the warning and the spot search.
+        check("exposed: in the loose cone with a clear line",G.exposed({X=0,Y=0},0,{X=500,Y=300},false))
+        check("exposed: not when the line is blocked",not G.exposed({X=0,Y=0},0,{X=500,Y=300},true))
+        check("exposed: not beyond the loose range",not G.exposed({X=0,Y=0},0,{X=1200,Y=0},false))
+        check("grid covers the bounds",#G.grid({minX=0,maxX=300,minY=0,maxY=150},150)==6)
+        local en2=require("lang.en")
+        G.PATH=real_path
+        -- Prediction from the recorded path (2 Nov log).
+        local P=G.PATH
+        check("path loaded from the log",#P>30)
+        local a=G.pose_at(P,P[1][1]);check("pose at the first sample",a and math.abs(a.X-P[1][2])<1)
+        local mid=G.pose_at(P,(P[5][1]+P[6][1])/2);check("pose interpolates between samples",mid and mid.X>=math.min(P[5][2],P[6][2])-1 and mid.X<=math.max(P[5][2],P[6][2])+1)
+        check("no pose beyond the recorded range",G.pose_at(P,P[#P][1]+5)==nil)
+        check("path covers the whole 78 s patrol (decoded from the game's animation)",P[#P][1]>=77)
+        -- At seq ~17 he stands at the west end looking north: Max at -886,-1582
+        -- (where she was caught) is in danger from seq 14 already (3 s ahead).
+        local hit=false
+        local function sees(pose,pt)local dx,dy=pt.X-pose.X,pt.Y-pose.Y;return dx*dx+dy*dy<=800*800 and G.in_cone({X=pose.X,Y=pose.Y},pose.yaw,pt,65) end
+        check("danger predicted 3 s before the catch",G.danger(P,14.5,G.WARN_AHEAD,{X=-886,Y=-1582},sees,nil))
+        check("no danger far behind him (east end, out of range)",not G.danger(P,17,{0},{X=300,Y=-1400},sees,nil))
+        _G.FindAllOf,_G.FName,_G.StaticFindObject=oldF,oldN,oldS
+        package.loaded["nav.route"]=nil;package.loaded["nav.doors"]=nil
+    end
+    local en=require("lang.en")
+    check("pool phrases",en.pool_hall_way and en.pool_hiding_spot and en.pool_way_out and en.cue_sneak_spotted and en.cue_sneak_hidden)
+    package.loaded["scenes.pool_guard"]=nil
 end
 -- Button prompts: the scene's own "press X" line (TextBlock_Button).
 do

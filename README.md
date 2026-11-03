@@ -51,6 +51,7 @@ when they change.
 | 1 to 4 | Face buttons | Answer a dialogue choice, or use the focused object's actions, as announced |
 | F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
 | F2 | Hold left-stick click, then D-pad left | Play the next sound cue and say what it means |
+| F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -132,6 +133,27 @@ the mod says "You can unlock the door now." when the door can be opened from
 the inside; face the door with the scanner and F if its prompt does not come
 up. Do not use the "other side" entry after the rewind: the door is closed
 again.
+
+### Hiding from the guard at the pool (Episode 3)
+
+After you and Chloe leave the water, the scanner lists "Way to the hall".
+Autowalk there: the mod says "Leave The Swimming Pool" with its key. Take it,
+and the guard comes in and patrols the room.
+
+By default the guard can't see you, so you can walk out once he has gone.
+The mod says so when his patrol starts. Finding a hiding place there is
+trivial for a sighted player and this is the game's only stealth sequence,
+so the mod does it for you.
+
+To hide from him yourself, press F3 (or hold the left stick and press D-pad
+down) during the patrol. Then:
+
+- the "spotted" sound means his view will reach you within a few seconds;
+- "Hiding spot" in the scanner is a place he won't see for the next ten
+  seconds; autowalk there;
+- the calmer "hidden" sound means you're out of his view again.
+
+Press F3 again to stop him seeing you.
 
 ### When the game takes over
 

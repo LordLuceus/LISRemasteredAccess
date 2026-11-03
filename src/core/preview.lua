@@ -5,6 +5,8 @@ local M={}
 M.cues={
     {file="control_lost.wav",key="cue_control_lost"},
     {file="control_back.wav",key="cue_control_back"},
+    {file="sneak_spotted.wav",key="cue_sneak_spotted"},
+    {file="sneak_hidden.wav",key="cue_sneak_hidden"},
 }
 M.text=function(key)return key end
 M.say=function(_)end
