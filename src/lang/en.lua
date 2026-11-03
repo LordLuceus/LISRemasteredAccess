@@ -55,6 +55,7 @@ return {
     walk_arrived="Arrived at {name}.",
     walk_stopped="Walking stopped.",
     walk_in_reach="{name} is within reach.",
+    walk_retry="Trying again.",
     walk_interrupted="Walking stopped. The game took over.",
     walk_blocked="Walking stopped. Something is blocking the way to {name}.",
     walk_timeout="Walking stopped before reaching {name}.",

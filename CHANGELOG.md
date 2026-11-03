@@ -14,6 +14,10 @@ Player-facing changes, newest first.
 - The F2 sound preview includes the two new sounds, "spotted" and "hidden".
 - Prompts a scene shows on screen, such as "Leave The Swimming Pool", are read
   with their key.
+- Autowalk no longer gives up at the first corner it catches on: it says
+  "Trying again." and carries on from where Max stopped, as long as she keeps
+  moving. Only when she makes no progress does it say something is blocking
+  the way.
 
 ## 2026-10-31
 

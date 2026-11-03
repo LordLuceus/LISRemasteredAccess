@@ -2134,5 +2134,62 @@ do
     check("global scan actually ran (files found and compiler listing read)",scanned>0 and listed>0,tostring(scanned).."/"..tostring(listed))
     check("no unexpected globals in scene, scanner, autowalk, nav and hud modules",#bad==0,table.concat(bad,", "))
 end
+-- Stall retries: try again from where Max stopped while each try gets closer.
+do
+    package.loaded["autowalk.plan"]=nil
+    local P=require("autowalk.plan")
+    -- The pool walks of 3 Nov: Max moved 107 cm and then 773 cm between the
+    -- stalls (remaining 1320, 1290, 668), then arrived.
+    check("first stall is retried",P.retry_stall(nil,0))
+    check("a stall after moving 107 cm is retried (only 30 cm closer)",P.retry_stall(107,1))
+    check("a stall after moving 773 cm is retried",P.retry_stall(773,2))
+    check("a stall without moving is reported as blocked",not P.retry_stall(10,1))
+    check("retries are limited",not P.retry_stall(500,P.RETRIES))
+    package.loaded["autowalk.plan"]=nil
+end
+-- Stall retry, end to end through autowalk.tick: two stalls with progress,
+-- then arrival; and a stall without progress reported as blocked.
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+    local pos={X=0,Y=0,Z=0}
+    local follow={active=false};local script={};local step=0;local emitf=nil
+    function follow.ready()return true end
+    function follow.start(_,_,goal,emit)
+        step=step+1;emitf=emit;follow.active=true;follow.goal=goal
+    end
+    function follow.stop()follow.active=false end
+    function follow.tick()
+        if not follow.active then return end
+        local s=script[step] or {res="stalled",x=pos.X}
+        pos.X=s.x
+        emitf(string.format("follow_progress elapsed=1 remaining=%.3f vertical=0 position=%.1f,0,0",math.abs(follow.goal.X-pos.X),pos.X))
+        emitf("follow_end="..s.res.." stop_ok=true");follow.active=false
+    end
+    package.loaded["nav.follow"]=follow
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X or p[1],Y=p.Y or p[2] or 0,Z=p.Z or p[3] or 0} end,
+        query=function()return true,1000,{{X=0,Y=0,Z=0},{X=1000,Y=0,Z=0}} end}
+    package.loaded["nav.doors"]={plan=function()return nil end,survey=function()return {} end,inside=function()return false end}
+    local aw=require("autowalk.autowalk")
+    local said={};aw.say=function(k)said[#said+1]=k end;aw.text=function(k)return k end
+    aw.moving=function()return false end;aw.in_reach=function()return nil end
+    aw.log=function()end
+    local pawn={K2_GetActorLocation=function()return {X=pos.X,Y=pos.Y,Z=pos.Z} end,GetAddress=function()return 1 end,IsValid=function()return true end,
+        CapsuleComponent={K2_GetComponentLocation=function()return {X=pos.X,Y=pos.Y,Z=pos.Z} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
+    local c={Pawn=pawn,IsValid=function()return true end}
+    local entry={name="Way to the hall",pos={X=1000,Y=0,Z=0},stand={X=1000,Y=0,Z=0},kind="goal"}
+    -- Two stalls that each moved Max, then arrival.
+    script={{res="stalled",x=300},{res="stalled",x=700},{res="arrived_test_region",x=1000}}
+    local okstart=pcall(aw.start,c,entry)
+    for _=1,8 do pcall(aw.tick) end
+    local function has(k)for _,v in ipairs(said) do if v==k then return true end end end
+    check("retry: stalls with progress are retried and the walk arrives",okstart and has("walk_retry") and has("walk_arrived") and not has("walk_blocked"),table.concat(said,","))
+    -- A stall that does not move Max: reported as blocked after the first retry.
+    said={};pos={X=0,Y=0,Z=0};step=0
+    script={{res="stalled",x=300},{res="stalled",x=310}}
+    pcall(aw.start,c,entry)
+    for _=1,8 do pcall(aw.tick) end
+    check("retry: a stall without progress is reported as blocked",has("walk_blocked") and not has("walk_arrived"),table.concat(said,","))
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

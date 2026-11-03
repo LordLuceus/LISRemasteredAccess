@@ -28,6 +28,21 @@ end
 -- reaching a story goal is usually what starts its cutscene.
 M.NEAR=150
 M.STALL_ARRIVED=60
+-- A stall far from the point is retried from where Max stopped, while each
+-- try gets closer (3 Nov, pool: three walks to the hall stalled at corners
+-- and the fourth arrived; every one started from where the last had stopped).
+-- Only when a try makes no progress is the way reported as blocked.
+M.RETRIES=3
+M.RETRY_MOVED=50 -- cm Max must have moved since the previous stall
+-- Pure: should a stalled walk be tried again? moved: cm Max moved since the
+-- previous stall (nil on the first stall); tries: retries so far. Progress is
+-- distance MOVED, not distance left: the 3 Nov route wound round, and a stop
+-- only 30 cm "closer" was 107 cm further along it.
+function M.retry_stall(moved,tries)
+    if tries>=M.RETRIES then return false end
+    if moved and moved<M.RETRY_MOVED then return false end
+    return true
+end
 function M:leg_result(result,remaining)
     if self.finished then return {done=true} end
     if HANDED_OVER[result] and remaining and remaining<=(self.near or M.NEAR) and self.index>=#self.legs then result="arrived" end

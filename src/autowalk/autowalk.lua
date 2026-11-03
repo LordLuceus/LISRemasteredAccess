@@ -281,6 +281,24 @@ function M.tick()
     emit("leg_end result="..result.." leg="..s.walk.index)
     if outcome.continue then start_leg(s);return end
     M.active=nil
+    -- Stalled short of the point: plan again from here while it helps.
+    if outcome.say=="walk_blocked" and s.entry then
+        local here=nil;pcall(function()local v=s.pawn:K2_GetActorLocation();here={X=v.X,Y=v.Y}end)
+        local moved=nil
+        if here and s.stall_at then moved=math.sqrt((here.X-s.stall_at.X)^2+(here.Y-s.stall_at.Y)^2) end
+        local tries=s.stall_tries or 0
+        if here and plan.retry_stall(moved,tries) then
+            emit(string.format("stall_retry try=%d moved=%s remaining=%.0f",tries+1,moved and string.format("%.0f",moved) or "first",last_remaining or -1))
+            local entry,controller=s.entry,s.controller
+            speak("walk_retry",{name=s.walk.target})
+            if M.start(controller,entry,true) and M.active then
+                M.active.stall_tries=tries+1;M.active.stall_at=here
+            end
+            -- Started: the new walk reports its own end. Refused: M.start
+            -- already said why. Either way, nothing more to say here.
+            return
+        end
+    end
     if s.entry and s.entry.kind=="guide" and result~="arrived_test_region" and result~="arrived" and result~="cancelled" then
         local key,params=M.stalled_guide(s.entry,result)
         if key then speak(key,params);return end
