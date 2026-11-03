@@ -5,12 +5,13 @@
 --   D-pad down        autowalk
 --   Left-stick click  face, on release, unless used as a modifier:
 --   held + D-pad up   help;  held + D-pad right  repeat last announcement;
---   held + D-pad left sound preview;  held + D-pad down pool guard bypass.
+--   held + D-pad left sound preview;  held + D-pad down pool guard bypass;
+--   held + right-stick click  room filter on/off.
 -- Scanner commands only in gameplay (the caller passes active=false otherwise);
 -- the left-stick chords work everywhere.
 local M={}
 M.__index=M
-local UP,DOWN,LEFT,RIGHT,THUMB=0x1,0x2,0x4,0x8,0x40
+local UP,DOWN,LEFT,RIGHT,THUMB,RTHUMB=0x1,0x2,0x4,0x8,0x40,0x80
 local DELAY,RATE=0.45,0.18
 function M.new()return setmetatable({previous=0,thumb_used=false,thumb_started=false,repeat_at={}},M)end
 -- buttons: current bits (or -1 when no controller); now: seconds.
@@ -32,6 +33,7 @@ function M:update(buttons,active,now)
             if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
             if (edge&LEFT)~=0 then out[#out+1]="preview" end
             if (edge&DOWN)~=0 then out[#out+1]="pool_bypass" end
+            if (edge&RTHUMB)~=0 then self.thumb_used=true;out[#out+1]="room_filter" end
         end
         self.thumb_started=false;self.repeat_at={}
         self.previous=buttons;return out
@@ -43,6 +45,7 @@ function M:update(buttons,active,now)
         if (edge&RIGHT)~=0 then out[#out+1]="repeat" end
         if (edge&LEFT)~=0 then out[#out+1]="preview" end
         if (edge&DOWN)~=0 then out[#out+1]="pool_bypass" end
+        if (edge&RTHUMB)~=0 then self.thumb_used=true;out[#out+1]="room_filter" end
         self.repeat_at={}
     else
         if (edge&UP)~=0 then out[#out+1]="describe" end

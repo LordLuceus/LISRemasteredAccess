@@ -28,10 +28,22 @@ local function refresh(c)
     local player=viewpoint(c)
     return list:update(sources.collect(c),player)
 end
+-- Once per room, on the first readout there: how many objects the room filter
+-- left out, and the key that shows them (3 Nov: the player had no way to know
+-- the filter was hiding anything).
+local hint_room=nil
+M.filter_key=function()return "F4" end
+function M.filter_hint(room,shown,total,filtered)
+    if not room or room==hint_room or not filtered or not total or total<=shown then return nil end
+    hint_room=room
+    return M.text("scanner_filter_hint",{total=total,key=M.filter_key()})
+end
 local function announce(entry,index)
     local c=controller();if not c then return end
     local player,yaw=viewpoint(c)
     local text=R.describe(entry,index,#list.entries,player,yaw)
+    local hint=M.filter_hint(sources.room,#list.entries,sources.total,sources.filtered)
+    if hint then text=text..". "..hint end
     M.say(text)
     M.log("scanner_readout spoken="..text)
 end

@@ -194,6 +194,13 @@ local function toggle_pool_bypass()
     say(l10n.text(pool_guard.toggle_bypass(),{key=controls.name("pool_bypass")}),true)
 end
 bind_key(Key.F3,on_game(toggle_pool_bypass))
+-- Room filter on/off: the whole level's objects, for rooms the filter gets wrong.
+local function toggle_room_filter()
+    local on=require("scanner.sources").toggle_room_filter()
+    say(l10n.text(on and "room_filter_on" or "room_filter_off",{key=controls.name("room_filter")}),true)
+end
+bind_key(Key.F4,on_game(toggle_room_filter))
+require("scanner.scanner").filter_key=function()return controls.name("room_filter") end
 
 -- Menu narration: the title prompt and the highlighted main menu option,
 -- spoken whenever it changes. Four reads a second, menu widgets only.
@@ -719,6 +726,7 @@ local function pad_step()
                 elseif cmd=="help" then show_help()
                 elseif cmd=="preview" then next_preview()
             elseif cmd=="pool_bypass" then toggle_pool_bypass()
+            elseif cmd=="room_filter" then toggle_room_filter()
                 else scanner.command(cmd) end
             end
         end)

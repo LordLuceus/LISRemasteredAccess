@@ -325,6 +325,10 @@ M.shoot_action=function(actor)
 end
 -- The room Max is in (sub-level key) after the last collect, and its spoken name.
 M.room=nil
+-- Room filtering on/off (F4 / hold left stick + click right stick). On by
+-- default; off lists every object as before, with room names still spoken.
+M.ROOM_FILTER=true
+function M.toggle_room_filter()M.ROOM_FILTER=not M.ROOM_FILTER;M.report("scanner_room_filter="..tostring(M.ROOM_FILTER));return M.ROOM_FILTER end
 -- Floors. Every room's floor is in that room's own geometry level, so the
 -- floor under a point names its room exactly (3 Nov: the object vote said
 -- "Chloe's room" well into the corridor, because her objects were still the
@@ -490,6 +494,11 @@ function M.by_room(controller,out,p)
     if not room then room=rooms.current(out,p);how="objects" end
     for _,e in ipairs(out) do if e.door_like and e.kind=="interaction" then e.joins=joins_of(controller,e) end end
     if room~=M.room then M.room=room;M.report("scanner_room="..tostring(room).." by="..how) end
+    -- Totals for the "N in all" hint: everything here, before the filter.
+    M.total=#out
+    -- Room filter switched off by the player (F4): everything, as before rooms.
+    if not M.ROOM_FILTER then M.filtered=false;return out end
+    M.filtered=true
     local kept=rooms.filter(out,room)
     -- Ways into neighbouring rooms reached through an open doorway.
     if room and how=="floor" then

@@ -12,6 +12,10 @@ Player-facing changes, newest first.
   from the garden.
 - Rooms you walk into through an open doorway are listed too, as "Way to the
   bathroom" and so on; before, Chloe's upstairs bathroom could not be found.
+- F4 (or hold the left stick and click the right stick) switches room
+  filtering off and back on, in case it hides a room you need. The first
+  scanner readout in each room says how many objects there are in all when
+  some are hidden, so you know when F4 would show more.
 - The pool in Episode 3: getting past the guard. The scanner leads you to the
   hall door, and its "Leave The Swimming Pool" prompt is announced with its
   key. By default the guard can't see you during his patrol. To hide from him

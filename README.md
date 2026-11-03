@@ -52,6 +52,7 @@ when they change.
 | F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
 | F2 | Hold left-stick click, then D-pad left | Play the next sound cue and say what it means |
 | F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
+| F4 | Hold left-stick click, then click the right stick | Room filter on or off: off lists every object nearby, for a room the filter misses |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -68,7 +69,10 @@ Indoors, the scanner lists only the room you are in, plus its exits and the
 doors that lead out of it, including ones you have just come through, such as
 the sliding door back in from the garden. A room you enter through an open
 doorway, with no door, is listed as a way, such as "Way to the bathroom".
-When you cross into another room the
+The first time you use the scanner in a room, it tells you how many objects
+there are in all when the filter is hiding some ("21 in all; F4 shows
+them."). F4 (or hold the left stick and click the right stick) switches the
+filter off and lists everything nearby; press it again to switch it back on. When you cross into another room the
 mod says its name ("Corridor.", "Max's room."). Doors are named for the room
 they lead to ("Science lab door"). Places built as one open space, such as the
 pool, the junkyard and the campus, are listed whole.

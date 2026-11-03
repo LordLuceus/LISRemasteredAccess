@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true,options=true,key=true,text=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true,options=true,key=true,text=true,total=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")
@@ -2329,6 +2329,52 @@ do
     end
     _G.StaticFindObject=oldS
     package.loaded["scanner.sources"]=nil;package.loaded["scanner.rooms"]=nil
+end
+-- Room filter toggle: off lists everything; the pad chord reaches it.
+do
+    package.loaded["scanner.sources"]=nil
+    local S=require("scanner.sources");S.report=function()end
+    local oldS=_G.StaticFindObject
+    _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b,_,_,_,_,hit)
+        hit.Actor={Get=function()return {GetFullName=function()return "S /Game/Maps/E/R_A_GRC.R_A_GRC:PersistentLevel.F" end} end};return true end} end
+    local c={GetWorld=function()return {GetFName=function()return {ToString=function()return "Wt" end} end} end,Pawn={}}
+    local list=function()return {{id="a",kind="interaction",sublevel="R_A_LD",pos={X=0,Y=0,Z=0}},{id="b",kind="interaction",sublevel="R_B_LD",pos={X=900,Y=0,Z=0}}} end
+    check("room filter on by default",S.ROOM_FILTER==true)
+    local on=#S.by_room(c,list(),{X=0,Y=0,Z=0})
+    check("toggle reports off",S.toggle_room_filter()==false)
+    local off=#S.by_room(c,list(),{X=0,Y=0,Z=0})
+    check("filter off lists every object",on==1 and off==2,on.."/"..off)
+    S.toggle_room_filter()
+    _G.StaticFindObject=oldS;package.loaded["scanner.sources"]=nil
+    package.loaded["scanner.pad"]=nil
+    local P=require("scanner.pad");local pd=P.new()
+    pd:update(0x40,true,0);local cmds=pd:update(0x40|0x80,true,0.1)
+    check("hold left stick, click right stick: room filter",cmds[1]=="room_filter")
+    local en=require("lang.en");check("room filter phrases",en.room_filter_on and en.room_filter_off:find("{key}"))
+end
+-- "N in all" hint: once per room, only when the filter hid something.
+do
+    package.loaded["scanner.scanner"]=nil
+    local Sc=require("scanner.scanner")
+    Sc.text=function(k,p)return k..":"..tostring(p and p.total)..":"..tostring(p and p.key) end
+    check("hint on the first readout in a room that hides objects",Sc.filter_hint("A",6,21,true)=="scanner_filter_hint:21:F4")
+    check("not again in the same room",Sc.filter_hint("A",6,21,true)==nil)
+    check("again in the next room",Sc.filter_hint("B",4,21,true)~=nil)
+    check("no hint when nothing is hidden",Sc.filter_hint("C",5,5,true)==nil)
+    check("no hint with the filter off",Sc.filter_hint("D",21,21,false)==nil)
+    check("no hint before the room is known",Sc.filter_hint(nil,3,9,true)==nil)
+    local en=require("lang.en");check("hint phrase names the total and the key",en.scanner_filter_hint:find("{total}") and en.scanner_filter_hint:find("{key}"))
+    -- End to end: the first readout in a new room carries the hint.
+    package.loaded["scanner.scanner"]=nil
+    local oldF=_G.FindAllOf
+    _G.FindAllOf=function()return {{IsValid=function()return true end,Pawn={IsValid=function()return true end,K2_GetActorLocation=function()return {X=0,Y=0,Z=0} end},GetControlRotation=function()return {Yaw=0} end}} end
+    local S=require("scanner.sources");local oldC=S.collect
+    S.collect=function()S.room="E2E";S.total=9;S.filtered=true;return {{label="Poster",pos={X=100,Y=0,Z=0},id="poster"}} end
+    local Sc2=require("scanner.scanner");local said={};Sc2.say=function(t)said[#said+1]=t end;Sc2.text=function(k)return k end
+    Sc2.command("next");Sc2.command("next")
+    check("first readout in the room speaks the hint",said[1] and said[1]:find("scanner_filter_hint",1,true)~=nil,tostring(said[1]))
+    check("the next readout does not",said[2] and not said[2]:find("scanner_filter_hint",1,true),tostring(said[2]))
+    S.collect=oldC;_G.FindAllOf=oldF;package.loaded["scanner.scanner"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -19,6 +19,7 @@ M.commands={
     stop_activity={keyboard="Space",controller="B"},
     -- The mod's own pool-guard bypass toggle (Episode 3).
     pool_bypass={keyboard="F3",controller="left stick and D-pad down"},
+    room_filter={keyboard="F4",controller="left stick and right stick"},
     -- Rewind: hold (DefaultInput.ini RewindSecondary = R, RewindPrimary = right
     -- mouse button; Rewind = left trigger on a controller).
     rewind={keyboard="R",controller="the left trigger"},
