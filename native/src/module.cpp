@@ -4,6 +4,7 @@
 // never blocks the game thread, where all of the mod's Lua runs.
 #include "lua_bridge.h"
 #include "speech.h"
+#include "tone.h"
 #include <Windows.h>
 #include <Xinput.h>
 #include <mmsystem.h>
@@ -196,6 +197,42 @@ __declspec(dllexport) int lisr_play(lua_State* state) {
         MultiByteToWideChar(CP_UTF8, 0, path.c_str(), static_cast<int>(path.size()), wide.data(), n);
         ok = PlaySoundW(wide.c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT) != FALSE;
     }
+    lua.set_bool(ok);
+    return 1;
+}
+// lisr_tick_load(channel, path) -> true when the WAV (16-bit mono) loaded.
+__declspec(dllexport) int lisr_tick_load(lua_State* state) {
+    Lua lua(state);
+    bool ok = false;
+    if (lua.get_stack_size() >= 2 && lua.is_integer(1)) {
+        const int channel = static_cast<int>(lua.get_integer(1));
+        if (lua.is_string(1)) {
+            std::string path(lua.get_string(1));
+            const int n = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), static_cast<int>(path.size()), nullptr, 0);
+            std::wstring wide(n, L'\0');
+            MultiByteToWideChar(CP_UTF8, 0, path.c_str(), static_cast<int>(path.size()), wide.data(), n);
+            ok = lisr::tone::Start() && lisr::tone::Load(channel, wide);
+        }
+    }
+    lua.set_bool(ok);
+    return 1;
+}
+// lisr_tick(channel, on, pan, interval_ms, volume) -> true when running.
+// Integers only (the bridge reads no floats): pan in thousandths (-1000 left
+// .. 1000 right), volume in percent. Only stores values; a private thread plays.
+__declspec(dllexport) int lisr_tick(lua_State* state) {
+    Lua lua(state);
+    const int n = lua.get_stack_size();
+    int64_t channel = -1, pan = 0, interval = 500, vol = 50;
+    bool on = false;
+    // get_* removes the value it reads: always read argument 1.
+    if (n >= 1 && lua.is_integer(1)) channel = lua.get_integer(1);
+    if (n >= 2 && lua.is_bool(1)) on = lua.get_bool(1);
+    if (n >= 3 && lua.is_integer(1)) pan = lua.get_integer(1);
+    if (n >= 4 && lua.is_integer(1)) interval = lua.get_integer(1);
+    if (n >= 5 && lua.is_integer(1)) vol = lua.get_integer(1);
+    const bool ok = lisr::tone::Start();
+    if (ok) lisr::tone::Set(static_cast<int>(channel), on, static_cast<float>(pan) / 1000.0f, static_cast<int>(interval), static_cast<float>(vol) / 100.0f);
     lua.set_bool(ok);
     return 1;
 }

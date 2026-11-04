@@ -121,6 +121,7 @@ local shooting=require("scenes.junkyard_shooting")
 local office=require("scenes.principal_office")
 local rooms=require("scanner.rooms")
 local pool_guard=require("scenes.pool_guard")
+local polarewind=require("scenes.polarewind")
 local viewer=require("hud.viewer")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
@@ -588,6 +589,11 @@ shooting.text=function(key,p)return l10n.text(key,p)end
 office.log=function(line)log(line)end
 office.text=function(key,p)return l10n.text(key,p)end
 pool_guard.log=log
+polarewind.log=log
+polarewind.say=function(t)say(t,false)end
+polarewind.tick_fn=function(...)if speech.tick then speech.tick(...) end end
+polarewind.load_fn=function(...)if speech.tick_load then return speech.tick_load(...) end return false end
+polarewind.audio_dir=speech.audio_dir
 pool_guard.announce=function(key)say(l10n.text(key,{key=controls.name("pool_bypass")}),false)end
 pool_guard.text=function(key,p)return l10n.text(key,p)end
 pool_guard.play=function(file)if speech.play then speech.play(speech.audio_dir..file) end end
@@ -750,6 +756,8 @@ LoopInGameThreadWithDelay(50,function()
         -- The lighthouse rewind cue needs a fresh reading: the rewind runs at
         -- twice speed and the safe moment to let go is short (measured).
         pcall(lighthouse_fast_step)
+        -- Focus minigame ticks: fresh every 100 ms so they follow the controls.
+        if beat%2==0 then local okp,errp=pcall(polarewind.tick,os.clock());if not okp then log("polarewind_error="..tostring(errp)) end end
         if beat%5==0 then
             if (beat//5)%2==0 then menu_step() else main_step() end
             -- Facing corrections need a fresh camera reading every 250 ms.

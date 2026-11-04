@@ -24,6 +24,10 @@ do
         if f5 then M.moving=function()local mok,v=pcall(f5);return mok and v==true end end
         local f7=package.loadlib(dll,"lisr_keys")
         if f7 then M.keys=function(...)local kok,v=pcall(f7,...);if kok then return v end end end
+        local f8=package.loadlib(dll,"lisr_tick")
+        if f8 then M.tick=function(ch,on,pan,ms,vol)local tok,v=pcall(f8,math.floor(ch),on==true,math.floor(pan or 0),math.floor(ms or 500),math.floor(vol or 50));return tok and v==true end end
+        local f9=package.loadlib(dll,"lisr_tick_load")
+        if f9 then M.tick_load=function(ch,path)local tok,v=pcall(f9,math.floor(ch),path);return tok and v==true end end
         local f6=package.loadlib(dll,"lisr_play")
         if f6 then M.play=function(path)local pok,v=pcall(f6,path);return pok and v==true end end
     end

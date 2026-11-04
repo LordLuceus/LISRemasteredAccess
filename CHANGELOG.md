@@ -5,6 +5,11 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- Focusing a photo (end of Episode 3, and later episodes): the game's
+  instructions are read, and each of the two controls has its own tick, a
+  wooden click on the left for A and D and a metallic tick on the right for
+  the mouse buttons, that speeds up as its picture sharpens. The ticks fall
+  silent once the photo locks.
 - Autowalk to an object stops as soon as you are within the distance the game
   lets you use it from. For the truck in the diner car park, whose photo can
   be taken from over 20 metres away, that is where it takes you, and it says

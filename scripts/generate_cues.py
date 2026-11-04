@@ -32,6 +32,14 @@ CUES = {
     'sneak_hidden': {
         'prompt': 'One soft calm low single tone that settles, signalling you are safely out of sight again. Gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.',
         'cap_ms': 500},
+    # Focus minigame (PolaRewind): one tick per control, clearly distinct, short
+    # enough to repeat quickly; they must cut through the game's own drones.
+    'focus_tick_a': {
+        'prompt': 'A single soft dry wooden click, like one notch of a wooden dial turning. Very short, instant onset, no tail. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.',
+        'cap_ms': 90},
+    'focus_tick_b': {
+        'prompt': 'A single bright crisp high metallic tick, like a tiny bell-like click of a camera lens ring. Very short, instant onset, no tail. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.',
+        'cap_ms': 90},
 }
 
 

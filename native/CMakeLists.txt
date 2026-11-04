@@ -50,15 +50,25 @@ add_library(lisr_speech_core STATIC src/speech.cpp)
 lisr_target(lisr_speech_core)
 target_link_libraries(lisr_speech_core PUBLIC prism::prism)
 
+# Continuous panned guidance tone (XAudio2 2.9, part of Windows 10+).
+add_library(lisr_tone STATIC src/tone.cpp)
+lisr_target(lisr_tone)
+target_link_libraries(lisr_tone PUBLIC xaudio2 ole32)
+
 add_library(lisr_speech SHARED src/module.cpp)
 lisr_target(lisr_speech)
 add_dependencies(lisr_speech ue4ss_implib)
-target_link_libraries(lisr_speech PRIVATE lisr_speech_core "${UE4SS_IMPLIB}" winmm)
+target_link_libraries(lisr_speech PRIVATE lisr_speech_core lisr_tone "${UE4SS_IMPLIB}" winmm)
 set_target_properties(lisr_speech PROPERTIES OUTPUT_NAME lisr_speech)
 
 # Speech core smoke test without the game or UE4SS.
 add_executable(speech_smoke tests/speech_smoke.cpp)
 lisr_target(speech_smoke)
 target_link_libraries(speech_smoke PRIVATE lisr_speech_core)
+# Tone: pan maths, and (unless --quiet) a short audible sweep left to right.
+add_executable(tone_smoke tests/tone_smoke.cpp)
+lisr_target(tone_smoke)
+target_link_libraries(tone_smoke PRIVATE lisr_tone)
 enable_testing()
 add_test(NAME speech_smoke COMMAND speech_smoke --quiet)
+add_test(NAME tone_smoke COMMAND tone_smoke --quiet)

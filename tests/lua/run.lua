@@ -2472,5 +2472,44 @@ do
     _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
 end
+-- Focus minigame (PolaRewind): one panned tick per dial, faster as it sharpens.
+do
+    package.loaded["scenes.polarewind"]=nil
+    local P=require("scenes.polarewind")
+    check("sharp: fastest ticks",P.interval_for(0.6)==P.FAST and P.interval_for(0.4)==P.FAST)
+    check("blurred: slowest ticks",P.interval_for(3.0)==P.SLOW and P.interval_for(9)==P.SLOW)
+    check("ticks quicken as it sharpens",P.interval_for(1.0)<P.interval_for(2.0) and P.interval_for(2.0)<P.interval_for(2.8))
+    check("the two dials are panned apart and use different sounds",P.CHANNELS[1].pan<0 and P.CHANNELS[2].pan>0 and P.CHANNELS[1].file~=P.CHANNELS[2].file)
+    check("tutorial markup and line breaks removed",P.tidy("Use <img id=\"A\"/>A/D keys \\nuntil you find the sweet spot.")=="Use A/D keys until you find the sweet spot.")
+    local ticks,said,loads={},{},{}
+    P.tick_fn=function(ch,on,pan,ms,vol)ticks[#ticks+1]={ch=ch,on=on,pan=pan,ms=ms}end
+    P.load_fn=function(ch,path)loads[#loads+1]=path;return true end
+    P.say=function(t)said[#said+1]=t end;P.log=function()end
+    local oldFN=_G.FName;_G.FName=function(s)return s end
+    local blur={ImageA_PositionAndBlur=2.4,ImageB_PositionAndBlur=0.6}
+    local mid={IsValid=function()return true end,K2_GetVectorParameterValue=function(_,n)return {R=0,G=0,B=blur[n],A=0} end}
+    local function tb(text)return {IsValid=function()return true end,IsVisible=function()return true end,GetText=function()return {ToString=function()return text end} end} end
+    local w={IsValid=function()return true end,IsInViewport=function()return true end,IsVisible=function()return true end,
+        PuzzleSolved=false,mEmissiveInstance=mid,KBTutorial=tb("Use A/D keys until you find the sweet spot."),
+        GamepadTutorial={IsValid=function()return true end,IsVisible=function()return false end}}
+    local oldF=_G.FindAllOf;_G.FindAllOf=function(c)if c=="BP_LiSPolaRewindWidget_New_C" then return {w} end;return {} end
+    P.tick(1)
+    local a,b=ticks[1],ticks[2]
+    check("both sounds loaded once",#loads==2)
+    check("dial A ticks on the left, slowly while blurred",a and a.ch==0 and a.on and a.pan<0 and a.ms>P.FAST)
+    check("dial B ticks on the right, fast when sharp",b and b.ch==1 and b.on and b.pan>0 and b.ms==P.FAST)
+    check("tutorial read once",said[1]=="Use A/D keys until you find the sweet spot.")
+    P.tick(1.1);check("not read again while unchanged",#said==1 and #loads==2)
+    check("lock detected only when both drop below the sweet spot",P.locked(0.4,0.4) and not P.locked(0.6,0.4) and not P.locked(0.4,2.0) and not P.locked(nil,0.4))
+    blur.ImageA_PositionAndBlur=0.243;blur.ImageB_PositionAndBlur=0.243
+    local m=#ticks;P.tick(1.15)
+    check("ticks off while the game's closing animation runs",ticks[m+1] and ticks[m+1].on==false and ticks[m+2] and ticks[m+2].on==false and #ticks==m+2)
+    blur.ImageA_PositionAndBlur=2.4;blur.ImageB_PositionAndBlur=0.6
+    P.tick(1.18)  -- the game let go: ticking again
+    check("ticks come back if the pictures part again",ticks[#ticks].on==true)
+    w.PuzzleSolved=true;local n=#ticks;P.tick(1.2)
+    check("ticks off once solved",ticks[n+1] and ticks[n+1].on==false and ticks[n+2] and ticks[n+2].on==false)
+    _G.FindAllOf=oldF;_G.FName=oldFN;package.loaded["scenes.polarewind"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

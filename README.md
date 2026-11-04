@@ -168,6 +168,18 @@ down) during the patrol. Then:
 
 Press F3 again to stop him seeing you.
 
+### Focusing a photo
+
+Some scenes ask you to bring an old photo into focus (the first comes at the
+end of Episode 3, in Max's room). The mod reads the game's instructions. There
+are two pictures to focus, each with its own control: A and D (or the left
+stick) for one, the left and right mouse buttons (or the right stick) for the
+other. Each has its own tick: a soft wooden click slightly to the left for A
+and D, a brighter metallic tick slightly to the right for the mouse buttons.
+A tick speeds up as its picture sharpens, and is fastest at the sweet spot.
+The controls turn round like a dial, so if the ticks slow down you have gone
+past it. Stop each control at its fastest ticking.
+
 ### When the game takes over
 
 A soft descending tone plays when a cutscene takes control of Max, and an

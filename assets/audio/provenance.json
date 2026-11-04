@@ -34,6 +34,18 @@
       "source_bytes": 57600,
       "duration_seconds": 0.5,
       "rms_dbfs": -20.66
+    },
+    "focus_tick_a": {
+      "prompt": "A single soft dry wooden click, like one notch of a wooden dial turning. Very short, instant onset, no tail. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.09,
+      "rms_dbfs": -35.31
+    },
+    "focus_tick_b": {
+      "prompt": "A single bright crisp high metallic tick, like a tiny bell-like click of a camera lens ring. Very short, instant onset, no tail. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",
+      "source_bytes": 57600,
+      "duration_seconds": 0.09,
+      "rms_dbfs": -24.1
     }
   }
 }
