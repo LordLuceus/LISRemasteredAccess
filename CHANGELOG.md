@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- The bird you scare out of the living room window is listed in the garden,
+  where it lands, instead of staying on the living-room list.
 - The mod no longer scans every piece of on-screen text to find scene prompts
   such as "Leave The Swimming Pool"; it reads the one screen they appear on.
   The old scan was the likely cause of crashes when a conversation was

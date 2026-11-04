@@ -2271,6 +2271,65 @@ do
         check("door floors are cached: a repeat traces only Max's floor",res[3]==1,"traced "..tostring(res[3]))
         check("in the corridor: the way back, the parents' door and the poster",res[4]=="room door,parents door,poster",res[4])
     end
+    -- A moved object takes its room from the floor where it is now: the bird.
+    do
+        local LR,GA="E3_5B_LivingRoom_LD","E3_5B_Garden_LD"
+        _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b,_,_,_,_,hit)
+            local n=b.X>1500 and "E3_5B_Garden_GRC" or "E3_5B_LivingRoom_GRC"
+            hit.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end}
+            return true end} end
+        local c2={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5B" end} end} end,Pawn={}}
+        local function birdlist(bx)return {{id="bird",label="Bird",kind="interaction",sublevel=LR,pos={X=bx,Y=0,Z=100}},
+            {id="fridge",kind="interaction",sublevel=LR,pos={X=500,Y=0,Z=100}},{id="shed",kind="interaction",sublevel=GA,pos={X=2000,Y=0,Z=0}}} end
+        S.by_room(c2,birdlist(800),{X=600,Y=0,Z=0})                      -- first sight, in the living room
+        local inside=ids(S.by_room(c2,birdlist(1900),{X=600,Y=0,Z=0}))   -- flown out; Max still inside
+        local outside=ids(S.by_room(c2,birdlist(1900),{X=2000,Y=0,Z=0})) -- Max in the garden
+        check("a bird that flew out leaves the living room list",not inside:find("bird"),inside)
+        check("and is on the garden list",outside:find("bird")~=nil,outside)
+    end
+    -- The bird in play (3 Nov): 14 m away and high up; a 3 m downward trace
+    -- finds nothing. Floors here are only found by traces reaching z < -1000,
+    -- and nowhere for x > 3000 (a tree with nothing below): the geometry
+    -- fallback must still put it in the garden.
+    do
+        local LR,GA="E3_5B_LivingRoom_LD","E3_5B_Garden_LD"
+        _G.StaticFindObject=function()return {LineTraceSingle=function(_,_,a,b,_,_,_,_,hit)
+            if b.Z>-1000 or b.X>3000 then return false end
+            local n=b.X>1500 and "E3_5B_Garden_GRC" or "E3_5B_LivingRoom_GRC"
+            hit.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end}
+            return true end} end
+        local oldF=_G.FindAllOf
+        _G.FindAllOf=function(cn)
+            if cn=="StaticMeshActor" then return {
+                {GetFullName=function()return "StaticMeshActor "..lvl("E3_5B_LivingRoom_GRC").."A" end,K2_GetActorLocation=function()return {X=600,Y=0,Z=0} end},
+                {GetFullName=function()return "StaticMeshActor "..lvl("E3_5B_Garden_GRC").."B" end,K2_GetActorLocation=function()return {X=2600,Y=0,Z=0} end}} end
+            return {} end
+        local function run(world,bx,bz)
+            local cc={GetWorld=function()return {GetFName=function()return {ToString=function()return world end} end} end,Pawn={}}
+            local function bl(x,z)return {{id="bird",label="Bird",kind="interaction",sublevel=LR,pos={X=x,Y=0,Z=z}},{id="shed",kind="interaction",sublevel=GA,pos={X=2000,Y=0,Z=0}}} end
+            S.by_room(cc,bl(800,100),{X=2000,Y=0,Z=0})
+            return ids(S.by_room(cc,bl(bx,bz),{X=2000,Y=0,Z=0}))
+        end
+        check("a bird high in the garden (deep trace) is on the garden list",run("Wbird1",2200,800):find("bird")~=nil)
+        -- The real case: under the bird, first the living room's eaves (z=300),
+        -- then the garden lawn (z=0). The lowest surface names the room.
+        local oldS2=_G.StaticFindObject
+        local function hit(n,z)return {get=function()return {Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."S" end} end},ImpactPoint={X=0,Y=0,Z=z}} end} end
+        _G.StaticFindObject=function()return {
+            LineTraceSingle=function(_,_,a,b,_,_,_,_,h)
+                -- The first surface down from a high point is the eaves (3 Nov log).
+                local n=(a.Z>150 and b.X>1500) and "E3_5B_LivingRoom_GRC" or (b.X>1500 and "E3_5B_Garden_GRC" or "E3_5B_LivingRoom_GRC")
+                h.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end};return true end,
+            LineTraceMulti=function(_,_,a,b,_,_,_,_,hits)
+                -- As UE4SS does it: the out array filled as a plain Lua list.
+                hits[1]={Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl("E3_5B_LivingRoom_GRC").."S" end} end},ImpactPoint={X=0,Y=0,Z=300}}
+                hits[2]={Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl("E3_5B_Garden_GRC").."S" end} end},ImpactPoint={X=0,Y=0,Z=0}}
+                return true end} end
+        check("a bird above the eaves goes by the ground below, not the roof",run("Wbird3",2513,147):find("bird")~=nil)
+        _G.StaticFindObject=oldS2
+        check("a bird with no floor below (geometry fallback) is on the garden list",run("Wbird2",3200,800):find("bird")~=nil)
+        _G.FindAllOf=oldF
+    end
     -- An open doorway: corridor (y > -1000) and bathroom (y <= -1000) with no
     -- door object between them (3 Nov: the bathroom was unreachable).
     do

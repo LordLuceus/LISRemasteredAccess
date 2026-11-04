@@ -344,9 +344,44 @@ local function floor_room(controller,p,ignore,depth)
     return room
 end
 M.floor_room=floor_room
+-- The room of the GROUND below a high point: every surface down the line, the
+-- lowest one that names a room (3 Nov: the scared bird at 2513,-659, 1.5 m up
+-- over the garden; the first surface below it was the living room's - the
+-- house's eaves - so it stayed on the living-room list).
+local function ground_room(controller,p)
+    local found,n=nil,0
+    local ok,err=pcall(function()
+        local lib=StaticFindObject("/Script/Engine.Default__KismetSystemLibrary")
+        local hits={}
+        lib:LineTraceMulti(controller,{X=p.X,Y=p.Y,Z=p.Z+60},{X=p.X,Y=p.Y,Z=p.Z-5000},0,true,{},0,hits,true,{R=1,G=0,B=0,A=1},{R=0,G=1,B=0,A=1},0)
+        local low=nil
+        local function one(h)
+            pcall(function()
+                local hit=h
+                if type(h)=="userdata" or (type(h)=="table" and h.get) then local ok2,g=pcall(function()return h:get()end);if ok2 and g then hit=g end end
+                local r=rooms.room_of(hit.Actor:Get():GetFullName())
+                local z=hit.ImpactPoint.Z
+                n=n+1
+                if r and (not low or z<low) then low=z;found=r end
+            end)
+        end
+        -- UE4SS fills an out array as a plain Lua list (3 Nov: the earlier
+        -- hits:ForEach failed silently, so every moved object fell back).
+        if type(hits)=="table" and #hits>0 then for _,h in ipairs(hits) do one(h) end
+        else pcall(function()hits:ForEach(function(_,h)one(h)end)end) end
+    end)
+    if not ok then report_once("ground_room","scanner_ground_error="..tostring(err)) end
+    return found,n
+end
+M.ground_room=ground_room
 -- Rooms around each door-like object, measured once per level visit: floors
 -- 120 cm away in eight directions. Two or more rooms = a way between them.
 local joins_cache,joins_world={},nil
+-- Objects that move (3 Nov: the scared bird flies from the living room out to
+-- the garden, but its level is still the living room's). An object more than
+-- MOVED_CM from where it was first seen takes its room from the floor under
+-- it now; re-measured only when it has moved again.
+M.MOVED_CM=150
 -- Neighbouring rooms without a door, per room, measured once per level visit.
 local ways_cache={}
 M.WAY_STEP=50     -- cm between floor samples along a route
@@ -395,6 +430,17 @@ local function room_geometry(controller)
         M.report("scanner_rooms_world objects "..table.concat(parts,",").." | geometry "..table.concat(g,","))
     end)
     return geometry
+end
+-- Pure: the room whose geometry point is nearest to p on the ground plan.
+function M.nearest_room(geo,p)
+    local best,bd=nil,math.huge
+    for r,list in pairs(geo or {}) do
+        for _,v in ipairs(list) do
+            local d=(v.X-p.X)^2+(v.Y-p.Y)^2
+            if d<bd then bd=d;best=r end
+        end
+    end
+    return best
 end
 -- Ways from `room` into each neighbouring room no listed door already joins.
 local function ways_from(controller,out,room,p)
@@ -466,6 +512,7 @@ local function ways_from(controller,out,room,p)
     end
     return found
 end
+local first_seen,moved_room={},{}
 local function joins_of(controller,e)
     if joins_cache[e.id]~=nil then return joins_cache[e.id] or nil end
     local keys={}
@@ -487,7 +534,30 @@ end
 -- the floors around them, then the filter.
 function M.by_room(controller,out,p)
     local world=nil;pcall(function()world=controller:GetWorld():GetFName():ToString()end)
-    if world~=joins_world then joins_cache={};joins_world=world;ways_cache={};geometry=nil end
+    if world~=joins_world then joins_cache={};joins_world=world;first_seen={};moved_room={};ways_cache={};geometry=nil end
+    for _,e in ipairs(out) do
+        if e.kind=="interaction" and e.pos and e.sublevel then
+            local f=first_seen[e.id]
+            if not f then first_seen[e.id]={X=e.pos.X,Y=e.pos.Y}
+            elseif (e.pos.X-f.X)^2+(e.pos.Y-f.Y)^2>M.MOVED_CM^2 then
+                local m=moved_room[e.id]
+                if not m or (e.pos.X-m.X)^2+(e.pos.Y-m.Y)^2>100^2 then
+                    -- A flying or perched object can be metres up: trace far
+                    -- down; if that finds no room, the room whose geometry is
+                    -- nearest on the ground plan (3 Nov: the bird, 14 m out,
+                    -- never got a room from a 3 m trace).
+                    local r,hits=ground_room(controller,e.pos)
+                    local how="ground"..(hits and ("/"..hits) or "")
+                    if not r then r=floor_room(controller,e.pos,{},5000);how="floor" end
+                    if not r then r=M.nearest_room(room_geometry(controller),e.pos);how="geometry" end
+                    moved_room[e.id]={X=e.pos.X,Y=e.pos.Y,room=r}
+                    M.report(string.format("scanner_moved %s at=%.0f,%.0f,%.0f room=%s by=%s",tostring(e.label),e.pos.X,e.pos.Y,e.pos.Z,tostring(r),how))
+                    m=moved_room[e.id]
+                end
+                if m.room then e.sublevel=m.room end
+            end
+        end
+    end
     local pawn=nil;pcall(function()pawn=controller.Pawn end)
     local room=floor_room(controller,p,{pawn})
     local how="floor"
