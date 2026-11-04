@@ -2090,15 +2090,18 @@ do
         package.loaded["hud.tooltip"]=nil
         local T=require("hud.tooltip")
         local old=_G.FindAllOf
-        local function tb(full,text,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,GetFullName=function()return full end,GetText=function()return {ToString=function()return text end} end} end
-        _G.FindAllOf=function(c)return {
-            tb("BP_Widget_HUD_View_C_1.WidgetTree_0.TextBlock_Tolltip","I need to get out",true),
-            tb("BP_SomePrompt_C_3.WidgetTree_0.TextBlock_Button"," Leave The Swimming Pool",true),
-            tb("BP_Other_C_4.WidgetTree_0.TextBlock_Button","Hidden one",false)} end
+        local walked=false
+        local function tb(text,vis)return {IsValid=function()return true end,IsVisible=function()return vis end,GetText=function()return {ToString=function()return text end} end} end
+        local function widget(text,vis,on)return {IsValid=function()return true end,IsInViewport=function()return on end,IsVisible=function()return on end,TextBlock_Button=tb(text,vis)} end
+        _G.FindAllOf=function(c)
+            if c=="TextBlock" then walked=true;return {} end
+            if c=="BP_LiSLVLWidget_View_C" then return {widget(" Leave The Swimming Pool",true,true)} end
+            return {} end
         T.button_key=function()return "A" end
         check("button prompt read with the key",T.button_prompt()=="Leave The Swimming Pool, A")
-        check("button prompt widget class recorded",T.button_class=="BP_SomePrompt_C")
-        _G.FindAllOf=function()return {tb("X_C_1.WidgetTree_0.TextBlock_Button","Hidden",false)} end
+        check("button prompt widget class recorded",T.button_class=="BP_LiSLVLWidget_View_C")
+        check("the prompt reader never walks every text block",walked==false)
+        _G.FindAllOf=function(c)if c=="BP_LiSLVLWidget_View_C" then return {widget("Hidden",false,true),widget("Off screen",true,false)} end;return {} end
         check("no visible button: nothing",T.button_prompt()==nil)
         _G.FindAllOf=old;package.loaded["hud.tooltip"]=nil
     end

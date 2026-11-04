@@ -82,17 +82,23 @@ end
 -- Read from any visible copy; the key is the interact key for the device.
 M.button_key=function()return nil end
 M.button_class=nil
+-- Only the level widget is read (3 Nov: the first version walked EVERY text
+-- block in the game several times a second; three crashes followed within
+-- seconds of a conversation being skipped, while the dialogue screen's text
+-- blocks were being destroyed). The widget is found fresh and its own named
+-- text block read, like the other prompt readers.
+M.BUTTON_WIDGET="BP_LiSLVLWidget_View_C"
 function M.button_prompt()
     local found=nil
     pcall(function()
-        for _,tb in ipairs(FindAllOf("TextBlock") or {}) do
+        for _,w in ipairs(FindAllOf(M.BUTTON_WIDGET) or {}) do
             if found then break end
             pcall(function()
-                if not (tb:IsValid() and tb:IsVisible()) then return end
-                local full=tb:GetFullName()
-                if not full:find("%.TextBlock_Button$") then return end
+                if not on_screen(w) then return end
+                local tb=w.TextBlock_Button
+                if not (tb and tb:IsValid() and tb:IsVisible()) then return end
                 local text=M.prompt_text(tb:GetText():ToString(),M.button_key())
-                if text then found=text;M.button_class=full:match("([%w_]+_C)_%d+%.WidgetTree") or full end
+                if text then found=text;M.button_class=M.BUTTON_WIDGET end
             end)
         end
     end)
