@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- Inside the diner, the scanner no longer adds a "Way to" the car park next
+  to the diner door that already leads there.
 - The bird you scare out of the living room window is listed in the garden,
   where it lands, instead of staying on the living-room list.
 - The mod no longer scans every piece of on-screen text to find scene prompts

@@ -2386,6 +2386,16 @@ do
         local got4=S.by_room(c6,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}}},{X=0,Y=-700,Z=0})
         local way4=nil;for _,e in ipairs(got4) do if e.id=="way:"..BA then way4=e end end
         check("a way is found when the room's object hangs on a wall off the walkable floor",way4~=nil,ids(got4))
+        -- A listed door sits at the threshold (the diner's own door): no extra way.
+        package.loaded["nav.route"]={project=function(_,q)return true,{X=q.X,Y=q.Y,Z=0} end,query=function(_,_,_,a,b)return true,0,{a,b} end}
+        local c7={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_door" end} end} end,Pawn={}}
+        local got5=S.by_room(c7,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}},
+            {id="bath door",label="Door",kind="interaction",sublevel=CO,pos={X=0,Y=-850,Z=100},door_like=true}},{X=0,Y=-700,Z=0})
+        local way5=nil;for _,e in ipairs(got5) do if e.id=="way:"..BA then way5=e end end
+        -- Its floor test sees one room only (120 cm out stays above y=-1000), as
+        -- the diner door's did; it is 150 cm from the threshold.
+        check("no 'Way to' when a listed door is the way",way5==nil and ids(got5):find("bath door")~=nil,ids(got5))
+        _G.FindAllOf=oldF
         _G.FindAllOf=oldF
         package.loaded["nav.route"]=nil
     end

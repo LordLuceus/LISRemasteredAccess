@@ -387,6 +387,7 @@ local ways_cache={}
 M.WAY_STEP=50     -- cm between floor samples along a route
 M.WAY_INTO=120    -- cm past the threshold for the entry's point
 M.WAY_TRIES=12    -- candidate points tried per room
+M.WAY_DOOR_NEAR=250 -- cm: a door this close to a route's threshold is the way
 -- Rooms' geometry, measured once per level visit: for every room, the
 -- positions of its geometry actors (floors, walls). Lets a way be found into a
 -- room none of whose objects the game has registered (3 Nov: no bathroom
@@ -501,6 +502,17 @@ local function ways_from(controller,out,room,p)
             for i,sp in ipairs(samples) do keys[i]=floor_room(controller,{X=sp.X,Y=sp.Y,Z=sp.Z+40},{}) end
             local i,k=rooms.entered(keys,#samples,room)
             if k~=target then M.report(string.format("scanner_room_way_none %s -> %s first=%s samples=%d",room,target,tostring(k),#samples)) end
+            -- The route goes through a door the scanner already lists (3 Nov: the
+            -- diner's own door, whose floor test missed): no extra "Way to".
+            local th=samples[i]
+            local near_door=nil
+            for _,e in ipairs(out) do
+                if e.door_like and e.pos and th and (e.pos.X-th.X)^2+(e.pos.Y-th.Y)^2<=M.WAY_DOOR_NEAR^2 then near_door=e.label end
+            end
+            if k==target and near_door then
+                M.report(string.format("scanner_room_way_skip %s -> %s reason=door_near %s",room,target,tostring(near_door)))
+                k=nil
+            end
             if k==target then
                 local j=math.min(#samples,i+math.floor(M.WAY_INTO/M.WAY_STEP))
                 found[#found+1]={room=target,pos=samples[j]}
