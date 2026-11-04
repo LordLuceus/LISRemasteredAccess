@@ -5,6 +5,10 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- Autowalk to an object stops as soon as you are within the distance the game
+  lets you use it from. For the truck in the diner car park, whose photo can
+  be taken from over 20 metres away, that is where it takes you, and it says
+  the truck "is within interaction range".
 - Inside the diner, the scanner no longer adds a "Way to" the car park next
   to the diner door that already leads there.
 - The bird you scare out of the living room window is listed in the garden,

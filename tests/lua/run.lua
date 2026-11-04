@@ -2448,5 +2448,29 @@ do
     check("the next readout does not",said[2] and not said[2]:find("scanner_filter_hint",1,true),tostring(said[2]))
     S.collect=oldC;_G.FindAllOf=oldF;package.loaded["scanner.scanner"]=nil
 end
+-- An object's interaction radius is the off-mesh walk's reach (the diner truck:
+-- 2350 cm; its Photo appeared at about 23 m).
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+    local pos={X=0,Y=0,Z=0}
+    package.loaded["nav.follow"]={ready=function()return true end,active=false,start=function()end,stop=function()end,tick=function()end}
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z or 0} end,query=function()return false,0,{} end}
+    package.loaded["nav.doors"]={plan=function()return false end,survey=function()return {} end,inside=function()return false end}
+    local got=nil
+    package.loaded["nav.offmesh"]={NEAR_MISS=100,cancel=function()end,ground_below=function()return 0 end,
+        planner=function(_,_,_,_,reach)got=reach;return {g={samples=1},reason="no_path",step=function()return "failed" end} end,walk=function()end}
+    _G.LoopInGameThreadWithDelay=function(_,f)f();return 1 end;_G.CancelDelayedAction=function()end
+    local aw=require("autowalk.autowalk")
+    aw.say=function()end;aw.text=function(k)return k end;aw.moving=function()return false end;aw.in_reach=function()return nil end;aw.log=function()end
+    local pawn={K2_GetActorLocation=function()return pos end,GetAddress=function()return 1 end,IsValid=function()return true end,
+        CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=0} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
+    local c={Pawn=pawn,IsValid=function()return true end}
+    pcall(aw.start,c,{name="Truck",kind="interaction",pos={X=3380,Y=0,Z=207},actor={},zone=2350})
+    check("an object's interaction radius becomes the walk's reach",got==2350-aw.ZONE_MARGIN,tostring(got))
+    got=nil;pcall(aw.start,c,{name="Mug",kind="interaction",pos={X=3380,Y=0,Z=0},actor={}})
+    check("without a radius the reach is unchanged",got==150,tostring(got))
+    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

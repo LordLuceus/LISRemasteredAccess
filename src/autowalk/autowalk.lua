@@ -16,6 +16,7 @@ local offmesh=require("nav.offmesh")
 M.say=function(_)end
 M.log=function(_)end
 M.text=function(key,p)return key end
+M.ZONE_MARGIN=150 -- cm inside an object's interaction radius
 -- Movement input (WASD, arrows, left stick) cancels a walk. Supplied by the
 -- caller; returns true while the player is moving Max by hand.
 M.moving=function()return false end
@@ -90,7 +91,12 @@ local function start_offmesh(controller,pawn,entry,target,why,quiet)
     -- A guide leg is short and runs along the doe's route: search a corridor
     -- around it (quick), not the whole cliff.
     local corridor=entry.kind=="guide" and 600 or nil
-    local p=offmesh.planner(controller,pawn,from,target,entry.reach or (entry.stand and 60 or 150),corridor)
+    -- An object with its own interaction radius: anywhere inside it will do -
+    -- that is what walking to an object is for (user, 3 Nov: "go to its
+    -- interaction zone instead"). A margin keeps the stop inside the zone.
+    local reach=entry.reach or (entry.stand and 60 or 150)
+    if entry.zone and entry.zone-M.ZONE_MARGIN>reach then reach=entry.zone-M.ZONE_MARGIN;emit(string.format("offmesh_zone reach=%.0f",reach)) end
+    local p=offmesh.planner(controller,pawn,from,target,reach,corridor)
     local s={controller=controller,pawn=pawn,offmesh=true,planning=true,armed=not M.moving()}
     M.active=s
     local t0,told=os.clock(),false

@@ -83,8 +83,14 @@ Shift+Home (or D-pad down) walks Max to the selected object, using the game's ow
 paths and the spot the game expects you to stand at. If the direct way crosses a
 closed door, it goes around through an open one and tells you so. It says when it
 starts and when you arrive. Moving yourself (W, A, S, D, the arrow keys or the
-left stick) or pressing Shift+Home again stops it. It also stops if something
-blocks the way or the game takes over, and tells you which.
+left stick) or pressing Shift+Home again stops it. If it catches on a corner it
+says "Trying again." and carries on; only when Max can't make progress does it
+stop and say something is blocking the way. It also stops if the game takes
+over, and tells you so.
+
+Walking to an object stops once you are close enough to use it, which for
+some objects is a long way off: the truck in the diner car park can be
+photographed from over 20 metres away, so that is where autowalk takes you.
 
 Some places have no walking paths from the game, such as most of the
 Dormitories lawn. There the mod works out its own way around obstacles, which

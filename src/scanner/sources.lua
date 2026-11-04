@@ -184,7 +184,10 @@ local function interactions(controller,out)
             local stand=nil
             local dummy=a.TapToMoveActor
             if valid(dummy) then stand=point(dummy:K2_GetActorLocation()) end
-            return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",
+            -- The object's own interaction radius, when the level sets one (the
+            -- diner truck: 23.5 m; the Photo action appeared at about 23 m).
+            local zone=nil;pcall(function()local z=a.OverrideInnerZoneRadius;if type(z)=="number" and z>0 then zone=z end end)
+                return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",zone=zone,
                 sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01",
                 door_like=door~=nil or rooms.door_like(id,key,label)~=false}
         end)
