@@ -86,7 +86,13 @@ end
 function M.fact_reader(controller)
     local cache={}
     return function(fact)
-        if cache[fact]~=nil then return cache[fact] end
+        -- A fact that cannot be read is remembered as unreadable but always
+        -- returned as nil (unknown). 3 Nov: the cached marker string itself was
+        -- returned on the second ask - truthy and never equal to the wanted
+        -- value - so an object checked after another with the same unreadable
+        -- fact was dropped (the diner truck, the scared bird).
+        local c=cache[fact]
+        if c~=nil then if c=="unknown" then return nil end;return c end
         local ok,v=pcall(function()return controller:IsFactActive(FName(fact))end)
         local r=nil
         if ok and type(v)=="boolean" then r=v end

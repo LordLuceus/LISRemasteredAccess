@@ -2619,5 +2619,20 @@ do
     _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
 end
+-- Story facts: an unreadable fact stays "unknown" (nil) on every ask.
+do
+    package.loaded["scanner.availability"]=nil
+    local A=require("scanner.availability")
+    local oldN=_G.FName;_G.FName=function(s)return s end
+    local c={IsFactActive=function(_,f)if f=="Broken" then error("unreadable") end;return f=="On" end}
+    local is=A.fact_reader(c)
+    check("an unreadable fact reads as unknown",is("Broken")==nil)
+    check("and still unknown the second time",is("Broken")==nil)
+    check("a known fact is cached as itself",is("On")==true and is("On")==true and is("Off")==false and is("Off")==false)
+    local cond={["and"]={{fact="Broken",want=true}},["or"]={}}
+    check("an object with an unknown fact is available on the first check",A.action_ok(cond,is))
+    check("and on the second check (3 Nov: the truck was dropped here)",A.action_ok(cond,is))
+    _G.FName=oldN;package.loaded["scanner.availability"]=nil
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)
