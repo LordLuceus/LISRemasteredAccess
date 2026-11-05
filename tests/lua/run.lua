@@ -2511,5 +2511,46 @@ do
     check("ticks off once solved",ticks[n+1] and ticks[n+1].on==false and ticks[n+2] and ticks[n+2].on==false)
     _G.FindAllOf=oldF;_G.FName=oldFN;package.loaded["scenes.polarewind"]=nil
 end
+-- An exit walk that stalls inside the exit's volume has arrived (3 Nov: Leave
+-- Chloe's House, volume centre -48,-256 half-size 330x328, stall at 204,-297).
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+    local pos={X=216,Y=-277,Z=0}
+    local follow={active=false};local emitf
+    function follow.ready()return true end
+    function follow.start(_,_,goal,emit)emitf=emit;follow.active=true;follow.goal=goal end
+    function follow.stop()follow.active=false end
+    function follow.tick()
+        if not follow.active then return end
+        pos={X=204,Y=-297,Z=0}
+        emitf(string.format("follow_progress elapsed=4 remaining=%.3f vertical=0 position=%.1f,%.1f,0",math.abs(follow.goal.X-pos.X),pos.X,pos.Y))
+        emitf("follow_end=stalled stop_ok=true");follow.active=false
+    end
+    package.loaded["nav.follow"]=follow
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z or 0} end,query=function(_,_,_,a,b)return true,300,{a,b} end}
+    local D=dofile("src/nav/doors.lua")
+    package.loaded["nav.doors"]={plan=function()return nil end,survey=function()return {} end,inside=D.inside}
+    local aw=require("autowalk.autowalk")
+    local said={};aw.say=function(k)said[#said+1]=k end;aw.text=function(k)return k end
+    aw.moving=function()return false end;aw.in_reach=function()return nil end;aw.log=function()end
+    local pawn={K2_GetActorLocation=function()return pos end,GetAddress=function()return 1 end,IsValid=function()return true end,
+        CapsuleComponent={K2_GetComponentLocation=function()return {X=pos.X,Y=pos.Y,Z=pos.Z} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
+    local c={Pawn=pawn,IsValid=function()return true end}
+    local exit={name="Leave Chloe's House, exit",kind="exit",pos={X=-48,Y=-256,Z=64},stand={X=-48,Y=-256,Z=0},extent={X=330,Y=328,Z=64}}
+    local ok=pcall(aw.start,c,exit);for _=1,4 do pcall(aw.tick) end
+    local function has(k)for _,v in ipairs(said) do if v==k then return true end end end
+    check("exit walk stalled inside the volume counts as arrived",ok and has("walk_arrived") and not has("walk_blocked") and not has("walk_retry"),table.concat(said,","))
+    -- Outside the volume it is still blocked (after its retry).
+    said={};pos={X=600,Y=-277,Z=0}
+    follow.tick=function()
+        if not follow.active then return end
+        pos={X=500,Y=-297,Z=0}
+        emitf("follow_progress elapsed=4 remaining=548 vertical=0 position=500,-297,0")
+        emitf("follow_end=stalled stop_ok=true");follow.active=false
+    end
+    pcall(aw.start,c,exit);for _=1,6 do pcall(aw.tick) end
+    check("an exit walk stalled outside the volume is not arrival",not has("walk_arrived"),table.concat(said,","))
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -283,6 +283,17 @@ function M.tick()
     follow.tick()
     if not s or follow.active then return end
     local result=last_result or "observation_error";last_result=nil
+    -- An exit walk that stops anywhere inside the exit's volume has arrived:
+    -- its prompt is available there (3 Nov: "Leave Chloe's House" stalled every
+    -- time 2.5 m short of the volume's centre, against a blocking volume by the
+    -- door, while already inside the volume; the player then took the prompt).
+    if result=="stalled" and s.entry and s.entry.kind=="exit" and s.entry.extent and s.walk.index>=#s.walk.legs then
+        local here=nil;pcall(function()here=feet(s.pawn)end)
+        if here and doors.inside(here,s.entry,0) then
+            emit(string.format("exit_stall_inside at=%.0f,%.0f",here.X,here.Y))
+            result="arrived"
+        end
+    end
     local outcome=s.walk:leg_result(result,last_remaining)
     emit("leg_end result="..result.." leg="..s.walk.index)
     if outcome.continue then start_leg(s);return end

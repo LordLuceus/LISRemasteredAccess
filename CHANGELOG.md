@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- Autowalk reaches exits it used to stop short of, such as "Leave Chloe's
+  House": stopping anywhere the exit's prompt is available counts as arriving.
 - Focusing a photo (end of Episode 3, and later episodes): the game's
   instructions are read, and each of the two controls has its own tick, a
   wooden click on the left for A and D and a metallic tick on the right for
