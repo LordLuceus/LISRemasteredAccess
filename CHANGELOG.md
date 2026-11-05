@@ -5,8 +5,10 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
-- The diner's car park is announced as "car park", and the camper van there as
-  "camper van", instead of run-together level names.
+- Places and doors are named in the game's own words: "parking lot" and "RV"
+  at the diner, "Chloe's truck", "Bathroom door", "Science room door" and
+  "Art class door". Places in Episodes 4 and 5, such as the dark room and the
+  old barn, have names too instead of run-together level names.
 - Focusing a photo (end of Episode 3, and later episodes): the game's
   instructions are read, and each of the two controls has its own tick, a
   wooden click on the left for A and D and a metallic tick on the right for
@@ -23,10 +25,10 @@ Player-facing changes, newest first.
 - Standing on a doorstep no longer switches the list to the room inside; it
   changes once you are properly through.
 - Autowalk to an object stops as soon as you are within the distance the game
-  lets you use it from. For the truck in the diner car park, whose photo can
+  lets you use it from. For the truck in the diner parking lot, whose photo can
   be taken from over 20 metres away, that is where it takes you, and it says
   the truck "is within interaction range".
-- Inside the diner, the scanner no longer adds a "Way to" the car park next
+- Inside the diner, the scanner no longer adds a "Way to" the parking lot next
   to the diner door that already leads there.
 - The bird you scare out of the living room window is listed in the garden,
   where it lands, instead of staying on the living-room list.

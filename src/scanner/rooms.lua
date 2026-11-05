@@ -18,21 +18,28 @@
 local M={}
 M.VOTERS=3
 -- Sub-level room word -> spoken name.
+-- Room and door names use the game's own words: its chapter titles, objective
+-- text and object names (5 Nov, user: be consistent with the game, e.g.
+-- "parking lot" and "RV", not "car park" and "camper van").
 M.ROOMS={
     Corridor="corridor",MaxRoom="Max's room",DanaRoom="Dana's room",VicRoom="Victoria's room",
-    Bathroom="bathroom",Toilets="toilets",ArtClass="art classroom",PrinOffice="principal's office",
+    Bathroom="bathroom",Toilets="bathroom",ArtClass="art class",PrinOffice="principal's office",
     ChloeRoom="Chloe's room",ParentsRoom="parents' room",Garage="garage",Garden="garden",
     LivingRoom="living room",SwimPool="swimming pool",Junkyard="junkyard",Diner="diner",
-    DinerPark="car park",InsideRV="camper van",
+    DinerPark="parking lot",InsideRV="RV",
     Railroad="railroad",CampusA="campus",CampusB="campus",CampusPark="campus park",
-    CHouseFront="front of Chloe's house",ChloeCar="Chloe's car",CliffNow="cliff",CliffFuture="cliff",
+    CHouseFront="front of Chloe's house",ChloeCar="Chloe's truck",CliffNow="cliff",CliffFuture="cliff",
+    -- Episodes 4 and 5, named as the game's chapters and objects name them.
+    ArtGallery="art gallery",Beach="beach",DarkRoom="dark room",DormsCorridor="corridor",
+    Hospital="hospital",JeffCar="Jefferson's car",KateRoom="Kate's room",NathanRoom="Nathan's room",
+    OldFarm="old barn",Plane="plane",SciClass="science room",Pool="swimming pool",
 }
 -- Door interaction actor name (without the trailing _N) -> label. Each from
 -- the level data; "door" is appended by the caller's text key.
 M.DOORS={
-    ArtClassDoor="Art classroom",ArtDoor="Art classroom",ScienceDoor="Science lab",SciDoor01="Science lab",
-    SciDoor02="Science lab",PrincipalDoor="Principal's office",LockDoor="Principal's office",
-    ToiletDoor="Toilet",LadiesRoomDoor="Ladies' room",SwimmingPoolDoor="Swimming pool",
+    ArtClassDoor="Art class",ArtDoor="Art class",ScienceDoor="Science room",SciDoor01="Science room",
+    SciDoor02="Science room",PrincipalDoor="Principal's office",LockDoor="Principal's office",
+    ToiletDoor="Bathroom",LadiesRoomDoor="Bathroom",SwimmingPoolDoor="Swimming pool",
     JanitorDoor="Janitor's",KateDoor="Kate's",VicRoomDoor="Victoria's",MaxRoomDoor="Max's",
     ChloeDoor="Chloe's",Door01="Garage",Door02="Garage",DinerDoor="Diner",DinerDoor2="Diner",
     BoysDoor="Boys' locker room",GirlsDoor="Girls' locker room", -- read as "...locker room door"ShedDoor="Shed",DoorLock="Shed",

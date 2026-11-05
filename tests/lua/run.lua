@@ -1857,7 +1857,7 @@ do
     check("persistent-level actors have none",R.sublevel(max)==nil)
     check("room name from the table",R.room_name("E3_1A_MaxRoom_LD")=="Max's room" and R.room_name("E3_1A_Corridor_LD")=="corridor")
     check("unlisted room falls back to its word",R.room_name("E9_9A_Boiler_LD")=="Boiler")
-    check("door label from the actor name",R.door_label(kate)=="Kate's" and R.door_label("x LiSInteractionActor_SciDoor01_2")=="Science lab")
+    check("door label from the actor name",R.door_label(kate)=="Kate's" and R.door_label("x LiSInteractionActor_SciDoor01_2")=="Science room")
     check("non-door has no label",R.door_label(bed)==nil)
     local E={
         {pos={X=0,Y=0},sublevel="E3_1A_MaxRoom_LD",kind="interaction"},
@@ -2704,6 +2704,15 @@ do
     w.PuzzleSolved=true;local n=#ticks;P.tick(1.2)
     check("ticks off once solved",ticks[n+1] and ticks[n+1].on==false and ticks[n+2] and ticks[n+2].on==false)
     _G.FindAllOf=oldF;_G.FName=oldFN;package.loaded["scenes.polarewind"]=nil
+end
+-- Place names follow the game's own words (5 Nov).
+do
+    package.loaded["scanner.rooms"]=nil
+    local R=require("scanner.rooms")
+    check("diner parking lot and RV as the game names them",R.room_name("E3_6B_DinerPark_LD")=="parking lot" and R.room_name("E3_6B_InsideRV_LD")=="RV")
+    check("Chloe's truck, not car",R.room_name("E1_4A_ChloeCar_LD")=="Chloe's truck")
+    check("bathroom door as the game labels it",R.door_label("x LiSInteractionActor_LadiesRoomDoor_3")=="Bathroom" and R.door_label("x LiSInteractionActor_ToiletDoor_1")=="Bathroom")
+    package.loaded["scanner.rooms"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

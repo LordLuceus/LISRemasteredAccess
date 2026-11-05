@@ -74,7 +74,7 @@ there are in all when the filter is hiding some ("21 in all; F4 shows
 them."). F4 (or hold the left stick and click the right stick) switches the
 filter off and lists everything nearby; press it again to switch it back on. When you cross into another room the
 mod says its name ("Corridor.", "Max's room."). Doors are named for the room
-they lead to ("Science lab door"). Places built as one open space, such as the
+they lead to ("Science room door"). Places built as one open space, such as the
 pool, the junkyard and the campus, are listed whole.
 
 ### Autowalk
@@ -89,7 +89,7 @@ stop and say something is blocking the way. It also stops if the game takes
 over, and tells you so.
 
 Walking to an object stops once you are close enough to use it, which for
-some objects is a long way off: the truck in the diner car park can be
+some objects is a long way off: the truck in the diner parking lot can be
 photographed from over 20 metres away, so that is where autowalk takes you.
 If even that can't be reached, autowalk says "No way to" the object, takes you
 as close as you can get, and says how many metres away it still is.
