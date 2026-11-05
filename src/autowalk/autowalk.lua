@@ -16,6 +16,9 @@ local offmesh=require("nav.offmesh")
 M.say=function(_)end
 M.log=function(_)end
 M.text=function(key,p)return key end
+-- An object with no way to it is approached when the closest reachable point
+-- is at least this much nearer (cm) than Max is now.
+M.CLOSEST_GAIN=200
 M.ZONE_MARGIN=150 -- cm inside an object's interaction radius
 -- Movement input (WASD, arrows, left stick) cancels a walk. Supplied by the
 -- caller; returns true while the player is moving Max by hand.
@@ -139,6 +142,25 @@ local function start_offmesh(controller,pawn,entry,target,why,quiet)
                     emit("guide_retry step="..tostring(entry.step))
                     local ok2=pcall(start_offmesh,controller,pawn,nxt,{X=nxt.stand.X,Y=nxt.stand.Y,Z=nxt.stand.Z},"guide_retry",true)
                     if ok2 and M.active then M.active.waiting_told=true end
+                end)
+                return
+            end
+            -- An object with no way to it: walk as close as Max can get, when
+            -- that is meaningfully closer than she is now (objects only: a goal
+            -- or exit with no route is better reported plainly).
+            local here=nil;pcall(function()here=feet(pawn)end)
+            local now_d=here and math.sqrt((here.X-target.X)^2+(here.Y-target.Y)^2) or 0
+            if entry.kind=="interaction" and p.closest_waypoints and #p.closest_waypoints>=1 and p.closest_d and now_d-p.closest_d>=M.CLOSEST_GAIN then
+                emit(string.format("offmesh_closest closest=%.0f now=%.0f waypoints=%d",p.closest_d,now_d,#p.closest_waypoints))
+                s.planning=false
+                speak("walk_closest_start",{name=entry.name})
+                offmesh.walk(controller,pawn,p.closest_waypoints,function(result)
+                    if M.active~=s then return end
+                    M.active=nil
+                    emit("leg_end result="..result.." leg=closest")
+                    if result=="cancelled" then speak("walk_stopped");return end
+                    local d=p.closest_d;pcall(function()local f=feet(pawn);d=math.sqrt((f.X-target.X)^2+(f.Y-target.Y)^2)end)
+                    speak("walk_closest_arrived",{name=entry.name,value=require("scanner.readout").metres(d)})
                 end)
                 return
             end

@@ -91,6 +91,8 @@ over, and tells you so.
 Walking to an object stops once you are close enough to use it, which for
 some objects is a long way off: the truck in the diner car park can be
 photographed from over 20 metres away, so that is where autowalk takes you.
+If even that can't be reached, autowalk says "No way to" the object, takes you
+as close as you can get, and says how many metres away it still is.
 
 Some places have no walking paths from the game, such as most of the
 Dormitories lawn. There the mod works out its own way around obstacles, which

@@ -56,6 +56,8 @@ return {
     walk_stopped="Walking stopped.",
     walk_in_reach="{name} is within interaction range.",
     walk_retry="Trying again.",
+    walk_closest_start="No way to {name}. Walking as close as you can get.",
+    walk_closest_arrived="As close as you can get. {name} is {value} metres away.",
     walk_interrupted="Walking stopped. The game took over.",
     walk_blocked="Walking stopped. Something is blocking the way to {name}.",
     walk_timeout="Walking stopped before reaching {name}.",

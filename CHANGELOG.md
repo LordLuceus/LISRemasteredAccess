@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- For an object you can't get within range of at all, autowalk says so, takes
+  you as close as you can get, and says how far away it still is.
 - Standing on a doorstep no longer switches the list to the room inside; it
   changes once you are properly through.
 - Autowalk reaches exits it used to stop short of, such as "Leave Chloe's

@@ -1416,6 +1416,11 @@ do
     local function boxed(x,y)if math.abs(x)>=200 or math.abs(y)>=200 then return nil end;return 0 end
     local s4=G.new({X=0,Y=0,Z=0},{X=1000,Y=0,Z=0},{sample=boxed})
     check("grid reports an enclosed start",run(s4)=="failed" and s4.reason=="no_path")
+    -- The closest reachable point when there is no way (the diner's truck):
+    -- inside the 4 m box, the cell nearest the target at x=1000.
+    local cp=s4:closest_path()
+    check("a failed search keeps the way to its closest point",cp and #cp>=2 and cp[#cp].X>=100 and cp[#cp].X<200 and math.abs(cp[#cp].Y)<60,cp and string.format("%d pts end %.0f,%.0f",#cp,cp[#cp].X,cp[#cp].Y) or "nil")
+    check("that way starts at Max",cp and cp[1].X==0 and cp[1].Y==0)
     local rep=s4:report(60)
     check("failure report names the cause and maps the area",rep[1]:find("refused=") and rep[2]:find("^grid_target") and rep[3] and rep[3]:find("^grid_area") and #rep>4)
     -- A diagonal line of refused cells (x+y=500, cell 50) is crossable only by
@@ -2569,6 +2574,50 @@ do
     check("nothing found: no room",R.vote({nil,nil,nil,nil,nil},5,P)==nil)
     check("no current room: the majority",R.vote({D,P,P,nil,nil},5,nil)==P)
     package.loaded["scanner.rooms"]=nil
+end
+-- "As close as you can get": an object with no way to it, through autowalk.
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+    local pos={X=0,Y=0,Z=0}
+    package.loaded["nav.follow"]={ready=function()return true end,active=false,start=function()end,stop=function()end,tick=function()end}
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z or 0} end,query=function()return false,0,{} end}
+    package.loaded["nav.doors"]={plan=function()return false end,survey=function()return {} end,inside=function()return false end}
+    local walked=nil
+    package.loaded["nav.offmesh"]={NEAR_MISS=100,cancel=function()end,ground_below=function()return 0 end,
+        planner=function()return {g={samples=1},reason="no_path",closest_waypoints={{X=0,Y=0,Z=0},{X=1300,Y=0,Z=0}},closest_d=2080,
+            step=function(self)return "failed" end} end,
+        walk=function(_,_,wps,done)walked=wps;pos={X=1300,Y=0,Z=0};done("arrived_test_region",0) end}
+    _G.LoopInGameThreadWithDelay=function(_,f)f();return 1 end
+    _G.CancelDelayedAction=function()end
+    local aw=require("autowalk.autowalk")
+    local said={};aw.say=function(k)said[#said+1]=k end;aw.text=function(k,p)return k..(p and p.value and ("="..p.value) or "") end
+    aw.moving=function()return false end;aw.in_reach=function()return nil end;aw.log=function()end
+    local pawn={K2_GetActorLocation=function()return pos end,GetAddress=function()return 1 end,IsValid=function()return true end,
+        CapsuleComponent={K2_GetComponentLocation=function()return {X=pos.X,Y=pos.Y,Z=pos.Z} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
+    local c={Pawn=pawn,IsValid=function()return true end}
+    local truck={name="Truck",kind="interaction",pos={X=3380,Y=0,Z=207},actor={}}
+    local ok,err=pcall(aw.start,c,truck)
+    local joined=table.concat(said,",")
+    check("no way to an object: walks as close as it can",ok and walked~=nil and joined:find("walk_closest_start",1,true)~=nil,tostring(err).." "..joined)
+    check("and says how far the object still is",joined:find("walk_closest_arrived=21",1,true)~=nil,joined)
+    -- An object with its own interaction radius: the planner may stop anywhere
+    -- inside it (the truck: 2350 cm, photo seen at ~23 m).
+    local got_reach=nil
+    local planner0=package.loaded["nav.offmesh"].planner
+    package.loaded["nav.offmesh"].planner=function(_,_,_,_,reach)got_reach=reach;return planner0() end
+    said={};pos={X=0,Y=0,Z=0}
+    pcall(aw.start,c,{name="Truck",kind="interaction",pos={X=3380,Y=0,Z=207},actor={},zone=2350})
+    check("an object's interaction radius becomes the walk's reach",got_reach==2350-aw.ZONE_MARGIN,tostring(got_reach))
+    got_reach=nil;said={};pos={X=0,Y=0,Z=0}
+    pcall(aw.start,c,{name="Mug",kind="interaction",pos={X=3380,Y=0,Z=0},actor={}})
+    check("without a radius the reach is unchanged",got_reach==150,tostring(got_reach))
+    package.loaded["nav.offmesh"].planner=planner0
+    -- A goal (not an object) with no way: reported plainly, no approach.
+    said={};walked=nil;pos={X=0,Y=0,Z=0}
+    pcall(aw.start,c,{name="Somewhere",kind="goal",pos={X=3380,Y=0,Z=0},stand={X=3380,Y=0,Z=0}})
+    check("a goal with no way is still 'no route'",walked==nil and table.concat(said,","):find("walk_no_route",1,true)~=nil,table.concat(said,","))
+    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

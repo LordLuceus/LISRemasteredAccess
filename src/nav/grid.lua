@@ -115,7 +115,7 @@ function M:step(budget)
             local z=self.z[k]
             local x,y=self:pos(i,j)
             local d=math.sqrt((x-self.target.X)^2+(y-self.target.Y)^2)
-            if d<self.best_d then self.best_d=d end
+            if d<self.best_d then self.best_d=d;self.best_k=k end
             if self:is_goal(i,j,z) then self:finish(i,j);return self.state end
             for _,d in ipairs(DIRS) do
                 local ni,nj=i+d[1],j+d[2]
@@ -246,6 +246,22 @@ function M.shorten(path,clear)
     return out
 end
 -- The search's own path, shortened with its cells plus an injected sweep.
+-- The path to the reached cell closest to the target, after a failed search
+-- (3 Nov: the diner's truck, on a road beyond blocking volumes, 20 m from the
+-- nearest walkable point). nil when no cell was reached.
+function M:closest_path()
+    local k=self.best_k
+    if not k then return nil end
+    local pts={}
+    while k do
+        local a,b=k:match("^(-?%d+),(-?%d+)$");a,b=tonumber(a),tonumber(b)
+        local x,y=self:pos(a,b)
+        table.insert(pts,1,{X=x,Y=y,Z=self.z[k]})
+        k=self.parent[k]
+    end
+    pts[1]={X=self.start.X,Y=self.start.Y,Z=self.start.Z}
+    return pts
+end
 function M:waypoints(sweep)
     return M.shorten(self.path,function(a,b)return self:line_open(a,b) and (not sweep or sweep(a,b)) end)
 end

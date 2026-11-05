@@ -110,7 +110,17 @@ function M.planner(controller,pawn,start,target,reach,corridor)
         end
         if st=="found" then
             self.waypoints=self.g:waypoints(function(a,b)return sweep_blocker(controller,pawn,a,b)==nil end)
-        elseif st=="failed" then self.reason=self.g.reason end
+        elseif st=="failed" then
+            self.reason=self.g.reason
+            -- No way to the target: keep the way to the closest reachable point.
+            local pts=self.g:closest_path()
+            if pts and #pts>=2 then
+                local saved=self.g.path;self.g.path=pts
+                self.closest_waypoints=self.g:waypoints(function(a,b)return sweep_blocker(controller,pawn,a,b)==nil end)
+                self.g.path=saved
+                self.closest_d=self.g.best_d
+            end
+        end
         return st
     end
     return p
