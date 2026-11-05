@@ -5,6 +5,8 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
+- The diner's car park is announced as "car park", and the camper van there as
+  "camper van", instead of run-together level names.
 - Focusing a photo (end of Episode 3, and later episodes): the game's
   instructions are read, and each of the two controls has its own tick, a
   wooden click on the left for A and D and a metallic tick on the right for

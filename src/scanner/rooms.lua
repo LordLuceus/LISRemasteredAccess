@@ -23,6 +23,7 @@ M.ROOMS={
     Bathroom="bathroom",Toilets="toilets",ArtClass="art classroom",PrinOffice="principal's office",
     ChloeRoom="Chloe's room",ParentsRoom="parents' room",Garage="garage",Garden="garden",
     LivingRoom="living room",SwimPool="swimming pool",Junkyard="junkyard",Diner="diner",
+    DinerPark="car park",InsideRV="camper van",
     Railroad="railroad",CampusA="campus",CampusB="campus",CampusPark="campus park",
     CHouseFront="front of Chloe's house",ChloeCar="Chloe's car",CliffNow="cliff",CliffFuture="cliff",
 }
