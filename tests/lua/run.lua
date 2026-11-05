@@ -2268,7 +2268,7 @@ do
     if ok then
         check("in Chloe's room by floor: bed and her door, not the parents' door",res[1]=="bed,room door",res[1])
         check("the room is named from the floor under Max",res[2]==CR and res[5]==CO,tostring(res[2]).."/"..tostring(res[5]))
-        check("door floors are cached: a repeat traces only Max's floor",res[3]==1,"traced "..tostring(res[3]))
+        check("door floors are cached: a repeat traces only the five room samples",res[3]==5,"traced "..tostring(res[3]))
         check("in the corridor: the way back, the parents' door and the poster",res[4]=="room door,parents door,poster",res[4])
     end
     -- A moved object takes its room from the floor where it is now: the bird.
@@ -2551,6 +2551,24 @@ do
     pcall(aw.start,c,exit);for _=1,6 do pcall(aw.tick) end
     check("an exit walk stalled outside the volume is not arrival",not has("walk_arrived"),table.concat(said,","))
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors"}) do package.loaded[m]=nil end
+end
+-- Room vote from floor samples: a doorstep does not switch the room.
+do
+    package.loaded["scanner.rooms"]=nil
+    local R=require("scanner.rooms")
+    local P,D="Park","Diner"
+    check("standing on the diner's doorstep (1 of 5 diner): still the park",R.vote({D,P,P,P,P},5,P)==P)
+    check("two of five diner: still the park",R.vote({D,D,P,P,P},5,P)==P)
+    check("well inside (4 of 5): the diner",R.vote({D,D,D,D,P},5,P)==D)
+    check("three of five: the diner",R.vote({D,D,D,P,P},5,P)==D)
+    -- Missed traces (outside the walls, into a doorframe) must not let two
+    -- doorstep samples outvote one: a change needs a majority of all five.
+    check("two diner, one park, two missed: still the park",R.vote({D,D,nil,nil,P},5,P)==P)
+    check("three diner, one park, one missed: the diner",R.vote({D,D,D,P,nil},5,P)==D)
+    check("missed traces are not votes when nothing else is known",R.vote({D,nil,nil,nil,nil},5,nil)==D)
+    check("nothing found: no room",R.vote({nil,nil,nil,nil,nil},5,P)==nil)
+    check("no current room: the majority",R.vote({D,P,P,nil,nil},5,nil)==P)
+    package.loaded["scanner.rooms"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

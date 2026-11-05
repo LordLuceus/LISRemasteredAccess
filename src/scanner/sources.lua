@@ -328,6 +328,7 @@ M.shoot_action=function(actor)
 end
 -- The room Max is in (sub-level key) after the last collect, and its spoken name.
 M.room=nil
+M.ROOM_REACH=50  -- cm: floor samples around Max for the room vote
 -- Room filtering on/off (F4 / hold left stick + click right stick). On by
 -- default; off lists every object as before, with room names still spoken.
 M.ROOM_FILTER=true
@@ -574,7 +575,14 @@ function M.by_room(controller,out,p)
         end
     end
     local pawn=nil;pcall(function()pawn=controller.Pawn end)
-    local room=floor_room(controller,p,{pawn})
+    -- Floor under Max and 50 cm out in four directions; a new room needs a
+    -- majority of them.
+    local keys={floor_room(controller,p,{pawn})}
+    for i=0,3 do
+        local a=i*math.pi/2
+        keys[i+2]=floor_room(controller,{X=p.X+math.cos(a)*M.ROOM_REACH,Y=p.Y+math.sin(a)*M.ROOM_REACH,Z=p.Z},{pawn})
+    end
+    local room=rooms.vote(keys,5,M.room)
     local how="floor"
     if not room then room=rooms.current(out,p);how="objects" end
     for _,e in ipairs(out) do if e.door_like and e.kind=="interaction" then e.joins=joins_of(controller,e) end end

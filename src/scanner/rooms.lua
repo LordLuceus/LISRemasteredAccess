@@ -73,6 +73,19 @@ function M.joins(keys,count)
     for i=1,(count or 8) do local k=keys[i];if k and not set[k] then set[k]=true;n=n+1 end end
     return set,n>=2
 end
+-- Pure: the room from floor samples around Max (list of n keys, nils for
+-- missed traces). A different room needs a majority of the samples; otherwise
+-- the current room stays (3 Nov: one step onto the diner's doorstep, whose
+-- floor is the diner's, switched the list to the diner's inside).
+function M.vote(keys,n,current)
+    local c,seen={},0
+    for i=1,n do local k=keys[i];if k then c[k]=(c[k] or 0)+1;seen=seen+1 end end
+    if seen==0 then return nil end
+    local best,bn=nil,0
+    for k,v in pairs(c) do if v>bn or (v==bn and k==current) then best,bn=k,v end end
+    if best~=current and current and c[current] and bn*2<=n then return current end
+    return best
+end
 -- Pure: the first room other than `current` met along a route, from the
 -- rooms of floors sampled along it (list of n keys, nils allowed for missed
 -- traces). Returns its index and key, or nil. A room reached this way, with
