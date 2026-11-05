@@ -5,17 +5,21 @@ Player-facing changes, newest first.
 ## 2026-11-04
 
 ### In play
-- For an object you can't get within range of at all, autowalk says so, takes
-  you as close as you can get, and says how far away it still is.
-- Standing on a doorstep no longer switches the list to the room inside; it
-  changes once you are properly through.
-- Autowalk reaches exits it used to stop short of, such as "Leave Chloe's
-  House": stopping anywhere the exit's prompt is available counts as arriving.
 - Focusing a photo (end of Episode 3, and later episodes): the game's
   instructions are read, and each of the two controls has its own tick, a
   wooden click on the left for A and D and a metallic tick on the right for
   the mouse buttons, that speeds up as its picture sharpens. The ticks fall
   silent once the photo locks.
+- Autowalk reaches exits it used to stop short of, such as "Leave Chloe's
+  House": stopping anywhere the exit's prompt is available counts as arriving.
+- Objects no longer drop off the scanner and come back as you move around,
+  and objects whose action only appears while the camera points at them, such
+  as the diner truck and the broken lamp outside the dorms, stay listed so you
+  can use F to face them.
+- For an object you can't get within range of at all, autowalk says so, takes
+  you as close as you can get, and says how far away it still is.
+- Standing on a doorstep no longer switches the list to the room inside; it
+  changes once you are properly through.
 - Autowalk to an object stops as soon as you are within the distance the game
   lets you use it from. For the truck in the diner car park, whose photo can
   be taken from over 20 metres away, that is where it takes you, and it says

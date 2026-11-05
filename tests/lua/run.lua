@@ -2401,7 +2401,6 @@ do
         -- the diner door's did; it is 150 cm from the threshold.
         check("no 'Way to' when a listed door is the way",way5==nil and ids(got5):find("bath door")~=nil,ids(got5))
         _G.FindAllOf=oldF
-        _G.FindAllOf=oldF
         package.loaded["nav.route"]=nil
     end
     _G.StaticFindObject=oldS
@@ -2452,69 +2451,6 @@ do
     check("first readout in the room speaks the hint",said[1] and said[1]:find("scanner_filter_hint",1,true)~=nil,tostring(said[1]))
     check("the next readout does not",said[2] and not said[2]:find("scanner_filter_hint",1,true),tostring(said[2]))
     S.collect=oldC;_G.FindAllOf=oldF;package.loaded["scanner.scanner"]=nil
-end
--- An object's interaction radius is the off-mesh walk's reach (the diner truck:
--- 2350 cm; its Photo appeared at about 23 m).
-do
-    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
-    local pos={X=0,Y=0,Z=0}
-    package.loaded["nav.follow"]={ready=function()return true end,active=false,start=function()end,stop=function()end,tick=function()end}
-    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z or 0} end,query=function()return false,0,{} end}
-    package.loaded["nav.doors"]={plan=function()return false end,survey=function()return {} end,inside=function()return false end}
-    local got=nil
-    package.loaded["nav.offmesh"]={NEAR_MISS=100,cancel=function()end,ground_below=function()return 0 end,
-        planner=function(_,_,_,_,reach)got=reach;return {g={samples=1},reason="no_path",step=function()return "failed" end} end,walk=function()end}
-    _G.LoopInGameThreadWithDelay=function(_,f)f();return 1 end;_G.CancelDelayedAction=function()end
-    local aw=require("autowalk.autowalk")
-    aw.say=function()end;aw.text=function(k)return k end;aw.moving=function()return false end;aw.in_reach=function()return nil end;aw.log=function()end
-    local pawn={K2_GetActorLocation=function()return pos end,GetAddress=function()return 1 end,IsValid=function()return true end,
-        CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=0} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
-    local c={Pawn=pawn,IsValid=function()return true end}
-    pcall(aw.start,c,{name="Truck",kind="interaction",pos={X=3380,Y=0,Z=207},actor={},zone=2350})
-    check("an object's interaction radius becomes the walk's reach",got==2350-aw.ZONE_MARGIN,tostring(got))
-    got=nil;pcall(aw.start,c,{name="Mug",kind="interaction",pos={X=3380,Y=0,Z=0},actor={}})
-    check("without a radius the reach is unchanged",got==150,tostring(got))
-    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
-    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
-end
--- Focus minigame (PolaRewind): one panned tick per dial, faster as it sharpens.
-do
-    package.loaded["scenes.polarewind"]=nil
-    local P=require("scenes.polarewind")
-    check("sharp: fastest ticks",P.interval_for(0.6)==P.FAST and P.interval_for(0.4)==P.FAST)
-    check("blurred: slowest ticks",P.interval_for(3.0)==P.SLOW and P.interval_for(9)==P.SLOW)
-    check("ticks quicken as it sharpens",P.interval_for(1.0)<P.interval_for(2.0) and P.interval_for(2.0)<P.interval_for(2.8))
-    check("the two dials are panned apart and use different sounds",P.CHANNELS[1].pan<0 and P.CHANNELS[2].pan>0 and P.CHANNELS[1].file~=P.CHANNELS[2].file)
-    check("tutorial markup and line breaks removed",P.tidy("Use <img id=\"A\"/>A/D keys \\nuntil you find the sweet spot.")=="Use A/D keys until you find the sweet spot.")
-    local ticks,said,loads={},{},{}
-    P.tick_fn=function(ch,on,pan,ms,vol)ticks[#ticks+1]={ch=ch,on=on,pan=pan,ms=ms}end
-    P.load_fn=function(ch,path)loads[#loads+1]=path;return true end
-    P.say=function(t)said[#said+1]=t end;P.log=function()end
-    local oldFN=_G.FName;_G.FName=function(s)return s end
-    local blur={ImageA_PositionAndBlur=2.4,ImageB_PositionAndBlur=0.6}
-    local mid={IsValid=function()return true end,K2_GetVectorParameterValue=function(_,n)return {R=0,G=0,B=blur[n],A=0} end}
-    local function tb(text)return {IsValid=function()return true end,IsVisible=function()return true end,GetText=function()return {ToString=function()return text end} end} end
-    local w={IsValid=function()return true end,IsInViewport=function()return true end,IsVisible=function()return true end,
-        PuzzleSolved=false,mEmissiveInstance=mid,KBTutorial=tb("Use A/D keys until you find the sweet spot."),
-        GamepadTutorial={IsValid=function()return true end,IsVisible=function()return false end}}
-    local oldF=_G.FindAllOf;_G.FindAllOf=function(c)if c=="BP_LiSPolaRewindWidget_New_C" then return {w} end;return {} end
-    P.tick(1)
-    local a,b=ticks[1],ticks[2]
-    check("both sounds loaded once",#loads==2)
-    check("dial A ticks on the left, slowly while blurred",a and a.ch==0 and a.on and a.pan<0 and a.ms>P.FAST)
-    check("dial B ticks on the right, fast when sharp",b and b.ch==1 and b.on and b.pan>0 and b.ms==P.FAST)
-    check("tutorial read once",said[1]=="Use A/D keys until you find the sweet spot.")
-    P.tick(1.1);check("not read again while unchanged",#said==1 and #loads==2)
-    check("lock detected only when both drop below the sweet spot",P.locked(0.4,0.4) and not P.locked(0.6,0.4) and not P.locked(0.4,2.0) and not P.locked(nil,0.4))
-    blur.ImageA_PositionAndBlur=0.243;blur.ImageB_PositionAndBlur=0.243
-    local m=#ticks;P.tick(1.15)
-    check("ticks off while the game's closing animation runs",ticks[m+1] and ticks[m+1].on==false and ticks[m+2] and ticks[m+2].on==false and #ticks==m+2)
-    blur.ImageA_PositionAndBlur=2.4;blur.ImageB_PositionAndBlur=0.6
-    P.tick(1.18)  -- the game let go: ticking again
-    check("ticks come back if the pictures part again",ticks[#ticks].on==true)
-    w.PuzzleSolved=true;local n=#ticks;P.tick(1.2)
-    check("ticks off once solved",ticks[n+1] and ticks[n+1].on==false and ticks[n+2] and ticks[n+2].on==false)
-    _G.FindAllOf=oldF;_G.FName=oldFN;package.loaded["scenes.polarewind"]=nil
 end
 -- An exit walk that stalls inside the exit's volume has arrived (3 Nov: Leave
 -- Chloe's House, volume centre -48,-256 half-size 330x328, stall at 204,-297).
@@ -2619,6 +2555,78 @@ do
     _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
     for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
 end
+-- Dropouts: an object the game registered and then dropped stays listed
+-- (3 Nov: the diner truck flickered 15 <-> 16 while Max stood in the park).
+do
+    package.loaded["scanner.sources"]=nil
+    local S=require("scanner.sources");S.report=function()end;S.translate=function(k)return k end
+    local function lvl(n)return "/Game/Maps/Episode03/Sequence06/"..n.."."..n..":PersistentLevel." end
+    local function actor(name,hidden)
+        return {IsValid=function()return true end,HasAnyFlags=function()return false end,bIsRegistered=true,bNeedToHide=false,bHidden=hidden or false,
+            GetFullName=function()return "LiSInteractionActor "..lvl("E3_6B_DinerPark_LD").."LiSInteractionActor_"..name end,
+            GetFName=function()return {ToString=function()return name end} end,
+            K2_GetActorLocation=function()return {X=464,Y=-3414,Z=207} end,
+            objectName={ToString=function()return "$GT_Sensen_Int_"..name end},
+            Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true} end}) end}}
+    end
+    local oldFlags=_G.EObjectFlags;_G.EObjectFlags={RF_BeginDestroyed=1,RF_FinishDestroyed=2}
+    local truck,bike=actor("Truck_1"),actor("Bike_2")
+    local registered={truck,bike}
+    local controller={IsFactActive=function()return true end,GetAddress=function()return 7 end,
+        GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_6B" end} end} end}
+    local comp={IsValid=function()return true end,HasAnyFlags=function()return false end,GetOwner=function()return {GetAddress=function()return 7 end} end,
+        RegisteredActors={ForEach=function(_,f)for i,a in ipairs(registered) do f(i,{get=function()return a end}) end end}}
+    controller.IsValid=function()return true end
+    local oldF=_G.FindAllOf
+    _G.FindAllOf=function(c)if c=="LiSInteractionComponent" then return {comp} end;return {} end
+    package.loaded["scanner.availability"]=nil
+    local ok,res=pcall(function()
+        local function names()local o={};for _,e in ipairs(S.collect(controller)) do if e.kind=="interaction" then o[#o+1]=e.id:match("_(%a+)_%d+$") end end;table.sort(o);return table.concat(o,",") end
+        local first=names()
+        truck.bIsRegistered=false;registered={bike}   -- the game drops the truck
+        local second=names()
+        truck.bHidden=true                             -- the story hides it
+        local third=names()
+        return {first,second,third}
+    end)
+    check("dropout test runs",ok,tostring(res))
+    if ok then
+        check("truck listed while registered",res[1]=="Bike,Truck",res[1])
+        check("truck stays listed after the game drops it",res[2]=="Bike,Truck",res[2])
+        check("a dropped object the story hides is not listed",res[3]=="Bike",res[3])
+        -- While the game shows an object's pop-up it stays listed even if a story
+        -- check says no (3 Nov: the truck vanished on arrival, Face had no target).
+        local gated=actor("Photo_7")
+        local gate={["and"]={{fact="Gone",want=true}},["or"]={}}
+        gated.Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true,FactCondAND={ForEach=function(_,g)g(1,{get=function()return {FactName={ToString=function()return "Gone" end},bFactActive=true} end}) end},FactCondOR={ForEach=function()end}} end}) end}
+        registered={bike,gated};controller.IsFactActive=function(_,f)return f~="Gone" end
+        local oldFN=_G.FName;_G.FName=function(s)return s end
+        local function names2()local o={};for _,e in ipairs(S.collect(controller)) do if e.kind=="interaction" then o[#o+1]=e.id:match("_(%a+)_%d+$") end end;table.sort(o);return table.concat(o,",") end
+        local okA,without=pcall(names2)
+        gated.bObjectInDisplay=true
+        local okB,with=pcall(names2)
+        check("a story-gated object is not listed",okA and not tostring(without):find("Photo"),tostring(without))
+        check("unless its pop-up is showing",okB and tostring(with):find("Photo")~=nil,tostring(with))
+        -- A "look at it" condition (the truck's Check_Truck, set only while the
+        -- camera faces it): listed, so Face can turn Max to it.
+        local looked=actor("Truck_9")
+        looked.Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true,FactCondAND={ForEach=function(_,g)g(1,{get=function()return {FactName={ToString=function()return "E3_6B_DinerPark_LD_Check_Truck" end},bFactActive=true} end}) end},FactCondOR={ForEach=function()end}} end}) end}
+        registered={bike,looked};controller.IsFactActive=function(_,f)return false end
+        local okC,lst=pcall(names2)
+        check("an object gated on being looked at stays listed",okC and tostring(lst):find("Truck")~=nil,tostring(lst))
+        -- 5 Nov: the campus lamp's condition has no "Check" in its name.
+        local lamp=actor("BrokenLamp_3")
+        lamp.Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true,FactCondAND={ForEach=function(_,g)g(1,{get=function()return {FactName={ToString=function()return "E3_1B_Corridor_LD_BrokenLampInScreen" end},bFactActive=true} end}) end},FactCondOR={ForEach=function()end}} end}) end}
+        local story=actor("Poster_4")
+        story.Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true,FactCondAND={ForEach=function(_,g)g(1,{get=function()return {FactName={ToString=function()return "E3_1B_Something_Finished" end},bFactActive=true} end}) end},FactCondOR={ForEach=function()end}} end}) end}
+        registered={bike,lamp,story}
+        local okD,lst2=pcall(names2)
+        check("the campus lamp (InScreen condition) stays listed",okD and tostring(lst2):find("Lamp")~=nil,tostring(lst2))
+        check("an ordinary story condition still hides its object",okD and not tostring(lst2):find("Poster"),tostring(lst2))
+        _G.FName=oldFN
+    end
+    _G.FindAllOf=oldF;_G.EObjectFlags=oldFlags;package.loaded["scanner.sources"]=nil
+end
 -- Story facts: an unreadable fact stays "unknown" (nil) on every ask.
 do
     package.loaded["scanner.availability"]=nil
@@ -2633,6 +2641,69 @@ do
     check("an object with an unknown fact is available on the first check",A.action_ok(cond,is))
     check("and on the second check (3 Nov: the truck was dropped here)",A.action_ok(cond,is))
     _G.FName=oldN;package.loaded["scanner.availability"]=nil
+end
+-- An object's interaction radius is the off-mesh walk's reach (the diner truck:
+-- 2350 cm; its Photo appeared at about 23 m).
+do
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+    local pos={X=0,Y=0,Z=0}
+    package.loaded["nav.follow"]={ready=function()return true end,active=false,start=function()end,stop=function()end,tick=function()end}
+    package.loaded["nav.route"]={project=function(_,p)return true,{X=p.X,Y=p.Y,Z=p.Z or 0} end,query=function()return false,0,{} end}
+    package.loaded["nav.doors"]={plan=function()return false end,survey=function()return {} end,inside=function()return false end}
+    local got=nil
+    package.loaded["nav.offmesh"]={NEAR_MISS=100,cancel=function()end,ground_below=function()return 0 end,
+        planner=function(_,_,_,_,reach)got=reach;return {g={samples=1},reason="no_path",step=function()return "failed" end} end,walk=function()end}
+    _G.LoopInGameThreadWithDelay=function(_,f)f();return 1 end;_G.CancelDelayedAction=function()end
+    local aw=require("autowalk.autowalk")
+    aw.say=function()end;aw.text=function(k)return k end;aw.moving=function()return false end;aw.in_reach=function()return nil end;aw.log=function()end
+    local pawn={K2_GetActorLocation=function()return pos end,GetAddress=function()return 1 end,IsValid=function()return true end,
+        CapsuleComponent={K2_GetComponentLocation=function()return {X=0,Y=0,Z=0} end,GetScaledCapsuleHalfHeight=function()return 0 end}}
+    local c={Pawn=pawn,IsValid=function()return true end}
+    pcall(aw.start,c,{name="Truck",kind="interaction",pos={X=3380,Y=0,Z=207},actor={},zone=2350})
+    check("an object's interaction radius becomes the walk's reach",got==2350-aw.ZONE_MARGIN,tostring(got))
+    got=nil;pcall(aw.start,c,{name="Mug",kind="interaction",pos={X=3380,Y=0,Z=0},actor={}})
+    check("without a radius the reach is unchanged",got==150,tostring(got))
+    _G.LoopInGameThreadWithDelay=nil;_G.CancelDelayedAction=nil
+    for _,m in ipairs({"autowalk.autowalk","nav.follow","nav.route","nav.doors","nav.offmesh"}) do package.loaded[m]=nil end
+end
+-- Focus minigame (PolaRewind): one panned tick per dial, faster as it sharpens.
+do
+    package.loaded["scenes.polarewind"]=nil
+    local P=require("scenes.polarewind")
+    check("sharp: fastest ticks",P.interval_for(0.6)==P.FAST and P.interval_for(0.4)==P.FAST)
+    check("blurred: slowest ticks",P.interval_for(3.0)==P.SLOW and P.interval_for(9)==P.SLOW)
+    check("ticks quicken as it sharpens",P.interval_for(1.0)<P.interval_for(2.0) and P.interval_for(2.0)<P.interval_for(2.8))
+    check("the two dials are panned apart and use different sounds",P.CHANNELS[1].pan<0 and P.CHANNELS[2].pan>0 and P.CHANNELS[1].file~=P.CHANNELS[2].file)
+    check("tutorial markup and line breaks removed",P.tidy("Use <img id=\"A\"/>A/D keys \\nuntil you find the sweet spot.")=="Use A/D keys until you find the sweet spot.")
+    local ticks,said,loads={},{},{}
+    P.tick_fn=function(ch,on,pan,ms,vol)ticks[#ticks+1]={ch=ch,on=on,pan=pan,ms=ms}end
+    P.load_fn=function(ch,path)loads[#loads+1]=path;return true end
+    P.say=function(t)said[#said+1]=t end;P.log=function()end
+    local oldFN=_G.FName;_G.FName=function(s)return s end
+    local blur={ImageA_PositionAndBlur=2.4,ImageB_PositionAndBlur=0.6}
+    local mid={IsValid=function()return true end,K2_GetVectorParameterValue=function(_,n)return {R=0,G=0,B=blur[n],A=0} end}
+    local function tb(text)return {IsValid=function()return true end,IsVisible=function()return true end,GetText=function()return {ToString=function()return text end} end} end
+    local w={IsValid=function()return true end,IsInViewport=function()return true end,IsVisible=function()return true end,
+        PuzzleSolved=false,mEmissiveInstance=mid,KBTutorial=tb("Use A/D keys until you find the sweet spot."),
+        GamepadTutorial={IsValid=function()return true end,IsVisible=function()return false end}}
+    local oldF=_G.FindAllOf;_G.FindAllOf=function(c)if c=="BP_LiSPolaRewindWidget_New_C" then return {w} end;return {} end
+    P.tick(1)
+    local a,b=ticks[1],ticks[2]
+    check("both sounds loaded once",#loads==2)
+    check("dial A ticks on the left, slowly while blurred",a and a.ch==0 and a.on and a.pan<0 and a.ms>P.FAST)
+    check("dial B ticks on the right, fast when sharp",b and b.ch==1 and b.on and b.pan>0 and b.ms==P.FAST)
+    check("tutorial read once",said[1]=="Use A/D keys until you find the sweet spot.")
+    P.tick(1.1);check("not read again while unchanged",#said==1 and #loads==2)
+    check("lock detected only when both drop below the sweet spot",P.locked(0.4,0.4) and not P.locked(0.6,0.4) and not P.locked(0.4,2.0) and not P.locked(nil,0.4))
+    blur.ImageA_PositionAndBlur=0.243;blur.ImageB_PositionAndBlur=0.243
+    local m=#ticks;P.tick(1.15)
+    check("ticks off while the game's closing animation runs",ticks[m+1] and ticks[m+1].on==false and ticks[m+2] and ticks[m+2].on==false and #ticks==m+2)
+    blur.ImageA_PositionAndBlur=2.4;blur.ImageB_PositionAndBlur=0.6
+    P.tick(1.18)  -- the game let go: ticking again
+    check("ticks come back if the pictures part again",ticks[#ticks].on==true)
+    w.PuzzleSolved=true;local n=#ticks;P.tick(1.2)
+    check("ticks off once solved",ticks[n+1] and ticks[n+1].on==false and ticks[n+2] and ticks[n+2].on==false)
+    _G.FindAllOf=oldF;_G.FName=oldFN;package.loaded["scenes.polarewind"]=nil
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

@@ -131,7 +131,25 @@ local function available(actor,is_active)
     end) end
     return false
 end
+-- Story facts the game switches on only while the camera points at an object
+-- (5 Nov). From all 158 object levels: facts that a level behaviour holding an
+-- IA_CheckVisibility node both sets and clears, reviewed by hand to the ones
+-- that are camera conditions (the rest are story state such as "Finished").
+-- Each gates an object the player is meant to turn and look at.
+M.LOOK_FACTS={
+    E2_1A_Corridor_LD_Check_TP=true,
+    E2_3A_Junkyard_LD_AllowLookFromBottomBottle=true,  -- bottle (look from below)
+    E2_3A_Junkyard_LD_AllowPhotoBus=true,              -- school bus photo
+    E2_4B_Corridor_LD_VortexBannerInScreen=true,       -- Vortex banner
+    E3_1B_Corridor_LD_BrokenLampInScreen=true,         -- broken lamp, campus
+    E3_6B_DinerPark_LD_Check_Truck=true,               -- truck photo, diner
+}
+-- Objects registered at any point during this level visit: id -> actor.
+local remembered,remembered_world={},nil
+local dropout_logged={}
 local function interactions(controller,out)
+    local w=nil;pcall(function()w=controller:GetWorld():GetFName():ToString()end)
+    if w~=remembered_world then remembered={};remembered_world=w;dropout_logged={} end
     local is_active=availability.fact_reader(controller)
     local component=component_of(controller)
     if not component then report_once("component","scanner_source error=no_interaction_component");return end
@@ -143,6 +161,58 @@ local function interactions(controller,out)
         local ok,a=pcall(function()return v:get()end)
         if ok and valid(a) then actors[#actors+1]=a end
     end)
+    local seen={}
+    local function read(a,registered)
+            local ok,entry=pcall(function()
+                if (registered and a.bIsRegistered~=true) or a.bNeedToHide==true then return nil end
+                -- Hidden by the story (seen in the classroom: six students not yet in
+                -- the scene are registered with their actor hidden).
+                if a.bHidden==true then return nil end
+                -- The object's visible model (ObjectActor) is hidden until the story
+                -- shows it: the bathroom butterfly's model starts hidden and is
+                -- revealed when it flies in, though its actions have no conditions.
+                local model=nil;pcall(function()model=a.ObjectActor end)
+                if valid(model) and model.bHidden==true then
+                    if M.trace_gates then pcall(function()M.report("scanner_model_hidden id="..a:GetFName():ToString())end) end
+                    return nil
+                end
+                if not available(a,is_active) then
+                    -- Still listed while the game itself shows its pop-up (3 Nov:
+                    -- the truck vanished as autowalk arrived, so Face had no target).
+                    local shown=false
+                    pcall(function()shown=a.bObjectInDisplay==true end)
+                    -- "Look at it" conditions: a level script sets a *_Check_* fact
+                    -- only while the camera points at the object (4 Nov: the diner
+                    -- truck's Photo needs E3_6B_DinerPark_LD_Check_Truck, set by a
+                    -- screen-centre check). Facing it is how the player meets
+                    -- them, so the object stays listed for Face to turn to.
+                    if not shown then
+                        local looking=function(f)if M.LOOK_FACTS[f] then return true end;return is_active(f) end
+                        if available(a,looking) then shown=true end
+                    end
+                    if not shown then return nil end
+                end
+                local key=a.objectName:ToString()
+                if key=="" or key=="None" then return nil end
+                local label=M.translate(key)
+                local id=a:GetFullName()
+                -- Doors are named for the room they lead to ("Science lab door").
+                local door=rooms.door_label(id)
+                if door then label=M.text("door_label",{name=door}) end
+                -- Where to stand: the game's authored approach point, else the actor.
+                local stand=nil
+                local dummy=a.TapToMoveActor
+                if valid(dummy) then stand=point(dummy:K2_GetActorLocation()) end
+            -- The object's own interaction radius, when the level sets one (the
+            -- diner truck: 23.5 m; the Photo action appeared at about 23 m).
+            local zone=nil;pcall(function()local z=a.OverrideInnerZoneRadius;if type(z)=="number" and z>0 then zone=z end end)
+                return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",zone=zone,
+                    sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01",
+                    door_like=door~=nil or rooms.door_like(id,key,label)~=false}
+            end)
+            if ok and entry then out[#out+1]=entry;seen[entry.id]=true;if registered then remembered[entry.id]=a end
+            elseif not ok then report_once("read:"..tostring(#out),"scanner_source read_error="..tostring(entry)) end
+    end
     for _,a in ipairs(actors) do
         -- Diagnostic (test sessions): the visibility state of every registered
         -- object, once per object, to find what marks story-gated ones.
@@ -159,39 +229,42 @@ local function interactions(controller,out)
             local line=table.concat(v," ")
             if M.gate_seen[id]~=line then M.gate_seen[id]=line;M.report("scanner_gate id="..id.." "..line) end
         end) end
-        local ok,entry=pcall(function()
-            if a.bIsRegistered~=true or a.bNeedToHide==true then return nil end
-            -- Hidden by the story (seen in the classroom: six students not yet in
-            -- the scene are registered with their actor hidden).
-            if a.bHidden==true then return nil end
-            -- The object's visible model (ObjectActor) is hidden until the story
-            -- shows it: the bathroom butterfly's model starts hidden and is
-            -- revealed when it flies in, though its actions have no conditions.
-            local model=nil;pcall(function()model=a.ObjectActor end)
-            if valid(model) and model.bHidden==true then
-                if M.trace_gates then pcall(function()M.report("scanner_model_hidden id="..a:GetFName():ToString())end) end
-                return nil
+        read(a,true)
+    end
+    -- Objects the game registered earlier on this visit and has since dropped
+    -- (3 Nov: the diner's truck and the dorms' broken lamp went on and off the
+    -- list; the game deregisters some objects by distance). Kept, with the same
+    -- story and visibility checks, so the list does not flicker.
+    for id,a in pairs(remembered) do
+        if not seen[id] then
+            local before=#out
+            local ok_valid=valid(a)
+            if ok_valid then read(a,false) end
+            -- Why a remembered object is or is not back on the list (3 Nov: the
+            -- diner's truck still flickered; logged on each change).
+            local why=not ok_valid and "invalid" or (#out>before and "kept") or "dropped"
+            if why~="kept" and ok_valid then
+                pcall(function()
+                    local parts={}
+                    for _,f in ipairs({"bIsRegistered","bNeedToHide","bHidden"}) do local ok2,x=pcall(function()return a[f]end);parts[#parts+1]=f.."="..(ok2 and tostring(x) or "err") end
+                    local m=nil;pcall(function()m=a.ObjectActor end)
+                    parts[#parts+1]="model_hidden="..tostring(valid(m) and m.bHidden==true)
+                    parts[#parts+1]="enabled="..tostring(any_enabled(a))
+                    -- Which story conditions say no (3 Nov: the truck is dropped
+                    -- with every visible flag fine, so a condition must fail).
+                    local is=availability.fact_reader(controller)
+                    local bad={}
+                    for _,c in ipairs(enabled_conditions(a)) do
+                        for _,f in ipairs(c["and"] or {}) do local now=is(f.fact);if now~=nil and now~=f.want then bad[#bad+1]=f.fact.."="..tostring(now) end end
+                        for _,f in ipairs(c["or"] or {}) do bad[#bad+1]="or:"..f.fact.."="..tostring(is(f.fact)) end
+                    end
+                    parts[#parts+1]="failing="..(#bad>0 and table.concat(bad,",") or "none")
+                    why=why.." "..table.concat(parts," ")
+                end)
             end
-            if not available(a,is_active) then return nil end
-            local key=a.objectName:ToString()
-            if key=="" or key=="None" then return nil end
-            local label=M.translate(key)
-            local id=a:GetFullName()
-            -- Doors are named for the room they lead to ("Science lab door").
-            local door=rooms.door_label(id)
-            if door then label=M.text("door_label",{name=door}) end
-            -- Where to stand: the game's authored approach point, else the actor.
-            local stand=nil
-            local dummy=a.TapToMoveActor
-            if valid(dummy) then stand=point(dummy:K2_GetActorLocation()) end
-            -- The object's own interaction radius, when the level sets one (the
-            -- diner truck: 23.5 m; the Photo action appeared at about 23 m).
-            local zone=nil;pcall(function()local z=a.OverrideInnerZoneRadius;if type(z)=="number" and z>0 then zone=z end end)
-                return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",zone=zone,
-                sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01",
-                door_like=door~=nil or rooms.door_like(id,key,label)~=false}
-        end)
-        if ok and entry then out[#out+1]=entry elseif not ok then report_once("read:"..tostring(#out),"scanner_source read_error="..tostring(entry)) end
+            local short=id:match("LiSInteractionActor_(.+)$") or id
+            if dropout_logged[id]~=why then dropout_logged[id]=why;M.report("scanner_remembered "..short.." "..why) end
+        end
     end
 end
 local function goals(out)
