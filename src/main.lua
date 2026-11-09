@@ -64,6 +64,10 @@ end
 -- no mod code ever runs on the loader's input thread. bind_key keeps the
 -- loader's call shape: bind_key(key, fn) or bind_key(key, {modifier}, fn).
 local keys=require("core.keys").new()
+local padlock=require("hud.padlock")
+padlock.text=function(key,p)return l10n.text(key,p)end
+padlock.log=log
+padlock.start()
 local function on_game(fn)return fn end
 local function bind_key(key,mods,fn,opts)
     if type(mods)=="function" then fn,mods,opts=mods,nil,fn end
@@ -85,6 +89,8 @@ local function run_keys()
     end
 end
 bind_key(Key.HOME,on_game(function()
+    padlock.check_presence()
+    if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
     if not can_scan() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
@@ -136,7 +142,11 @@ local function face_selected()
     local c=scanner.controller()
     if c then face.start(c,scanner.selected()) end
 end
-local function show_help()say(help.speech(controls.using_gamepad()),true)end
+local function show_help()
+    padlock.check_presence()
+    local gamepad=controls.using_gamepad()
+    say(padlock.help(gamepad) or help.speech(gamepad),true)
+end
 -- The cue plays ~0.9 s after its name (18 loop beats), on the game-thread loop.
 local delayed={}
 local function after_beats(n,fn)delayed[#delayed+1]={n=n,fn=fn} end
@@ -718,6 +728,7 @@ local pad_errors=0
 local function pad_step()
         local ok,err=pcall(function()
             local buttons=pad_read and pad_read() or -1
+            padlock.observe_buttons(buttons)
             if journal_open and buttons>=0 then
                 local dir=pad:reader(buttons,os.clock())
                 if dir then journal_move(dir) end
@@ -729,7 +740,7 @@ local function pad_step()
                 if cmd=="repeat" then speech.say(last_speech,true)
                 elseif cmd=="autowalk" then walk_toggle()
                 elseif cmd=="face" then face_selected()
-                elseif cmd=="help" then show_help()
+                elseif cmd=="help" then padlock.controller_help();show_help()
                 elseif cmd=="preview" then next_preview()
             elseif cmd=="pool_bypass" then toggle_pool_bypass()
             elseif cmd=="room_filter" then toggle_room_filter()
@@ -750,9 +761,17 @@ local beat=0
 LoopInGameThreadWithDelay(50,function()
     beat=beat+1
     local ok,err=pcall(function()
+        if beat%5==0 then
+            padlock.install()
+            padlock.check_presence()
+        end
         run_keys()
         run_delayed()
         pad_step()
+        -- Recognize help before emitting a queued native digit change from
+        -- the same controller press.
+        local code_text=padlock.due()
+        if code_text then say(code_text,true);log('padlock_spoken='..code_text) end
         -- The lighthouse rewind cue needs a fresh reading: the rewind runs at
         -- twice speed and the safe moment to let go is short (measured).
         pcall(lighthouse_fast_step)

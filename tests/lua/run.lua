@@ -55,7 +55,7 @@ do
 end
 -- Every English placeholder must be one the mod knows how to fill.
 do
-    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true,options=true,key=true,text=true,total=true}
+    local known={menu_key=true,cancel_key=true,value=true,confirm_key=true,back_key=true,index=true,count=true,name=true,label=true,actions=true,options=true,key=true,text=true,total=true,position=true,digits=true}
     local en=require("lang.en")
     for key,s in pairs(en) do
         check("string type "..key,type(s)=="string")

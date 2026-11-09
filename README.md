@@ -205,6 +205,39 @@ now. It can be too low for the camera to reach, or not available yet in the
 story: in the opening classroom, the other objects on your desk only open up
 after you look at the photo.
 
+### Garage combination lock
+
+The garage padlock announces its displayed code when you open code entry.
+Initially no wheel is selected; the mod says so rather than assuming the first.
+After you select a wheel, its current value is followed by its position, for
+example "0, digit 1 of 4." Changes are announced as you edit. Opening the lock
+does not read instructions; press **F1** for lock help, using the active device.
+
+| Keyboard | Action |
+| --- | --- |
+| A / D | Select the previous / next wheel; selection wraps at the ends |
+| W / S | Change the selected digit |
+| Home | Read the full entered code and current selection |
+| Enter | Submit through the game's normal code check |
+| Escape | Cancel and return to play |
+| F1 | Read the lock's controls for the active device |
+
+On a controller, use the **D-pad or left stick**: left/right selects a wheel,
+and up/down changes its digit. **A** applies and **B** goes back. The existing
+help command—hold left-stick click and press D-pad up—also reads lock help.
+The game still receives that Up input and may change the digit. Its announcement
+does not interrupt help; the reader keeps the updated value. Release Up before
+resuming normal edits. Use F1 if you want help without sending Up to the game.
+
+Use WASD here on keyboard, not the arrow keys. The game keeps its normal voiced feedback
+for an incorrect code. Reopening starts with the game's fresh digits. The mod
+neither reveals nor enters the solution, and the crowbar alternative is unchanged.
+
+Keyboard editing, submission of an incorrect code, cancellation and reopening
+have been tested in the game. Controller bindings above follow the player's
+reported controls; mouse/controller operation and successful puzzle completion
+have not been covered by the agent-run native tests.
+
 ### Dialogue choices
 
 When answers appear in a conversation, the mod reads them with their keys:

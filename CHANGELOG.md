@@ -2,6 +2,22 @@
 
 Player-facing changes, newest first.
 
+## 2026-11-09
+
+- The garage combination lock now reads the displayed code, selected wheel and
+  digit changes. Home reads the full code and selection. Use the game's A/D to
+  choose a wheel, W/S to change it, Enter to submit and Escape to cancel.
+  Reopening announces the fresh digits; closing returns Home to its usual
+  behavior. The solution, normal code checks and crowbar alternative are unchanged.
+  Control instructions are available through F1 or the controller help command,
+  not read automatically on opening. Help describes keyboard or controller
+  controls according to the active device.
+  The digit announcement caused by the controller help gesture no longer cuts
+  help short. The game still receives Up and may change the digit; the reader
+  retains that value, and ordinary edits speak again after Up is released.
+  Keyboard operation was tested; mouse/controller operation and successful puzzle
+  completion have not yet been verified with the reader.
+
 ## 2026-11-04
 
 ### In play
