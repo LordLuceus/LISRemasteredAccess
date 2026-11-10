@@ -211,6 +211,13 @@ local function start_leg(s)
     if not leg then return end
     local ok,goal=route.project(s.controller,leg)
     if not ok then M.active=nil;speak("walk_no_route",{name=s.walk.target});return end
+    if s.entry.way_via then
+        -- Revalidate from actual feet at every leg. Do not let the native
+        -- shortest path silently switch back to another listed entrance.
+        local good,pts=pcall(doors.approach,s.controller,s.pawn,feet(s.pawn),{goal},emit,s.way_survey,s.entry.way_avoid)
+        s.way_survey=nil -- subsequent legs re-read live door state
+        if not good or not pts then M.active=nil;speak("walk_no_route",{name=s.walk.target});return end
+    end
     last_result,last_remaining=nil,nil
     follow.start(s.controller,s.pawn,goal,emit,false)
     if not follow.active then
@@ -266,13 +273,23 @@ function M.start(controller,entry,quiet)
     if not gok and entry.through then gok,goal=route.project(controller,entry.stand or entry.pos) end
     if not sok or not gok then
         emit("navmesh_unavailable start="..tostring(sok).." goal="..tostring(gok))
+        if entry.way_via then speak("walk_no_route",{name=entry.name});return false end
         return start_offmesh(controller,pawn,entry,target,"unprojected",quiet)
     end
     -- Direct route, or a detour around a closed door; false means no route.
     -- An exit only needs Max inside its volume: a partial route that ends in it will do.
     local accept=nil
     if entry.kind=="exit" and entry.extent then accept=function(p)return doors.inside(p,entry,20) end end
-    local ok,legs=pcall(doors.plan,controller,pawn,start,goal,emit,accept)
+    local ok,legs,way_survey
+    if entry.way_via then
+        local good,pts,survey=pcall(doors.approach,controller,pawn,start,entry.way_via,emit,nil,entry.way_avoid)
+        if not good or not pts then speak("walk_no_route",{name=entry.name});return false end
+        way_survey=survey
+        ok=true;legs={}
+        for _,v in ipairs(entry.way_via) do legs[#legs+1]={v.X,v.Y,v.Z} end
+    else
+        ok,legs=pcall(doors.plan,controller,pawn,start,goal,emit,accept)
+    end
     if not ok then emit("plan_error="..tostring(legs));legs=nil end
     if legs==false then return start_offmesh(controller,pawn,entry,target,"no_navmesh_route",quiet) end
     local list={}
@@ -280,10 +297,11 @@ function M.start(controller,entry,quiet)
     else list={goal} end
     -- Movement already held when the walk starts must be released first, so
     -- it is never mistaken for a cancel.
-    M.active={controller=controller,pawn=pawn,entry=entry,walk=plan.new(entry.name,list,entry.through and entry.through+plan.NEAR or nil),armed=not M.moving()}
+    M.active={controller=controller,pawn=pawn,entry=entry,walk=plan.new(entry.name,list,entry.through and entry.through+plan.NEAR or nil),armed=not M.moving(),way_survey=way_survey}
     emit("start target="..entry.name.." legs="..#list)
     if quiet~=true then speak(#list>1 and "walk_start_detour" or "walk_start",{name=entry.name}) end
     start_leg(M.active)
+    if entry.way_via then return M.active~=nil end
     return true
 end
 -- Called regularly on the game thread.
@@ -317,6 +335,20 @@ function M.tick()
         end
     end
     local outcome=s.walk:leg_result(result,last_remaining)
+    if outcome.say=="walk_arrived" and s.entry and s.entry.way_room then
+        -- Distance/cutscene/stall tolerance alone is not entry into a room.
+        -- Match the scanner's five-sample vote and exact actor-position getter.
+        local ok,room=pcall(function()
+            local sources=require("scanner.sources")
+            return sources.standing_room(s.controller,s.pawn:K2_GetActorLocation(),sources.room or s.entry.way_from)
+        end)
+        if not ok or room~=s.entry.way_room then
+            emit("way_arrival_not_in_room expected="..s.entry.way_room.." actual="..tostring(room))
+            local takeover=result=="cinematic_movement_track" or result=="input_ignored" or result=="paused"
+            outcome.say=takeover and "walk_interrupted" or "walk_no_route"
+            outcome.params={name=s.walk.target}
+        end
+    end
     emit("leg_end result="..result.." leg="..s.walk.index)
     if outcome.continue then start_leg(s);return end
     M.active=nil
@@ -329,6 +361,12 @@ function M.tick()
         if here and plan.retry_stall(moved,tries) then
             emit(string.format("stall_retry try=%d moved=%s remaining=%.0f",tries+1,moved and string.format("%.0f",moved) or "first",last_remaining or -1))
             local entry,controller=s.entry,s.controller
+            if entry.way_via then
+                local copy={};for k,v in pairs(entry) do copy[k]=v end
+                copy.way_via={}
+                for i=s.walk.index,#s.walk.legs do copy.way_via[#copy.way_via+1]=s.walk.legs[i] end
+                entry=copy
+            end
             speak("walk_retry",{name=s.walk.target})
             if M.start(controller,entry,true) and M.active then
                 M.active.stall_tries=tries+1;M.active.stall_at=here

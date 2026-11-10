@@ -2,6 +2,16 @@
 
 Player-facing changes, newest first.
 
+## 2026-11-10
+
+- The room filter no longer hides other entrances just because a door to that
+  room is listed. In Chloe's house, the garage's eastern entrance stays available
+  while the hall door is locked. Autowalk follows the chosen entrance rather than
+  switching back to the hall, and ordinary door interactions remain listed.
+  Ways refresh after movement or within a few seconds. Arrival at a room way
+  checks the actual room, not merely proximity to its doorway. The garage entry,
+  return and previously failing near-hall position were verified in game.
+
 ## 2026-11-09
 
 - The garage combination lock now reads the displayed code, selected wheel and

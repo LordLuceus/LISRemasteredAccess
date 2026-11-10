@@ -1,5 +1,6 @@
 -- One bounded native movement request in an explicitly authorized disposable profile.
 local M={active=nil}
+local arrival=require("nav.arrival")
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function point(p)return {X=p.X,Y=p.Y,Z=p.Z}end
 local function horizontal(a,b)return math.sqrt((a.X-b.X)^2+(a.Y-b.Y)^2)end
@@ -122,7 +123,7 @@ function M.tick()
             s.last_report=now
             s.emit(string.format("follow_progress elapsed=%d remaining=%.3f vertical=%.3f position=%.3f,%.3f,%.3f",now-s.start,remaining,math.abs(p.Z-s.goal.Z),p.X,p.Y,p.Z))
         end
-        if remaining<=30 and math.abs(p.Z-s.goal.Z)<=40 and (s.pawn.CharacterMovement.MovementMode==1 or s.pawn.CharacterMovement.MovementMode==2) then M.stop("arrived_test_region");return end
+        if remaining<=arrival.RADIUS and math.abs(p.Z-s.goal.Z)<=arrival.HEIGHT and (s.pawn.CharacterMovement.MovementMode==1 or s.pawn.CharacterMovement.MovementMode==2) then M.stop("arrived_test_region");return end
         if horizontal(p,s.last)>=5 then s.last=p;s.last_progress=now end
         if now-s.start>=(s.limit or 20) then M.stop("timeout");return end
         if now-s.last_progress>=4 then M.stop("stalled");return end

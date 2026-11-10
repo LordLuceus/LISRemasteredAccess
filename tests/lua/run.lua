@@ -2344,6 +2344,13 @@ do
             if b.X>1000 then n="E3_5A_ParentsRoom_GRC" end
             hit.Actor={Get=function()return {GetFullName=function()return "StaticMeshActor "..lvl(n).."Floor" end} end}
             return true end} end
+        -- Exercise the shared planner with no physical doors in the open cases.
+        local oldDoors=package.loaded["nav.doors"]
+        local doorSurvey={}
+        package.loaded["nav.doors"]={survey=function()return doorSurvey end,
+            plan=function(...)return dofile("src/nav/doors.lua").plan(...) end,
+            crosses=function(...)return dofile("src/nav/doors.lua").crosses(...) end,
+            represents=function(...)return dofile("src/nav/doors.lua").represents(...) end}
         -- Routes: straight lines; to the parents' room the route passes the bathroom first.
         package.loaded["nav.route"]={project=function(_,q)return true,{X=q.X,Y=q.Y,Z=0} end,
             query=function(_,_,_,a,b)
@@ -2393,6 +2400,7 @@ do
         check("a way is found when the room's object hangs on a wall off the walkable floor",way4~=nil,ids(got4))
         -- A listed door sits at the threshold (the diner's own door): no extra way.
         package.loaded["nav.route"]={project=function(_,q)return true,{X=q.X,Y=q.Y,Z=0} end,query=function(_,_,_,a,b)return true,0,{a,b} end}
+        doorSurvey={{state="open",centre={X=172,Y=-1020,Z=0},nx=0,ny=1}}
         local c7={GetWorld=function()return {GetFName=function()return {ToString=function()return "E3_5A_door" end} end} end,Pawn={}}
         local got5=S.by_room(c7,{{id="poster",kind="interaction",sublevel=CO,pos={X=0,Y=-700,Z=100}},
             {id="bath door",label="Door",kind="interaction",sublevel=CO,pos={X=0,Y=-850,Z=100},door_like=true}},{X=0,Y=-700,Z=0})
@@ -2400,6 +2408,7 @@ do
         -- Its floor test sees one room only (120 cm out stays above y=-1000), as
         -- the diner door's did; it is 150 cm from the threshold.
         check("no 'Way to' when a listed door is the way",way5==nil and ids(got5):find("bath door")~=nil,ids(got5))
+        package.loaded["nav.doors"]=oldDoors
         _G.FindAllOf=oldF
         package.loaded["nav.route"]=nil
     end
@@ -2714,5 +2723,8 @@ do
     check("bathroom door as the game labels it",R.door_label("x LiSInteractionActor_LadiesRoomDoor_3")=="Bathroom" and R.door_label("x LiSInteractionActor_ToiletDoor_1")=="Bathroom")
     package.loaded["scanner.rooms"]=nil
 end
+-- Keep the producer/planner regression in the ordinary test command as well.
+local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
+if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

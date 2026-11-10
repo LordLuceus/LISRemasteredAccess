@@ -421,6 +421,17 @@ local function floor_room(controller,p,ignore,depth)
     return room
 end
 M.floor_room=floor_room
+-- Same standing-position vote for scanner classification and way arrival.
+-- p is capsule/standing position, not a navigation point at the feet.
+function M.standing_room(controller,p,current)
+    local pawn=nil;pcall(function()pawn=controller.Pawn end)
+    local keys={floor_room(controller,p,{pawn})}
+    for i=0,3 do
+        local a=i*math.pi/2
+        keys[i+2]=floor_room(controller,{X=p.X+math.cos(a)*M.ROOM_REACH,Y=p.Y+math.sin(a)*M.ROOM_REACH,Z=p.Z},{pawn})
+    end
+    return rooms.vote(keys,5,current)
+end
 -- The room of the GROUND below a high point: every surface down the line, the
 -- lowest one that names a room (3 Nov: the scared bird at 2513,-659, 1.5 m up
 -- over the garden; the first surface below it was the living room's - the
@@ -459,8 +470,11 @@ local joins_cache,joins_world={},nil
 -- MOVED_CM from where it was first seen takes its room from the floor under
 -- it now; re-measured only when it has moved again.
 M.MOVED_CM=150
--- Neighbouring rooms without a door, per room, measured once per level visit.
+-- Short-lived route evidence: doors can change without a level/room change.
 local ways_cache={}
+M.way_clock=os.time
+M.WAY_REFRESH=3 -- seconds; includes previously empty results
+M.WAY_MOVE=150  -- cm; re-evaluate from a meaningfully different position
 M.WAY_STEP=50     -- cm between floor samples along a route
 M.WAY_INTO=120    -- cm past the threshold for the entry's point
 M.WAY_TRIES=12    -- candidate points tried per room
@@ -520,13 +534,23 @@ function M.nearest_room(geo,p)
     end
     return best
 end
--- Ways from `room` into each neighbouring room no listed door already joins.
+-- Ways follow complete, doorway-aware native paths, not room-pair proxies.
 local function ways_from(controller,out,room,p)
-    if ways_cache[room] then return ways_cache[room] end
+    local now=M.way_clock()
+    local signature={}
+    for _,e in ipairs(out) do
+        if e.pos then signature[#signature+1]=tostring(e.id)..":"..tostring(e.sublevel)..":"..math.floor(e.pos.X/100)..","..math.floor(e.pos.Y/100)..","..math.floor(e.pos.Z/100) end
+    end
+    table.sort(signature);signature=table.concat(signature,";")
+    local cached=ways_cache[room]
+    if cached and now-cached.time<M.WAY_REFRESH and cached.signature==signature
+        and (p.X-cached.pos.X)^2+(p.Y-cached.pos.Y)^2+(p.Z-cached.pos.Z)^2<M.WAY_MOVE^2 then return cached.found end
     local found={}
-    ways_cache[room]=found
+    ways_cache[room]={time=now,pos={X=p.X,Y=p.Y,Z=p.Z},signature=signature,found=found}
     M.report("scanner_room_ways_check room="..tostring(room))
     local route=require("nav.route")
+    local doors=require("nav.doors")
+    local survey -- shared lazily across all candidate rooms in this refresh
     -- Candidate points per other room: its registered objects, else its
     -- objects in the world, else its geometry; nearest to Max first.
     local cands={}
@@ -546,58 +570,108 @@ local function ways_from(controller,out,room,p)
     for r,list in pairs(geo) do for _,v in ipairs(list) do add(r,v) end end
     for r,l in pairs(cands) do table.sort(l,function(a,c)return a.d<c.d end);best[r]=l end
     for target,list in pairs(best) do
-        local doored=false
-        for _,e in ipairs(out) do if e.joins and e.joins[room] and e.joins[target] then doored=true end end
-        if not doored then local okw,errw=pcall(function()
+        local okw,errw=pcall(function()
             -- Objects hang on walls and above the floor (3 Nov: the mirror, 1 m
             -- up a wall, never projected with a 50 cm search): try each
             -- candidate at floor height with a 150 cm search, nearest first.
-            local okg,goal=false,nil
-            local tried=0
+            local oks,start=route.project(controller,p)
+            if not oks then M.report("scanner_room_way_none "..room.." -> "..target.." reason=unprojected_start");return end
+            local tried,planned,complete=0,0,0
+            local represented={}
+            local function prepare()
+                if not survey then survey=doors.survey(controller,controller.Pawn,function()end) end
+                for _,e in ipairs(out) do
+                    if e.door_like and e.pos then
+                        local nearest,dist=nil,M.WAY_DOOR_NEAR^2
+                        for _,d in ipairs(survey) do
+                            local dd=(e.pos.X-d.centre.X)^2+(e.pos.Y-d.centre.Y)^2
+                            if math.abs(e.pos.Z-d.centre.Z)<200 and dd<dist then nearest=d;dist=dd end
+                        end
+                        if nearest then represented[nearest]=true end
+                    end
+                end
+            end
+            local function evaluate(pts)
+                complete=complete+1
+                -- Sample actual native legs, retaining their bends for activation.
+                local samples,keys,segments={},{},{}
+                for i=2,#pts do
+                    local a,c=pts[i-1],pts[i]
+                    local len=math.sqrt((c.X-a.X)^2+(c.Y-a.Y)^2)
+                    local steps=math.max(1,math.ceil(len/M.WAY_STEP))
+                    for s=0,steps-1 do
+                        local f=s/steps
+                        samples[#samples+1]={X=a.X+(c.X-a.X)*f,Y=a.Y+(c.Y-a.Y)*f,Z=a.Z+(c.Z-a.Z)*f}
+                        segments[#samples]=i
+                    end
+                end
+                samples[#samples+1]=pts[#pts];segments[#samples]=#pts
+                for i,sp in ipairs(samples) do keys[i]=floor_room(controller,{X=sp.X,Y=sp.Y,Z=sp.Z+40},{}) end
+                local i,k=rooms.entered(keys,#samples,room)
+                if k~=target then
+                    M.report(string.format("scanner_room_way_none %s -> %s first=%s samples=%d",room,target,tostring(k),#samples))
+                    return false
+                end
+                local j=i
+                for n=i+1,math.min(#samples,i+math.floor(M.WAY_INTO/M.WAY_STEP)) do
+                    if keys[n]~=target then break end
+                    j=n
+                end
+                local via,avoid,prefix={},{},{pts[1]}
+                for n=2,segments[j]-1 do via[#via+1]=pts[n];prefix[#prefix+1]=pts[n] end
+                via[#via+1]=samples[j];prefix[#prefix+1]=samples[j]
+                for d in pairs(represented) do
+                    -- A listed portal represents only itself, regardless of
+                    -- whether the collision survey reports it open or closed.
+                    if doors.represents(prefix,d) then
+                        M.report(string.format("scanner_room_way_skip %s -> %s reason=represented_portal doorway=%s",room,target,tostring(d.index)))
+                        return false
+                    end
+                    avoid[#avoid+1]={centre=d.centre,nx=d.nx,ny=d.ny}
+                end
+                -- The current standing vote is NOT target. A goal already in
+                -- follower acceptance range could announce arrival without a
+                -- room transition; keep looking for a meaningful approach.
+                local arrival=require("nav.arrival")
+                if (samples[j].X-p.X)^2+(samples[j].Y-p.Y)^2<=arrival.RADIUS^2
+                    and math.abs(samples[j].Z-start.Z)<=arrival.HEIGHT then return false end
+                found[#found+1]={room=target,pos=samples[j],via=via,avoid=avoid}
+                M.report(string.format("scanner_room_way %s -> %s at=%.0f,%.0f via=%d",room,target,samples[j].X,samples[j].Y,#via))
+                return true
+            end
+            -- First keep the usual geometry/object route, including openings
+            -- the mesh-name survey does not discover. Duplicates reject THIS
+            -- route, never the whole target room.
             for _,c in ipairs(list) do
                 if tried>=M.WAY_TRIES then break end
                 tried=tried+1
-                local o,g=route.project(controller,{X=c.pos.X,Y=c.pos.Y,Z=p.Z},{X=150,Y=150,Z=300})
-                if o and g and rooms.room_of and floor_room(controller,{X=g.X,Y=g.Y,Z=g.Z+40},{})==target then okg,goal=true,g;break end
-            end
-            local oks,start=route.project(controller,p)
-            if not (okg and oks) then M.report(string.format("scanner_room_way_none %s -> %s reason=unprojected target=%s start=%s tried=%d",room,target,tostring(okg),tostring(oks),tried));return end
-            local _,_,pts=route.query(controller,controller.Pawn,"way",start,goal,function()end)
-            if not pts or #pts<2 then M.report(string.format("scanner_room_way_none %s -> %s reason=no_route",room,target));return end
-            -- Floor samples every WAY_STEP cm along the route.
-            local samples,keys={},{}
-            for i=2,#pts do
-                local a,c=pts[i-1],pts[i]
-                local len=math.sqrt((c.X-a.X)^2+(c.Y-a.Y)^2)
-                local steps=math.max(1,math.floor(len/M.WAY_STEP))
-                for s=0,steps-1 do
-                    local f=s/steps
-                    samples[#samples+1]={X=a.X+(c.X-a.X)*f,Y=a.Y+(c.Y-a.Y)*f,Z=a.Z+(c.Z-a.Z)*f}
+                local o,goal=route.project(controller,{X=c.pos.X,Y=c.pos.Y,Z=p.Z},{X=150,Y=150,Z=300})
+                if o and goal and floor_room(controller,{X=goal.X,Y=goal.Y,Z=goal.Z+40},{})==target then
+                    prepare()
+                    planned=planned+1
+                    local plan,pts=doors.plan(controller,controller.Pawn,start,goal,function()end,nil,survey)
+                    if plan~=false and pts and #pts>=2 and evaluate(pts) then return end
+                end -- projected candidate in target room
+            end -- try other candidates, including after a missing/blocked route
+            -- A shorter represented entrance must not hide a distinct portal.
+            -- Query its near side and crossing explicitly, not another final
+            -- destination whose shortest route could use the same bad door.
+            prepare()
+            local avoid={};for d in pairs(represented) do avoid[#avoid+1]=d end
+            for _,d in ipairs(survey) do
+                if d.state=="open" and not represented[d] and d.sides then
+                    for order=1,2 do
+                        local near,far=d.sides[order],d.sides[3-order]
+                        if near and far and floor_room(controller,{X=far.X,Y=far.Y,Z=far.Z+40},{})==target then
+                            local pts=doors.approach(controller,controller.Pawn,start,{near,far},function()end,survey,avoid)
+                            if pts and evaluate(pts) then return end
+                        end
+                    end
                 end
             end
-            samples[#samples+1]=pts[#pts]
-            for i,sp in ipairs(samples) do keys[i]=floor_room(controller,{X=sp.X,Y=sp.Y,Z=sp.Z+40},{}) end
-            local i,k=rooms.entered(keys,#samples,room)
-            if k~=target then M.report(string.format("scanner_room_way_none %s -> %s first=%s samples=%d",room,target,tostring(k),#samples)) end
-            -- The route goes through a door the scanner already lists (3 Nov: the
-            -- diner's own door, whose floor test missed): no extra "Way to".
-            local th=samples[i]
-            local near_door=nil
-            for _,e in ipairs(out) do
-                if e.door_like and e.pos and th and (e.pos.X-th.X)^2+(e.pos.Y-th.Y)^2<=M.WAY_DOOR_NEAR^2 then near_door=e.label end
-            end
-            if k==target and near_door then
-                M.report(string.format("scanner_room_way_skip %s -> %s reason=door_near %s",room,target,tostring(near_door)))
-                k=nil
-            end
-            if k==target then
-                local j=math.min(#samples,i+math.floor(M.WAY_INTO/M.WAY_STEP))
-                found[#found+1]={room=target,pos=samples[j]}
-                M.report(string.format("scanner_room_way %s -> %s at=%.0f,%.0f",room,target,samples[j].X,samples[j].Y))
-            end
+            M.report(string.format("scanner_room_way_none %s -> %s reason=no_usable_route tried=%d planned=%d complete=%d",room,target,tried,planned,complete))
         end)
         if not okw then M.report("scanner_room_way_none "..room.." -> "..target.." reason=error "..tostring(errw)) end
-        else M.report("scanner_room_way_skip "..room.." -> "..target.." reason=door") end
     end
     return found
 end
@@ -622,7 +696,11 @@ end
 -- found: open areas built as one level, or a missed trace), doors judged by
 -- the floors around them, then the filter.
 function M.by_room(controller,out,p)
-    local world=nil;pcall(function()world=controller:GetWorld():GetFName():ToString()end)
+    local world=nil;pcall(function()
+        local w=controller:GetWorld()
+        world=w:GetFName():ToString()
+        pcall(function()world=world..":"..tostring(w:GetAddress())end)
+    end)
     if world~=joins_world then joins_cache={};joins_world=world;first_seen={};moved_room={};ways_cache={};geometry=nil end
     for _,e in ipairs(out) do
         if e.kind=="interaction" and e.pos and e.sublevel then
@@ -647,15 +725,9 @@ function M.by_room(controller,out,p)
             end
         end
     end
-    local pawn=nil;pcall(function()pawn=controller.Pawn end)
     -- Floor under Max and 50 cm out in four directions; a new room needs a
     -- majority of them.
-    local keys={floor_room(controller,p,{pawn})}
-    for i=0,3 do
-        local a=i*math.pi/2
-        keys[i+2]=floor_room(controller,{X=p.X+math.cos(a)*M.ROOM_REACH,Y=p.Y+math.sin(a)*M.ROOM_REACH,Z=p.Z},{pawn})
-    end
-    local room=rooms.vote(keys,5,M.room)
+    local room=M.standing_room(controller,p,M.room)
     local how="floor"
     if not room then room=rooms.current(out,p);how="objects" end
     for _,e in ipairs(out) do if e.door_like and e.kind=="interaction" then e.joins=joins_of(controller,e) end end
@@ -670,7 +742,7 @@ function M.by_room(controller,out,p)
     if room and how=="floor" then
         for _,w in ipairs(ways_from(controller,out,room,p)) do
             local name=rooms.room_name(w.room)
-            kept[#kept+1]={id="way:"..w.room,label=M.text("room_way",{name=rooms.way_name(name)}),pos=w.pos,stand=w.pos,kind="goal"}
+            kept[#kept+1]={id="way:"..w.room,label=M.text("room_way",{name=rooms.way_name(name)}),pos=w.pos,stand=w.pos,kind="goal",way_via=w.via,way_avoid=w.avoid,way_room=w.room,way_from=room}
         end
     end
     -- When the room changes, which objects of that room were dropped and why

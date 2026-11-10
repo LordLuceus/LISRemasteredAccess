@@ -67,8 +67,19 @@ menus.
 
 Indoors, the scanner lists only the room you are in, plus its exits and the
 doors that lead out of it, including ones you have just come through, such as
-the sliding door back in from the garden. A room you enter through an open
-doorway, with no door, is listed as a way, such as "Way to the bathroom".
+the sliding door back in from the garden. A room reached through an open
+connection can be listed as a way, such as "Way to the bathroom". A listed
+door represents its own opening, not every entrance to that room. For example,
+the garage's eastern entrance stays available while the hall door is locked.
+Autowalk follows the chosen entrance rather than switching back to the hall.
+Look and Test door entries remain available; their presence does not mean the
+door is passable. Ways refresh
+after movement or within a few seconds, including when none were found.
+Arrival at a room way checks the actual room, not just distance to its doorway.
+The garage entry, return and near-hall boundary were verified in game with the
+filter on. Coverage still depends on the game's navigation and room geometry;
+not every connection is guaranteed. Opening/closing-door transitions and
+performance in larger scenes have not yet been verified.
 The first time you use the scanner in a room, it tells you how many objects
 there are in all when the filter is hiding some ("21 in all; F4 shows
 them."). F4 (or hold the left stick and click the right stick) switches the

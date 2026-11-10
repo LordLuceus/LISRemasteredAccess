@@ -157,6 +157,34 @@ end
 -- Exposed so other code can reject goals autowalk would refuse (2 Nov: the
 -- pool's hiding spot was reachable on the navmesh only through a shut door).
 function M.crosses_closed(points,list)return closed_crossing(points,list)~=nil end
+function M.crosses(points,door)return crosses(points,door) end
+-- A represented threshold also owns goals ending within the follower's arrival
+-- radius of its finite opening. Strict crossing misses terminal/near touches.
+-- Keep collision crossing semantics unchanged: this is representation only.
+function M.represents(points,d)
+    if crosses(points,d) then return true end
+    local p=points[#points]
+    if not p or math.abs(p.Z-d.centre.Z)>=100 then return false end
+    local x,y=p.X-d.centre.X,p.Y-d.centre.Y
+    local normal=x*d.nx+y*d.ny
+    local tangent=math.max(0,math.abs(-x*d.ny+y*d.nx)-42)
+    return normal*normal+tangent*tangent<=require("nav.arrival").RADIUS^2
+end
+-- Validate an explicit approach without replacing it by a shortest path to its
+-- final goal. `avoid` contains represented portals, even if surveyed false-open.
+function M.approach(controller,pawn,start,via,emit,survey,avoid)
+    local list=survey or M.survey(controller,pawn,emit)
+    local points={}
+    local from=start
+    for i,to in ipairs(via) do
+        local ok,_,leg=route.query(controller,pawn,"approach"..i,from,to,emit)
+        if not ok or not leg or #leg<2 or closed_crossing(leg,list) then return false end
+        for _,d in ipairs(avoid or {}) do if M.represents(leg,d) then return false end end
+        for j,v in ipairs(leg) do if #points==0 or j>1 then points[#points+1]=v end end
+        from=to
+    end
+    return points,list
+end
 -- Pure: is a point inside an exit's trigger volume (centre pos, half-size
 -- extent), kept `inset` cm inside its sides? Walking into the volume is what
 -- the exit needs; its centre may be off the walkable ground.
@@ -170,8 +198,11 @@ end
 -- Returns nil for the direct native path, a waypoint list for a detour, or false.
 -- accept(point): optional; a partial route ending at an accepted point (inside
 -- an exit's volume) is used as a route to that point.
-function M.plan(controller,pawn,start,goal,emit,accept)
-    local list=M.survey(controller,pawn,emit)
+-- Optional shared survey avoids repeating actor discovery for multiple goals.
+-- Second result is the actual native polyline (not waypoint chords); complete
+-- unless the caller explicitly accepts a partial endpoint through `accept`.
+function M.plan(controller,pawn,start,goal,emit,accept,survey)
+    local list=survey or M.survey(controller,pawn,emit)
     local ok,len,pts=route.query(controller,pawn,"direct",start,goal,emit)
     local moved=nil
     if not ok and accept and pts and #pts>=2 and accept(pts[#pts]) then
@@ -184,7 +215,7 @@ function M.plan(controller,pawn,start,goal,emit,accept)
     end
     if not ok then emit("door_plan=no_direct_path");return false end
     local closed=closed_crossing(pts,list)
-    if not closed then emit("door_plan=direct length="..string.format("%.0f",len));return moved end
+    if not closed then emit("door_plan=direct length="..string.format("%.0f",len));return moved,pts end
     emit("door_plan=direct_crosses_closed doorway="..closed.index.." blocker="..tostring(closed.blocker))
     local best,best_len=nil,math.huge
     for _,d in ipairs(list) do
@@ -200,13 +231,19 @@ function M.plan(controller,pawn,start,goal,emit,accept)
                 emit("door_option doorway="..d.index.." order="..order.." complete="..tostring(ok3==true).." avoids_closed="..tostring(clear==true))
                 if clear then
                     local total=l1+l2+l3
-                    if total<best_len then best_len=total;best={near,far,goal,doorway=d.index} end
+                    if total<best_len then
+                        local points={}
+                        for _,leg in ipairs({p1,p2,p3}) do
+                            for i,v in ipairs(leg) do if #points==0 or i>1 then points[#points+1]=v end end
+                        end
+                        best_len=total;best={near,far,goal,doorway=d.index,points=points}
+                    end
                 end
             end
         end
     end
     if not best then emit("door_plan=no_open_detour");return false end
     emit(string.format("door_plan=detour doorway=%d length=%.0f",best.doorway,best_len))
-    return {{best[1].X,best[1].Y,best[1].Z},{best[2].X,best[2].Y,best[2].Z},{best[3].X,best[3].Y,best[3].Z}}
+    return {{best[1].X,best[1].Y,best[1].Z},{best[2].X,best[2].Y,best[2].Z},{best[3].X,best[3].Y,best[3].Z}},best.points
 end
 return M
