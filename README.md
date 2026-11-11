@@ -1,18 +1,19 @@
 # LIS Remastered Access (early development)
 
 A screen-reader accessibility mod for *Life is Strange Remastered*, ported from
-LISAccess for the original game. The remaster's own navigation system makes
-reliable automatic walking possible, which the original never achieved.
+LISAccess for the original game. Automatic walking builds on the remaster's
+native navigation system.
 
-**Current state: early.** Speech and braille work in-game, and the title screen
-and main menu are narrated. There is no object scanner, dialogue reading or
-general autowalk yet.
+**Current state: early.** Speech and braille, menu narration, the object scanner,
+automatic walking, dialogue choices and the scene-specific assistance described
+below are implemented. Coverage is still incomplete.
 
 ## Playing with the mod
 
 Launch the game from Steam as usual. Once the mod is installed it is active on
-every launch. It only reads the screen: it never moves Max, loads scenes or
-writes to your saves.
+every launch. Scanning and narration work alongside the game's normal controls;
+automatic walking and interaction shortcuts act when requested. The game saves
+normally; the mod does not edit your save files.
 
 - At the title screen it says **Click To Start** once the game accepts a key.
 - In the main menu and settings it reads the highlighted option as you move.
