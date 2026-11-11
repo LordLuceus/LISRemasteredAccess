@@ -1,0 +1,964 @@
+{
+  "loader_revision": "8333063595fa3c49ad307f3b0f732accbb760d25",
+  "entries": [
+    {
+      "name": "IconFontCppHeaders/licence.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/juliettef/IconFontCppHeaders/5ea783515597f35900bd42d42a97b0ac2669ecdb/licence.txt",
+      "sha256": "8a0e8338ba1d9359adbbfe5ffb70d6423b169192d146dae12410adaff15aa67a"
+    },
+    {
+      "name": "ImGuiColorTextEdit/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/ImGuiColorTextEdit/33b4f5a1c4dc67f5cf085453d4b1f933ab3a65ad/LICENSE",
+      "sha256": "7d8a940bdfabdc84091e8d597811784f21eb453b1eba157597ac319f59ec2b19"
+    },
+    {
+      "name": "PolyHook/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/stevemk14ebr/PolyHook_2_0/fd2a88f09c8ae89440858fc52573656141013c7f/LICENSE",
+      "sha256": "c0dc0c2a852d986cd736c8bc12f45bf7062179fd84bce5154cfacf1cca228aec"
+    },
+    {
+      "name": "Tracy/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/wolfpld/tracy/37aff70dfa50cf6307b3fee6074d627dc2929143/LICENSE",
+      "sha256": "893dc42931375ccf7f0715af482c8d5c6105777c0d04bca39e571eef6dd20f39"
+    },
+    {
+      "name": "Tracy/tracy_lz4.cpp",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/wolfpld/tracy/37aff70dfa50cf6307b3fee6074d627dc2929143/public/common/tracy_lz4.cpp",
+      "sha256": "7c8fe2308b1204e0f89fcca03b9deb828ad6dd20ac34900f61a5309c1ba5897d"
+    },
+    {
+      "name": "Tracy/tracy_rpmalloc.cpp",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/wolfpld/tracy/37aff70dfa50cf6307b3fee6074d627dc2929143/public/client/tracy_rpmalloc.cpp",
+      "sha256": "4ceceed51c147716993764c23711e824005e899861abfd1ff6ae03e23edda74d"
+    },
+    {
+      "name": "asmjit/LICENSE.md",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/asmjit/asmjit/3577608cab0bc509f856ebf6e41b2f9d9f71acc4/LICENSE.md",
+      "sha256": "a80880a56c0f7f1e8cf838544ff193d30e66dd562c117e07acba58c9063c62f9"
+    },
+    {
+      "name": "asmtk/LICENSE.md",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/asmjit/asmtk/6e25b8983fbd8bf455c01ed7c5dd40c99b789565/LICENSE.md",
+      "sha256": "d79e47f50caf8dc61c7ea920e364b09a34d303862b4d4752f06789623ef7c1b7"
+    },
+    {
+      "name": "glad/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/Dav1dde/glad/v0.1.36/LICENSE",
+      "sha256": "3d6e8bb9a06887b182a1da966937678b69fb8faeacf05dbf058cec8d0e4dc872"
+    },
+    {
+      "name": "glad/khrplatform.h",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/third/glad/include/KHR/khrplatform.h",
+      "sha256": "7b1e01aaa7ad8f6fc34b5c7bdf79ebf5189bb09e2c4d2e79fc5d350623d11e83"
+    },
+    {
+      "name": "glaze-2.9.5/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/stephenberry/glaze/v2.9.5/LICENSE",
+      "sha256": "5d49e66411a0807a7c8d6b911b9a26b59e940c71aebe561a3ad8b0b80ac4b7b6"
+    },
+    {
+      "name": "glfw-3.3.9/LICENSE.md",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/glfw/glfw/3.3.9/LICENSE.md",
+      "sha256": "149704059b5d0bf551637e50042dd4de9c2cae921021f6636298911e3a5f9462"
+    },
+    {
+      "name": "imgui-1.92.1/LICENSE.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/ocornut/imgui/v1.92.1/LICENSE.txt",
+      "sha256": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf"
+    },
+    {
+      "name": "patternsleuth/Apache-2.0.txt",
+      "kind": "raw",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "name": "patternsleuth/Cargo.toml",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/trumank/patternsleuth/1d90b02c7610b595f940af04ce97e0f6feb06923/Cargo.toml",
+      "sha256": "cf5bc06a91b0e71d8dcae29ba1f615230d49fb21a272ef4727f1deb8f5173717"
+    },
+    {
+      "name": "patternsleuth/patternsleuth-Cargo.toml",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/trumank/patternsleuth/1d90b02c7610b595f940af04ce97e0f6feb06923/patternsleuth/Cargo.toml",
+      "sha256": "254ff17397b2c0ee0b9f335325cde8bc9aa4d769b3c8e0057a0e06b251846e31"
+    },
+    {
+      "name": "patternsleuth/patternsleuth_scanner-Cargo.toml",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/trumank/patternsleuth/1d90b02c7610b595f940af04ce97e0f6feb06923/patternsleuth_scanner/Cargo.toml",
+      "sha256": "ed07f1472a3599cd4c95641095d7bfa7e743fe0676abc11161c7b44deddf812b"
+    },
+    {
+      "name": "rust/adler2-2.0.1",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/adler2/adler2-2.0.1.crate",
+      "sha256": "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa",
+      "members": [
+        "adler2-2.0.1/LICENSE-0BSD",
+        "adler2-2.0.1/LICENSE-APACHE",
+        "adler2-2.0.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/anyhow-1.0.99",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/anyhow/anyhow-1.0.99.crate",
+      "sha256": "b0674a1ddeecb70197781e945de4b3b8ffb61fa939a5597bcf48503737663100",
+      "members": [
+        "anyhow-1.0.99/LICENSE-APACHE",
+        "anyhow-1.0.99/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/autocfg-1.5.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/autocfg/autocfg-1.5.0.crate",
+      "sha256": "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8",
+      "members": [
+        "autocfg-1.5.0/LICENSE-APACHE",
+        "autocfg-1.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/bitflags-2.9.2",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/bitflags/bitflags-2.9.2.crate",
+      "sha256": "6a65b545ab31d687cff52899d4890855fec459eb6afe0da6417b8a18da87aa29",
+      "members": [
+        "bitflags-2.9.2/LICENSE-APACHE",
+        "bitflags-2.9.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/byteorder-1.5.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/byteorder/byteorder-1.5.0.crate",
+      "sha256": "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b",
+      "members": [
+        "byteorder-1.5.0/COPYING",
+        "byteorder-1.5.0/LICENSE-MIT",
+        "byteorder-1.5.0/UNLICENSE"
+      ]
+    },
+    {
+      "name": "rust/cfg-if-1.0.3",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/cfg-if/cfg-if-1.0.3.crate",
+      "sha256": "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9",
+      "members": [
+        "cfg-if-1.0.3/LICENSE-APACHE",
+        "cfg-if-1.0.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/crc32fast-1.5.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/crc32fast/crc32fast-1.5.0.crate",
+      "sha256": "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511",
+      "members": [
+        "crc32fast-1.5.0/LICENSE-APACHE",
+        "crc32fast-1.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/crossbeam-channel-0.5.15",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/crossbeam-channel/crossbeam-channel-0.5.15.crate",
+      "sha256": "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2",
+      "members": [
+        "crossbeam-channel-0.5.15/LICENSE-APACHE",
+        "crossbeam-channel-0.5.15/LICENSE-MIT",
+        "crossbeam-channel-0.5.15/LICENSE-THIRD-PARTY"
+      ]
+    },
+    {
+      "name": "rust/crossbeam-deque-0.8.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/crossbeam-deque/crossbeam-deque-0.8.6.crate",
+      "sha256": "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51",
+      "members": [
+        "crossbeam-deque-0.8.6/LICENSE-APACHE",
+        "crossbeam-deque-0.8.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/crossbeam-epoch-0.9.18",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/crossbeam-epoch/crossbeam-epoch-0.9.18.crate",
+      "sha256": "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e",
+      "members": [
+        "crossbeam-epoch-0.9.18/LICENSE-APACHE",
+        "crossbeam-epoch-0.9.18/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/crossbeam-utils-0.8.21",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/crossbeam-utils/crossbeam-utils-0.8.21.crate",
+      "sha256": "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28",
+      "members": [
+        "crossbeam-utils-0.8.21/LICENSE-APACHE",
+        "crossbeam-utils-0.8.21/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/dashmap-5.5.3",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/dashmap/dashmap-5.5.3.crate",
+      "sha256": "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856",
+      "members": [
+        "dashmap-5.5.3/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/derive_more-0.99.20",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/derive_more/derive_more-0.99.20.crate",
+      "sha256": "6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f",
+      "members": [
+        "derive_more-0.99.20/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/either-1.15.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/either/either-1.15.0.crate",
+      "sha256": "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719",
+      "members": [
+        "either-1.15.0/LICENSE-APACHE",
+        "either-1.15.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/flate2-1.1.2",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/flate2/flate2-1.1.2.crate",
+      "sha256": "4a3d7db9596fecd151c5f638c0ee5d5bd487b6e0ea232e5dc96d5250f6f94b1d",
+      "members": [
+        "flate2-1.1.2/LICENSE-APACHE",
+        "flate2-1.1.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures/futures-0.3.31.crate",
+      "sha256": "65bc07b1a8bc7c85c5f2e110c476c7389b4554ba72af57d8445ea63a576b0876",
+      "members": [
+        "futures-0.3.31/LICENSE-APACHE",
+        "futures-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-channel-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-channel/futures-channel-0.3.31.crate",
+      "sha256": "2dff15bf788c671c1934e366d07e30c1814a8ef514e1af724a602e8a2fbe1b10",
+      "members": [
+        "futures-channel-0.3.31/LICENSE-APACHE",
+        "futures-channel-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-core-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-core/futures-core-0.3.31.crate",
+      "sha256": "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e",
+      "members": [
+        "futures-core-0.3.31/LICENSE-APACHE",
+        "futures-core-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-executor-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-executor/futures-executor-0.3.31.crate",
+      "sha256": "1e28d1d997f585e54aebc3f97d39e72338912123a67330d723fdbb564d646c9f",
+      "members": [
+        "futures-executor-0.3.31/LICENSE-APACHE",
+        "futures-executor-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-io-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-io/futures-io-0.3.31.crate",
+      "sha256": "9e5c1b78ca4aae1ac06c48a526a655760685149f0d465d21f37abfe57ce075c6",
+      "members": [
+        "futures-io-0.3.31/LICENSE-APACHE",
+        "futures-io-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-macro-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-macro/futures-macro-0.3.31.crate",
+      "sha256": "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650",
+      "members": [
+        "futures-macro-0.3.31/LICENSE-APACHE",
+        "futures-macro-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-scopes-0.2.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-scopes/futures-scopes-0.2.0.crate",
+      "sha256": "ffdcf32827e803f1a3cd04c4319feb99156cb5968a3b393f8541efefa1e3b24c",
+      "members": [
+        "futures-scopes-0.2.0/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/futures-sink-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-sink/futures-sink-0.3.31.crate",
+      "sha256": "e575fab7d1e0dcb8d0c7bcf9a63ee213816ab51902e6d244a95819acacf1d4f7",
+      "members": [
+        "futures-sink-0.3.31/LICENSE-APACHE",
+        "futures-sink-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-task-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-task/futures-task-0.3.31.crate",
+      "sha256": "f90f7dce0722e95104fcb095585910c0977252f286e354b5e3bd38902cd99988",
+      "members": [
+        "futures-task-0.3.31/LICENSE-APACHE",
+        "futures-task-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/futures-util-0.3.31",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/futures-util/futures-util-0.3.31.crate",
+      "sha256": "9fa08315bb612088cc391249efdc3bc77536f16c91f6cf495e6fbe85b20a4a81",
+      "members": [
+        "futures-util-0.3.31/LICENSE-APACHE",
+        "futures-util-0.3.31/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/hashbrown-0.14.5",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/hashbrown/hashbrown-0.14.5.crate",
+      "sha256": "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1",
+      "members": [
+        "hashbrown-0.14.5/LICENSE-APACHE",
+        "hashbrown-0.14.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/heck-0.4.1",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/heck/heck-0.4.1.crate",
+      "sha256": "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8",
+      "members": [
+        "heck-0.4.1/LICENSE-APACHE",
+        "heck-0.4.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/iced-x86-1.21.0/LICENSE.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/icedland/iced/c50f29b7bc305696895c075f3fc7719751426b12/LICENSE.txt",
+      "sha256": "93a47598376fd3f276b631e75149340087153c6ff1635a53c5790249e9124e2d"
+    },
+    {
+      "name": "rust/inventory-0.3.21",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/inventory/inventory-0.3.21.crate",
+      "sha256": "bc61209c082fbeb19919bee74b176221b27223e27b65d781eb91af24eb1fb46e",
+      "members": [
+        "inventory-0.3.21/LICENSE-APACHE",
+        "inventory-0.3.21/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/itertools-0.12.1",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/itertools/itertools-0.12.1.crate",
+      "sha256": "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569",
+      "members": [
+        "itertools-0.12.1/LICENSE-APACHE",
+        "itertools-0.12.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/lazy_static-1.5.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/lazy_static/lazy_static-1.5.0.crate",
+      "sha256": "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe",
+      "members": [
+        "lazy_static-1.5.0/LICENSE-APACHE",
+        "lazy_static-1.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/libc-0.2.175",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/libc/libc-0.2.175.crate",
+      "sha256": "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543",
+      "members": [
+        "libc-0.2.175/LICENSE-APACHE",
+        "libc-0.2.175/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/lock_api-0.4.13",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/lock_api/lock_api-0.4.13.crate",
+      "sha256": "96936507f153605bddfcda068dd804796c84324ed2510809e5b2a624c81da765",
+      "members": [
+        "lock_api-0.4.13/LICENSE-APACHE",
+        "lock_api-0.4.13/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/memchr-2.7.5",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/memchr/memchr-2.7.5.crate",
+      "sha256": "32a282da65faaf38286cf3be983213fcf1d2e2a58700e808f83f4ea9a4804bc0",
+      "members": [
+        "memchr-2.7.5/COPYING",
+        "memchr-2.7.5/LICENSE-MIT",
+        "memchr-2.7.5/UNLICENSE"
+      ]
+    },
+    {
+      "name": "rust/miniz_oxide-0.8.9",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/miniz_oxide/miniz_oxide-0.8.9.crate",
+      "sha256": "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316",
+      "members": [
+        "miniz_oxide-0.8.9/LICENSE",
+        "miniz_oxide-0.8.9/LICENSE-APACHE.md",
+        "miniz_oxide-0.8.9/LICENSE-MIT.md",
+        "miniz_oxide-0.8.9/LICENSE-ZLIB.md"
+      ]
+    },
+    {
+      "name": "rust/object-0.32.2",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/object/object-0.32.2.crate",
+      "sha256": "a6a622008b6e321afc04970976f62ee297fdbaa6f95318ca343e3eebb9648441",
+      "members": [
+        "object-0.32.2/LICENSE-APACHE",
+        "object-0.32.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/once_cell-1.21.3",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/once_cell/once_cell-1.21.3.crate",
+      "sha256": "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d",
+      "members": [
+        "once_cell-1.21.3/LICENSE-APACHE",
+        "once_cell-1.21.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/parking_lot_core-0.9.11",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/parking_lot_core/parking_lot_core-0.9.11.crate",
+      "sha256": "bc838d2a56b5b1a6c25f55575dfc605fabb63bb2365f6c2353ef9159aa69e4a5",
+      "members": [
+        "parking_lot_core-0.9.11/LICENSE-APACHE",
+        "parking_lot_core-0.9.11/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/paste-1.0.15",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/paste/paste-1.0.15.crate",
+      "sha256": "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a",
+      "members": [
+        "paste-1.0.15/LICENSE-APACHE",
+        "paste-1.0.15/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/pin-project-1.1.10",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/pin-project/pin-project-1.1.10.crate",
+      "sha256": "677f1add503faace112b9f1373e43e9e054bfdd22ff1a63c1bc485eaec6a6a8a",
+      "members": [
+        "pin-project-1.1.10/LICENSE-APACHE",
+        "pin-project-1.1.10/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/pin-project-internal-1.1.10",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/pin-project-internal/pin-project-internal-1.1.10.crate",
+      "sha256": "6e918e4ff8c4549eb882f14b3a4bc8c8bc93de829416eacf579f1207a8fbf861",
+      "members": [
+        "pin-project-internal-1.1.10/LICENSE-APACHE",
+        "pin-project-internal-1.1.10/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/pin-project-lite-0.2.16",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/pin-project-lite/pin-project-lite-0.2.16.crate",
+      "sha256": "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b",
+      "members": [
+        "pin-project-lite-0.2.16/LICENSE-APACHE",
+        "pin-project-lite-0.2.16/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/pin-utils-0.1.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/pin-utils/pin-utils-0.1.0.crate",
+      "sha256": "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184",
+      "members": [
+        "pin-utils-0.1.0/LICENSE-APACHE",
+        "pin-utils-0.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/proc-macro2-1.0.101",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/proc-macro2/proc-macro2-1.0.101.crate",
+      "sha256": "89ae43fd86e4158d6db51ad8e2b80f313af9cc74f5c0e03ccb87de09998732de",
+      "members": [
+        "proc-macro2-1.0.101/LICENSE-APACHE",
+        "proc-macro2-1.0.101/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/quote-1.0.40",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/quote/quote-1.0.40.crate",
+      "sha256": "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d",
+      "members": [
+        "quote-1.0.40/LICENSE-APACHE",
+        "quote-1.0.40/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/rayon-1.11.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/rayon/rayon-1.11.0.crate",
+      "sha256": "368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f",
+      "members": [
+        "rayon-1.11.0/LICENSE-APACHE",
+        "rayon-1.11.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/rayon-core-1.13.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/rayon-core/rayon-core-1.13.0.crate",
+      "sha256": "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91",
+      "members": [
+        "rayon-core-1.13.0/LICENSE-APACHE",
+        "rayon-core-1.13.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/redox_syscall-0.5.17",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/redox_syscall/redox_syscall-0.5.17.crate",
+      "sha256": "5407465600fb0548f1442edf71dd20683c6ed326200ace4b1ef0763521bb3b77",
+      "members": [
+        "redox_syscall-0.5.17/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/rustversion-1.0.22",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/rustversion/rustversion-1.0.22.crate",
+      "sha256": "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d",
+      "members": [
+        "rustversion-1.0.22/LICENSE-APACHE",
+        "rustversion-1.0.22/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/ruzstd-0.5.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/ruzstd/ruzstd-0.5.0.crate",
+      "sha256": "58c4eb8a81997cf040a091d1f7e1938aeab6749d3a0dfa73af43cdc32393483d",
+      "members": [
+        "ruzstd-0.5.0/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/scopeguard-1.2.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/scopeguard/scopeguard-1.2.0.crate",
+      "sha256": "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49",
+      "members": [
+        "scopeguard-1.2.0/LICENSE-APACHE",
+        "scopeguard-1.2.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/slab-0.4.11",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/slab/slab-0.4.11.crate",
+      "sha256": "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589",
+      "members": [
+        "slab-0.4.11/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/smallvec-1.15.1",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/smallvec/smallvec-1.15.1.crate",
+      "sha256": "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03",
+      "members": [
+        "smallvec-1.15.1/LICENSE-APACHE",
+        "smallvec-1.15.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/static_assertions-1.1.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/static_assertions/static_assertions-1.1.0.crate",
+      "sha256": "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f",
+      "members": [
+        "static_assertions-1.1.0/LICENSE-APACHE",
+        "static_assertions-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/strum-0.25.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/strum/strum-0.25.0.crate",
+      "sha256": "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125",
+      "members": [
+        "strum-0.25.0/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/strum_macros-0.25.3",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/strum_macros/strum_macros-0.25.3.crate",
+      "sha256": "23dc1fa9ac9c169a78ba62f0b841814b7abae11bdd047b9c58f893439e309ea0",
+      "members": [
+        "strum_macros-0.25.3/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/syn-2.0.106",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/syn/syn-2.0.106.crate",
+      "sha256": "ede7c438028d4436d71104916910f5bb611972c5cfd7f89b8300a8186e6fada6",
+      "members": [
+        "syn-2.0.106/LICENSE-APACHE",
+        "syn-2.0.106/LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rust/tracing-0.1.41",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/tracing/tracing-0.1.41.crate",
+      "sha256": "784e0ac535deb450455cbfa28a6f0df145ea1bb7ae51b821cf5e7927fdcfbdd0",
+      "members": [
+        "tracing-0.1.41/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/tracing-attributes-0.1.30",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/tracing-attributes/tracing-attributes-0.1.30.crate",
+      "sha256": "81383ab64e72a7a8b8e13130c49e3dab29def6d0c7d76a03087b3cf71c5c6903",
+      "members": [
+        "tracing-attributes-0.1.30/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/tracing-core-0.1.34",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/tracing-core/tracing-core-0.1.34.crate",
+      "sha256": "b9d12581f227e93f094d3af2ae690a574abb8a2b9b7a96e7cfe9647b2b617678",
+      "members": [
+        "tracing-core-0.1.34/LICENSE",
+        "tracing-core-0.1.34/src/spin/LICENSE"
+      ]
+    },
+    {
+      "name": "rust/twox-hash-1.6.3",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/twox-hash/twox-hash-1.6.3.crate",
+      "sha256": "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675",
+      "members": [
+        "twox-hash-1.6.3/LICENSE.txt"
+      ]
+    },
+    {
+      "name": "rust/unicode-ident-1.0.18",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/unicode-ident/unicode-ident-1.0.18.crate",
+      "sha256": "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512",
+      "members": [
+        "unicode-ident-1.0.18/LICENSE-APACHE",
+        "unicode-ident-1.0.18/LICENSE-MIT",
+        "unicode-ident-1.0.18/LICENSE-UNICODE"
+      ]
+    },
+    {
+      "name": "rust/windows-0.52.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows/windows-0.52.0.crate",
+      "sha256": "e48a53791691ab099e5e2ad123536d0fff50652600abaf43bbf952894110d0be",
+      "members": [
+        "windows-0.52.0/license-apache-2.0",
+        "windows-0.52.0/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows-core-0.52.0",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows-core/windows-core-0.52.0.crate",
+      "sha256": "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9",
+      "members": [
+        "windows-core-0.52.0/license-apache-2.0",
+        "windows-core-0.52.0/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows-targets-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows-targets/windows-targets-0.52.6.crate",
+      "sha256": "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973",
+      "members": [
+        "windows-targets-0.52.6/license-apache-2.0",
+        "windows-targets-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_aarch64_gnullvm-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_aarch64_gnullvm/windows_aarch64_gnullvm-0.52.6.crate",
+      "sha256": "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3",
+      "members": [
+        "windows_aarch64_gnullvm-0.52.6/license-apache-2.0",
+        "windows_aarch64_gnullvm-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_aarch64_msvc-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_aarch64_msvc/windows_aarch64_msvc-0.52.6.crate",
+      "sha256": "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469",
+      "members": [
+        "windows_aarch64_msvc-0.52.6/license-apache-2.0",
+        "windows_aarch64_msvc-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_i686_gnu-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_i686_gnu/windows_i686_gnu-0.52.6.crate",
+      "sha256": "8e9b5ad5ab802e97eb8e295ac6720e509ee4c243f69d781394014ebfe8bbfa0b",
+      "members": [
+        "windows_i686_gnu-0.52.6/license-apache-2.0",
+        "windows_i686_gnu-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_i686_gnullvm-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_i686_gnullvm/windows_i686_gnullvm-0.52.6.crate",
+      "sha256": "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66",
+      "members": [
+        "windows_i686_gnullvm-0.52.6/license-apache-2.0",
+        "windows_i686_gnullvm-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_i686_msvc-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_i686_msvc/windows_i686_msvc-0.52.6.crate",
+      "sha256": "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66",
+      "members": [
+        "windows_i686_msvc-0.52.6/license-apache-2.0",
+        "windows_i686_msvc-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_x86_64_gnu-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_x86_64_gnu/windows_x86_64_gnu-0.52.6.crate",
+      "sha256": "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78",
+      "members": [
+        "windows_x86_64_gnu-0.52.6/license-apache-2.0",
+        "windows_x86_64_gnu-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_x86_64_gnullvm-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_x86_64_gnullvm/windows_x86_64_gnullvm-0.52.6.crate",
+      "sha256": "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d",
+      "members": [
+        "windows_x86_64_gnullvm-0.52.6/license-apache-2.0",
+        "windows_x86_64_gnullvm-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "rust/windows_x86_64_msvc-0.52.6",
+      "kind": "crate",
+      "url": "https://static.crates.io/crates/windows_x86_64_msvc/windows_x86_64_msvc-0.52.6.crate",
+      "sha256": "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec",
+      "members": [
+        "windows_x86_64_msvc-0.52.6/license-apache-2.0",
+        "windows_x86_64_msvc-0.52.6/license-mit"
+      ]
+    },
+    {
+      "name": "upstream/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/UE4SS/include/fonts/LICENSE_Droid.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/UE4SS/include/fonts/LICENSE_Droid.txt",
+      "sha256": "38751245389e1e23f73e6f5384b5cbe7fa972cc4410c5adc9c04b082a0b9561a"
+    },
+    {
+      "name": "upstream/UE4SS/include/fonts/LICENSE_Roboto.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/UE4SS/include/fonts/LICENSE_Roboto.txt",
+      "sha256": "061402327a96aadb0bfb694a960ed289ecd38d383e396243831ab81feb109c41"
+    },
+    {
+      "name": "upstream/UE4SS/src/USMapGenerator/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/UE4SS/src/USMapGenerator/LICENSE",
+      "sha256": "3e88c592c62eb914921d29b4e1effa09659f85844336b7819be40c82f6da223c"
+    },
+    {
+      "name": "upstream/deps/first/ASMHelper/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/ASMHelper/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/Constructs/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/Constructs/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/DynamicOutput/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/DynamicOutput/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/File/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/File/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/Function/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/Function/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/Helpers/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/Helpers/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/IniParser/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/IniParser/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/Input/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/Input/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/JSON/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/JSON/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/LuaMadeSimple/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/LuaMadeSimple/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/LuaRaw/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/LuaRaw/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/MProgram/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/MProgram/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/ParserBase/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/ParserBase/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/ScopedTimer/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/ScopedTimer/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/first/SinglePassSigScanner/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/first/SinglePassSigScanner/LICENSE",
+      "sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e"
+    },
+    {
+      "name": "upstream/deps/fonts/droid/NOTICE.txt",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/8333063595fa3c49ad307f3b0f732accbb760d25/deps/fonts/droid/NOTICE.txt",
+      "sha256": "38751245389e1e23f73e6f5384b5cbe7fa972cc4410c5adc9c04b082a0b9561a"
+    },
+    {
+      "name": "zycore-1.5.1/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/zyantific/zycore-c/v1.5.1/LICENSE",
+      "sha256": "7991ec4481a82c51d196f7440fda34c578aab51f8b9c7023935c6e03b57638bd"
+    },
+    {
+      "name": "zydis-4.1.1/LICENSE",
+      "kind": "raw",
+      "url": "https://raw.githubusercontent.com/zyantific/zydis/v4.1.1/LICENSE",
+      "sha256": "e5e99718209e94baaf3e9cbf6f64aa3329c9e73c63b1ab47e10f29d81974e6f3"
+    }
+  ],
+  "reviewed": true,
+  "binding_lock_sha256": "88c3718c03492cdc2650217a9d8bb2a8dbdecdbde1b4ea79e3e529e838b49bbe",
+  "scope": "Unmodified upstream UE4SS binary under supplied MIT notice; additional linked-dependency notices, including all registry packages in its binding lockfile. See NOTICE-AUDIT.md for source-availability and moving-ref limitations."
+}
