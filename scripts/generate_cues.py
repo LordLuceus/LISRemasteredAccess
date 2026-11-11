@@ -1,7 +1,7 @@
 """Generates and processes the mod's audio cues.
 
 The sounds come from ElevenLabs (text to sound effects), as in the original
-LISAccess. They are provider output, not MIT-licensed repository content: the
+LISAccess. They are provider output, not covered by source-code licences: the
 .pcm/.wav files in assets/audio are git-ignored and only bundled in releases.
 This script and assets/audio/provenance.json are tracked.
 

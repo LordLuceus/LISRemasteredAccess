@@ -8,6 +8,56 @@ native navigation system.
 automatic walking, dialogue choices and the scene-specific assistance described
 below are implemented. Coverage is still incomplete.
 
+## Installing the tester package
+
+This package is for the **Windows Steam version of Life is Strange Remastered**,
+not the original Life is Strange or Before the Storm Remastered. It targets Steam
+build **11330282**. Other stores, game builds and operating systems have not been
+verified. Windows 10 or 11, 64-bit, is required. Install the current
+[Microsoft Visual C++ x64 runtime](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+if it is not already installed.
+
+1. Close the game and extract the ZIP to a temporary folder.
+2. In Steam, open the game's Properties, Installed Files, then Browse. Open
+   `LIS`, then `Binaries`, then `Win64`. This folder contains
+   `LiS-Win64-Shipping.exe`.
+3. **If `dwmapi.dll` or a folder named `ue4ss` already exists there, stop.** Ask the
+   maintainer about updating or combining mods rather than overwriting another
+   installation.
+4. Copy **the contents of the package's `files` folder** into `Win64`: `dwmapi.dll`
+   and the `ue4ss` folder. Do not copy the enclosing `files` folder itself.
+5. Start your screen reader, then launch the game normally through Steam. Startup
+   can take about a minute; the first menu announcement is **Click To Start**.
+
+No development tools, Python or test launcher are needed to play. The package
+does not include game assets and does not supply or replace save files.
+The game continues to save your progress normally. Back up your own saves before
+testing, especially if continuing an existing playthrough.
+
+For a fresh installation made using these instructions, uninstall with the game
+closed by removing the `dwmapi.dll` and `ue4ss` folder you copied. Do not remove
+those if you subsequently added other mods to them; ask for help instead.
+
+### What to test and report
+
+Try menus, scanner navigation, interactions and repeated conversations using your
+usual input device. Report the episode, scene, selected object or dialogue,
+exact announcement, and keyboard or controller used. Include the package version
+from `package-manifest.json`.
+
+After a failure, copy `ue4ss/UE4SS.log` from the installation folder **before
+launching the game again**. Send it privately to the maintainer: it can contain
+local paths and dialogue spoilers. Do not post saves or crash dumps publicly.
+
+Episodes 1–3 have been completed with the mod; early Episode 4 interactions have
+also been tested. This is not a promise of full coverage through the ending.
+See the limitations in the relevant sections below. The pool guard bypass is
+**on by default**; F3 during his patrol lets you turn it off.
+
+Third-party terms and source availability are described in
+[Third-party licences](THIRD-PARTY-LICENSES.md). [The changelog](CHANGELOG.md)
+records player-facing changes.
+
 ## Playing with the mod
 
 Launch the game from Steam as usual. Once the mod is installed it is active on
@@ -55,7 +105,7 @@ when they change.
 | F | Left-stick click | Turn toward the selected object |
 | 1 to 4 | Face buttons | Answer a dialogue choice, or use the focused object's actions, as announced |
 | F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
-| F2 | Hold left-stick click, then D-pad left | Play the next sound cue and say what it means |
+| F2 | Hold left-stick click, then D-pad left | Preview the control and pool-guard cues and say what they mean |
 | F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
 | F4 | Hold left-stick click, then click the right stick | Room filter on or off: off lists every object nearby, for a room the filter misses |
 
@@ -65,8 +115,10 @@ example "Mail, 1.5 metres, ahead, 3 of 38". Objects with the same name get
 letters ("Door, A", "Door, B") that stay with the object as you move. The
 selection stays on the same object when the order changes.
 
-The controller commands work only in play, so the D-pad still works normally in
-menus.
+Scanner movement commands work only in play; the D-pad navigates menus normally.
+The left-stick chords for help, repeat and sound preview also work in menus and
+cutscenes. These chords do not consume the buttons: the game may still move its
+highlight or perform its usual action.
 
 ### Rooms
 
@@ -172,9 +224,8 @@ Autowalk there: the mod says "Leave The Swimming Pool" with its key. Take it,
 and the guard comes in and patrols the room.
 
 By default the guard can't see you, so you can walk out once he has gone.
-The mod says so when his patrol starts. Finding a hiding place there is
-trivial for a sighted player and this is the game's only stealth sequence,
-so the mod does it for you.
+The mod says so when his patrol starts. This bypass applies to this pool patrol,
+not to other dangers or later scenes.
 
 To hide from him yourself, press F3 (or hold the left stick and press D-pad
 down) during the patrol. Then:
@@ -258,8 +309,9 @@ have not been covered by the agent-run native tests.
 
 When answers appear in a conversation, the mod reads them with their keys:
 "Choose: 1, You're asking me?, 2, I did know..." Major choices (the ones the
-game marks with its own music) start with "Major choice". Each list is read once, when all its answers are shown. Press the number
-to answer; Home or Ctrl+Home repeats the list. On a controller the face button
+game marks with its own music) start with "Major choice". Each list is read once
+after its updates settle. Press the number to answer; Home reads the current list,
+while Ctrl+Home repeats the last announcement. On a controller the face button
 for each answer is named instead, and pressing it works as usual.
 
 ### Tutorial prompts
@@ -311,8 +363,8 @@ always goes back.
 
 The pause menu, its settings and its confirmations read the same way.
 
-Not narrated yet: Extras and the keybinding editor. In play, nothing beyond the
-pause menu is narrated yet.
+Coverage outside the screens described here is incomplete, including the
+keybinding editor and other Extras screens. The Choices screen is covered below.
 
 
 ### The Choices screen
@@ -333,26 +385,30 @@ Each outcome is read with the percentage the game shows and "your choice" for
 the one you picked. Friends stats come from Steam friends who have played; with
 none, every outcome reads 0 percent.
 
-## Planned order
+## Known limitations
 
-1. Foundation: speech and braille, keys, localisation. *(Speech, braille and localisation done; controller bindings pending.)*
-2. Menus: title screen, main menu, settings, saved games and confirmations *(done)*; pause menu *(done)*; Extras and the keybinding editor later.
-3. Object scanner and autowalk, using the game's own interaction list and
-   navigation, with automatic detours around closed doors.
-4. Dialogue choices and prompts.
-5. Journal and text messages *(done)*; rewind and the remaining features.
+- Autowalk can fail around obstacles or in places the story has not opened.
+  The room filter can miss connections; F4 exposes the full nearby scanner list.
+- Photos and Places in the journal are not narrated. Character selection can
+  skip grid entries; open a profile and use Left and Right as described above.
+- The mod does not describe arbitrary pictures or provide a full rewind-history
+  reader. The game's ordinary rewind controls still work.
+- Controller names use Xbox/XInput button labels. Other controller layouts have
+  not been verified.
+- Coverage in later episodes is not yet fully tested. Please report inaccessible
+  sequences rather than assuming every puzzle or timed event is supported.
 
 ## Speech and braille
 
 Announcements go through Prism from inside the game, using NVDA, JAWS or another
 running screen reader, with Windows speech as the fallback. Braille is sent to
 the reader's braille display where it supports one. Text is spoken literally.
-Screen-reader calls run on their own thread, so a stalled reader cannot freeze
-the game.
+Screen-reader calls run on their own thread to avoid blocking the game while
+speech is being delivered.
 
 ## Development launcher
 
-This is for testing, not for playing. It loads a test scene directly in a
+**For source developers only; not included in the tester ZIP.** This loads a test scene directly in a
 throwaway copy of your saves.
 
 Close the remaster, then run `Start-NavigationPrototype.cmd`. Choose the house
@@ -374,7 +430,7 @@ After the **Main menu** announcement, use Alt+F4 to exit. Closing directly from
 a loaded scene can trigger the game's existing shutdown crash; returning to the
 menu first avoids it. That is a workaround, not a fix.
 
-## Building and deploying
+## For source developers: building and deploying
 
 Requirements: Visual Studio 2022 (C++ build tools), CMake 3.24 or later, Python 3.
 
@@ -386,9 +442,49 @@ python scripts\deploy_probe.py
 ```
 
 The smoke test checks Prism's backends and literal SAPI text without speaking.
-Deployment copies `src/` and the speech DLL into the game's UE4SS Mods folder.
+Deployment copies `src/` and both native DLLs into the game's UE4SS Mods folder.
 It requires the game to be closed, verifies every installed file's hash before
 replacing it, and removes installed modules whose source was renamed or deleted.
+
+### Packaging a tester build
+
+`scripts/package_release.py` creates a full **fresh-install** tester ZIP without
+touching the installed game or launching it. It uses the built Release DLLs, the
+pinned upstream UE4SS ZIP, the six existing processed WAVs, and the pinned Prism
+source archive. It does not generate new sounds or compile native code. The local
+defaults match the paths used by the build and deployment tools above; individual
+input paths can be overridden (see `--help`). For worktrees, `--inputs-root` can
+point to the checkout holding these inputs.
+
+Pandoc is required for packaging, not for playing. The script finds it on PATH or
+in the normal Windows installation folders; `--pandoc` selects another location.
+It generates accessible HTML from the Markdown, validates table headers and links,
+and packages licences and the required Prism source alongside the mod.
+The first preflight also downloads the checksum-locked public dependency notices
+into `artifacts/release-notice-cache/`; later runs reuse that cache. A missing or
+changed notice input stops packaging rather than silently omitting it.
+
+After reviewing this README and confirming the release inputs, check them first,
+then create the archive:
+
+```powershell
+python scripts/package_release.py --version test-2026-11-11 --preflight
+python scripts/package_release.py --version test-2026-11-11
+```
+
+Use a new version label for a subsequent build. Packaging requires a clean source
+tree and refuses to overwrite an existing archive. Output goes to
+`artifacts/releases/` by default. `package-manifest.json` records the source commit,
+input binary hashes and every supplied file; the adjacent verification report gives
+the final ZIP's hash. No local installation manifest, saves, logs, raw PCM, debug
+symbols, development probes or game assets are copied. A failed archive remains
+marked `.partial`, never as a ready-to-share ZIP.
+
+Offline packaging checks, including deliberately malformed inputs:
+
+```powershell
+python tests/test_release_package.py
+```
 
 ## Localisation and key names
 
@@ -402,7 +498,7 @@ English string is spoken as a marked placeholder and logged, never guessed.
 
 Key names in announcements are filled in when spoken, for the input device the
 game says is in use: a connected but unused controller still gives keyboard
-names. Controller bindings for the mod's commands are not assigned yet.
+names. The controller bindings are listed in the scanner and reader sections above.
 
 Offline tests for this logic, which need no game:
 
@@ -425,8 +521,9 @@ HookProcessInternal, HookProcessLocalScriptFunction and
 HookUObjectProcessEvent; the last three let the mod listen to the game's own
 scripts, which the dialogue choice reader needs. HookLoadMap must stay off.
 
-To uninstall, close the game and run `scripts/rollback_ue4ss.ps1`. It checks
-hashes before changing anything and never restores old saves.
+For a developer installation with its local installation manifest, close the game
+and run `scripts/rollback_ue4ss.ps1`. It checks hashes before changing anything and
+never restores old saves. Tester-package removal is described at the top of this guide.
 
 ## Layout
 
@@ -444,4 +541,4 @@ hashes before changing anything and never restores old saves.
 - `CHANGELOG.md`: player-facing changes.
 
 Private game data, test profiles, logs, downloaded tools and build output live
-in `artifacts/` and are excluded from Git. This is not a redistributable release.
+in `artifacts/` and are excluded from Git and tester packages.

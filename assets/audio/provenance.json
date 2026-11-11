@@ -10,7 +10,7 @@
   "personal_data_sent": false,
   "source_format": "PCM16 LE, 24000 Hz, 2 channels interleaved. Evidence: the byte count equals exactly the requested duration as stereo, and the two channels correlate at 0.999+ (duplicated mono).",
   "processing": "Channels averaged to mono; trimmed below -45 dB of peak with 2 ms preroll and 12 ms tail; capped; 2 ms fade in, 8 ms fade out; peak normalised to -12 dBFS.",
-  "licence": "Provider output. Not covered by the repository MIT licence; git-ignored and bundled only in releases.",
+  "licence": "Provider output, not covered by source-code licences. Processed WAVs are bundled only within complete mod releases, not distributed as standalone samples; raw PCM remains private.",
   "cues": {
     "control_lost": {
       "prompt": "One soft low descending two-note tone signalling that control is taken away. Short, gentle, dry, instant onset, silence afterwards. Nonverbal isolated mono user interface sound. No voice, no music, no background, no reverb.",

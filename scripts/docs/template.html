@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$title$</title>
+<style>
+body { max-width: 76rem; margin: 1rem auto; padding: 0 1rem; font: 1rem/1.6 system-ui,sans-serif; }
+table { border-collapse: collapse; width: 100%; }
+th,td { border: 1px solid; padding: .4rem; text-align: left; vertical-align: top; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+a:focus { outline: 3px solid; }
+</style>
+</head>
+<body>
+<a href="#main">Skip to main content</a>
+$if(toc)$<nav aria-label="Contents">$toc$</nav>$endif$
+<main id="main" tabindex="-1">
+$body$
+</main>
+</body>
+</html>
