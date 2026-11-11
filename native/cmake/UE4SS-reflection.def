@@ -1,0 +1,18 @@
+LIBRARY UE4SS.dll
+EXPORTS
+    ??0Lua@LuaMadeSimple@RC@@QEAA@PEAUlua_State@@@Z
+    ??1Lua@LuaMadeSimple@RC@@QEAA@XZ
+    ?get_stack_size@Lua@LuaMadeSimple@RC@@QEBAHXZ
+    ?is_userdata@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?is_string@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?get_string@Lua@LuaMadeSimple@RC@@QEBA?AV?$basic_string_view@DU?$char_traits@D@std@@@std@@H@Z
+    ?is_integer@Lua@LuaMadeSimple@RC@@QEBA_NH@Z
+    ?get_integer@Lua@LuaMadeSimple@RC@@QEBA_JH@Z
+    ?insert_value@Lua@LuaMadeSimple@RC@@QEBAXHH@Z
+    ?discard_value@Lua@LuaMadeSimple@RC@@QEBAXH@Z
+    ?prepare_function_call@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z
+    ?call_function@Lua@LuaMadeSimple@RC@@QEBAXHH@Z
+    ?set_nil@Lua@LuaMadeSimple@RC@@QEBAXXZ
+    ?set_string@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z
+    ?push_arrayproperty@LuaType@RC@@YAXAEBUPusherParams@12@@Z
+    ?push_objectproperty@LuaType@RC@@YAXAEBUPusherParams@12@@Z

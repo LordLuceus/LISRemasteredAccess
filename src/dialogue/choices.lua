@@ -51,6 +51,13 @@ end
 -- State: answers by slot (1-4), plain values only.
 local answers,major,changed_at,spoken={},false,nil,nil
 M.clock=function()return os.clock() end
+local uncached=require('dialogue.uncached')
+local candidate_snapshot,pending,candidate_announced=nil,nil,nil
+local candidate_serial=0
+function M.configure_uncached(opts)
+    candidate_snapshot,pending,candidate_announced=nil,nil,nil
+    return uncached.configure(opts)
+end
 -- Pure: record one update. Blank text hides that slot. Returns true if the
 -- list changed.
 function M.update(slot,text,is_major)
@@ -69,6 +76,8 @@ local function key_of(list)
     return table.concat(t,"\31")
 end
 function M.clear(why)
+    candidate_snapshot,pending,candidate_announced=nil,nil,nil
+    candidate_serial=candidate_serial+1
     if next(answers) then M.log("choice_cleared why="..tostring(why)) end
     if why=="chosen" or why=="chosen_event" then
         if next(answers) then stale=key_of(answers) end
@@ -117,13 +126,17 @@ local function label_major(layout)
 end
 -- Returns the text to speak when a settled list is new, else nil.
 function M.due(gamepad)
-    if not changed_at or M.clock()-changed_at<M.SETTLE then return nil end
+    if not changed_at then return nil end
+    if M.clock()-changed_at<M.SETTLE then return nil end
     local opts,maj=M.options()
     if not opts then return nil end
     M.keys(opts,gamepad,maj)
     local text=M.announce_text(opts,label_major(maj))
     if text==spoken then return nil end
     spoken=text
+    if uncached.enabled and candidate_snapshot and candidate_snapshot.key==key_of(answers) then
+        candidate_announced=candidate_snapshot.serial
+    end
     return text,opts
 end
 -- The answer list for rereading (Home): always the full current list.
@@ -131,6 +144,9 @@ function M.current(gamepad)
     local opts,maj=M.options()
     if not opts then return nil end
     M.keys(opts,gamepad,maj)
+    if uncached.enabled and candidate_snapshot and candidate_snapshot.key==key_of(answers) then
+        candidate_announced=candidate_snapshot.serial
+    end
     return M.announce_text(opts,label_major(maj))
 end
 function M.read()return M.options() end
@@ -140,6 +156,99 @@ local VIEW="/Game/Packages/Widgets/BP_LiSDialogWidget_View.BP_LiSDialogWidget_Vi
 local FN=VIEW..":UpdateTextImplementable"
 local hooked=nil -- address of the function object hooked
 local function unwrap(p)local ok,v=pcall(function()return p:get()end);if ok then return v end;return p end
+-- Freshly read data is consumed within this owned Tick only. Retained state is scalar.
+local function candidate_collect(v,fresh)
+    local texts,buttons={},{}
+    local maj=v:IsMajorChoice()==true
+    local a,n
+    if fresh then a,n=uncached.array(v) else
+        a=v.DialogButtons_Array;n=a:GetArrayNum()
+        assert(type(n)=='number' and n==math.floor(n) and n>=0 and n<=4,'unexpected array size')
+    end
+    local function read(i,b)
+        assert(i>=1 and i<=n and i<=4,'array index')
+        if b:IsVisible() then
+            local s=fresh and uncached.caption(b) or b.DialogText:GetText():ToString()
+            assert(type(s)=='string','caption type')
+            s=s:gsub('^%s+',''):gsub('%s+$','')
+            if s~='' then texts[i]=s;buttons[i]=b end
+        end
+    end
+    if fresh then
+        for i=1,n do read(i,uncached.button(a,i,n)) end
+    else
+        a:ForEach(function(i,e)
+            -- Match the original reader: one visibility/caption failure must not
+            -- withdraw other usable slots. Unwrap/array failures still fail the read.
+            local b=e:get()
+            assert(i>=1 and i<=n and i<=4,'array index')
+            pcall(read,i,b)
+        end)
+    end
+    return texts,buttons,maj
+end
+local function candidate_acquire(v)
+    local ok,texts,buttons,maj=uncached.scope(v,function()return candidate_collect(v,true)end)
+    if ok then return ok,texts,buttons,maj,'uncached' end
+    -- Fresh helper rejection must not withdraw a working original read.
+    local fallback,t,b,m=pcall(candidate_collect,v,false)
+    return fallback,t,b,m,'original'
+end
+local function candidate_failure(reason)
+    M.log('choice_candidate rejected='..tostring(reason))
+    M.say(M.text('choice_unavailable'))
+end
+local function candidate_tick(v,now)
+    local identity_ok,id=pcall(function()return tostring(v:GetAddress())end)
+    if not identity_ok then
+        if pending then pending=nil;candidate_failure('view identity') end
+        return false
+    end
+    local view_ok,view_on=pcall(function()return v:IsValid() and v:IsInViewport() and v:IsVisible()end)
+    if not view_ok or not view_on then
+        if pending then pending=nil;candidate_failure('view hidden or unavailable') end
+        M.clear('candidate_view_hidden')
+        return true
+    end
+    -- Before the read throttle, and cleared BEFORE any potentially reentrant call.
+    if pending then
+        local intent=pending;pending=nil
+        if now>intent.expires or intent.view~=id or intent.serial~=candidate_serial then
+            candidate_failure('expired or changed view')
+        else
+            local shown,on=pcall(function()return v:IsValid() and v:IsInViewport() and v:IsVisible()end)
+            local ok,texts,buttons,maj=false,nil,nil,nil
+            if shown and on then ok,texts,buttons,maj=candidate_acquire(v) end
+            if not ok or key_of(texts)~=intent.key or maj~=intent.major or texts[intent.slot]~=intent.text or not buttons[intent.slot] then
+                candidate_failure('current choices changed or unavailable')
+            else
+                -- Clear held choices before ClickButton; its event may reenter choose/Tick.
+                local b=buttons[intent.slot]
+                M.clear('chosen')
+                local clicked,err=pcall(function()b:ClickButton()end)
+                M.log('choice_candidate clicked='..tostring(clicked)..' slot='..intent.slot)
+                if not clicked then candidate_failure(err) end
+                return true
+            end
+        end
+    end
+    if now<M.next_read then return true end
+    local ok,texts,_,maj=candidate_acquire(v)
+    if not ok then return false end -- retain the original reader below
+    M.next_read=now+1/M.READ_RATE
+    local key=key_of(texts)
+    local carry_announced=candidate_snapshot and candidate_announced==candidate_snapshot.serial
+        and candidate_snapshot.key==key and candidate_snapshot.major==maj
+    if not candidate_snapshot or candidate_snapshot.view~=id or candidate_snapshot.key~=key or candidate_snapshot.major~=maj then
+        candidate_serial=candidate_serial+1
+    end
+    M.set_all(texts,maj)
+    candidate_snapshot={view=id,key=key,major=maj,serial=candidate_serial,at=now}
+    -- Silent same-content refills remain selectable by a NEW key press. A queued
+    -- intent was checked against its old view above and is never migrated here.
+    if carry_announced then candidate_announced=candidate_serial end
+    return true
+end
 local function function_address()
     local a=nil
     pcall(function()local f=StaticFindObject(FN);if f and f:IsValid() then a=f:GetAddress() end end)
@@ -158,8 +267,12 @@ function M.install()
         -- with the hook calling IsMajorChoice inside the game's own event.
         -- A choice made by any route (controller, mouse, the mod's keys) runs
         -- the view's ChooseSentense; the next list then starts empty.
-        RegisterHook(VIEW..":ChooseSentense",function()M.clear("chosen_event") end)
-        RegisterHook(VIEW..":Destruct",function()M.clear("destruct") end)
+        RegisterHook(VIEW..":ChooseSentense",function()
+            diag.event('lifecycle','event=chosen generation='..generation);M.clear("chosen_event")
+        end)
+        RegisterHook(VIEW..":Destruct",function()
+            diag.event('lifecycle','event=destruct generation='..generation);M.clear("destruct")
+        end)
         -- Main read: on the view's own Tick (the game is running the view's
         -- code, so the view and its buttons are alive), at most READ_RATE
         -- times a second. The answers already on screen when the hooks are
@@ -167,9 +280,10 @@ function M.install()
         -- loads with the first conversation, after its answers were filled).
         RegisterHook(VIEW..":Tick",function(self)
             local now=M.clock()
+            local v=unwrap(self)
+            if uncached.enabled and candidate_tick(v,now) then return end
             if now<M.next_read then return end
             M.next_read=now+1/M.READ_RATE
-            local v=unwrap(self)
             local maj=false;pcall(function()maj=v:IsMajorChoice()==true end)
             local texts={}
             pcall(function()
@@ -201,6 +315,15 @@ local function view_up()
 end
 -- Only while answers are held: clear them once the view has gone.
 function M.tick()
+    if uncached.enabled then
+        -- No candidate object reads outside the owned Tick, including expiry handling.
+        if pending and M.clock()>pending.expires then pending=nil;candidate_failure('expired') end
+        if candidate_snapshot and M.clock()-candidate_snapshot.at>1 then
+            if pending then pending=nil;candidate_failure('view stopped ticking') end
+            M.clear('candidate_tick_stopped')
+        end
+        return
+    end
     if next(answers) and not view_up() then M.clear("closed") end
 end
 -- Chooses the n-th announced answer: the slot's button, pressed through the
@@ -210,6 +333,13 @@ function M.choose(n)
     if not opts then M.say(M.text("choice_none"));return false end
     local o=opts[n]
     if not o then M.say(M.text("choice_no_option",{index=n}));return false end
+    if uncached.enabled then
+        local s=candidate_snapshot
+        if pending or not s or candidate_announced~=s.serial or s.key~=key_of(answers) then candidate_failure('no announced snapshot');return false end
+        pending={slot=o.slot,text=o.text,key=s.key,view=s.view,major=s.major,serial=s.serial,expires=M.clock()+uncached.TTL}
+        M.log('choice_candidate queued slot='..o.slot)
+        return true -- accepted intent, not a claim that the click already succeeded
+    end
     local v=view_up()
     local ok,err=false,"view gone"
     if v then
@@ -225,5 +355,30 @@ function M.choose(n)
     M.log("choice_chosen n="..n.." slot="..o.slot.." ok="..tostring(ok)..(ok and "" or " err="..tostring(err)))
     if ok then M.clear("chosen") end
     return ok
+end
+-- Same startup activation as the playtested installed prototype. RegisterHook
+-- identifies the game host; engine-free consumers never load the native DLL.
+if type(RegisterHook)=='function' then
+    local ok,err=pcall(function()
+        local here=debug.getinfo(1,'S').source:gsub('^@',''):gsub('[^/\\]+$','')
+        local dll=here:gsub('dialogue[/\\]$','')..'lisr_reflection.dll'
+        local real,load_error=package.loadlib(dll,'lisr_reflection_read')
+        assert(type(real)=='function',load_error or 'native reader unavailable')
+        local failures=0
+        local function observed(owner,name)
+            local value,why=real(owner,name)
+            if value==nil and failures<4 then
+                failures=failures+1
+                local valid,detail=pcall(_G.__lisr_reflection_resolve_83330635,owner,name)
+                print('[LISAccess] choice_reader rejection property='..tostring(name)
+                    ..' native='..tostring(why)..' resolver_ok='..tostring(valid)
+                    ..' resolver='..tostring(detail):sub(1,400)..'\n')
+            end
+            return value,why
+        end
+        assert(M.configure_uncached({enabled=true,provider=observed}),'reader activation failed')
+    end)
+    print('[LISAccess] choice_reader enabled='..tostring(ok)
+        ..(ok and '' or ' error='..tostring(err))..'\n')
 end
 return M

@@ -1,0 +1,17 @@
+{
+  "module": "lisr_reflection (version-pinned dialogue property reader)",
+  "loader_commit": "8333063595fa3c49ad307f3b0f732accbb760d25",
+  "loader_sha256": "ce5e3c46a920cc00b2817ac61e438c9162830290379d0b5b9c4dfc2b29459290",
+  "lua_wrapper": "Existing ue4ss/include/LuaMadeSimple headers; provenance and hashes in ue4ss/SOURCE.json",
+  "lua_raw": "Existing declaration headers only; never link a second Lua runtime",
+  "carrier": "native/src/reflection_abi.h: public PusherParams members from UE4SS/include/LuaType/LuaUObject.hpp lines237-250 and Operation from deps/first/LuaMadeSimple/include/LuaMadeSimple/LuaObject.hpp lines14-20; inline implementation helpers deliberately omitted",
+  "fmt": {
+    "commit": "40626af88bd7df9a5fb80be7b25ac85b122d6c21",
+    "version": "11.2.0",
+    "upstream_pin": "deps/third-repo/packages/f/fmt/xmake.lua at loader commit",
+    "source": "https://github.com/fmtlib/fmt",
+    "use": "Public header declarations only, fetched into the one artifact build tree",
+    "license": "LICENSE-fmt"
+  },
+  "licenses": ["ue4ss/LICENSE-UE4SS", "ue4ss/LICENSE-LuaMadeSimple", "ue4ss/LICENSE-LuaRaw", "LICENSE-fmt"]
+}

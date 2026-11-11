@@ -2,6 +2,15 @@
 
 Player-facing changes, newest first.
 
+## 2026-11-11
+
+- Fixed dialogue choices sometimes going silent, particularly after speaking to
+  someone again. Choices and their keyboard or controller buttons now remain
+  readable across repeated conversations. Home still repeats the current choices.
+  Keyboard selection checks the current answers again before choosing, so an answer
+  from an earlier screen cannot be selected accidentally. Tested with both input
+  methods through repeated conversations with Daniel and Brooke.
+
 ## 2026-11-10
 
 - The room filter no longer hides other entrances just because a door to that

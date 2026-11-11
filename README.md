@@ -23,6 +23,10 @@ writes to your saves.
   instruction and the current level.
 - The Episodes screen reads the episode and the highlighted option, and the new
   episode as you switch with **A** and **D** or the arrows.
+- Dialogue choices remain readable when you speak to someone again, with the
+  buttons for your active input device. Home repeats the current choices. If a
+  keyboard choice has changed before it can be selected, the reader asks you to
+  listen to the current answers rather than choosing an old one.
 - Saved games read each slot's name, episode, chapter and date, or "New game".
 - Confirmation dialogs read their question and how to answer, such as "Quit the
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
@@ -403,12 +407,18 @@ Offline tests for this logic, which need no game:
 
 ```
 artifacts\lua-5.4.7\lua54.exe tests\lua\run.lua
+artifacts\lua-5.4.7\lua54.exe tests\lua\uncached_choices.lua
+artifacts\lua-5.4.7\lua54.exe tests\lua\choice_startup.lua
 ```
 
 The installation is pinned to Steam build 11330282 and experimental UE4SS
 3.0.1-1181-g83330635, with a measured virtual-table correction in
 `compatibility/VTableLayout.ini`. The speech module links against that exact
-loader's exported functions. It is not a general installer. The loader's
+loader's exported functions. The separate `lisr_reflection.dll`, built by default
+and included by deployment, reads dialogue properties through that same pinned
+loader. It rejects other loader binaries; the existing reader remains the fallback
+if the helper cannot load or read a view. Compatibility with other loader versions
+has not been established. It is not a general installer. The loader's
 UE4SS-settings.ini has every optional hook off except HookEngineTick,
 HookProcessInternal, HookProcessLocalScriptFunction and
 HookUObjectProcessEvent; the last three let the mod listen to the game's own
@@ -424,8 +434,10 @@ hashes before changing anything and never restores old saves.
   - `lang/`: announcement catalogs. `nav/`: autowalk and door-aware routing.
   - `dev/`: read-only development probes, not player features.
 - `tests/lua/`: offline tests for game-independent logic.
-- `native/`: the C++ speech and braille module. `third_party/ue4ss/` holds the
+- `native/`: the C++ speech/braille and dialogue-property modules. `third_party/ue4ss/` holds the
   loader's Lua headers at the pinned commit, with their licences and hashes.
+  `third_party/reflection-source.json` records the additional public declarations
+  and pinned fmt headers; their MIT notice is in `third_party/LICENSE-fmt`.
 - `scripts/`: launcher, deployment, test runner, rollback and log tools.
 - `NAVIGATION_FEASIBILITY.md`: the evidence behind choosing the remaster.
 - `CHANGELOG.md`: player-facing changes.

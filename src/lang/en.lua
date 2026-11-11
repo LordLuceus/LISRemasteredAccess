@@ -104,6 +104,7 @@ return {
     choice_option="{key}, {text}",
     choice_none="No dialogue choice now.",
     choice_no_option="No answer {index}.",
+    choice_unavailable="Could not select that answer. Please wait for the current choices.",
     viewer_no_text="No text version.",
     viewer_page="Page {index} of {count}.",
     journal_title="Journal",

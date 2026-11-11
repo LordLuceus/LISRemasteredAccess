@@ -72,3 +72,35 @@ target_link_libraries(tone_smoke PRIVATE lisr_tone)
 enable_testing()
 add_test(NAME speech_smoke COMMAND speech_smoke --quiet)
 add_test(NAME tone_smoke COMMAND tone_smoke --quiet)
+
+# Version-pinned fresh property reader. Separate DLL/definition of Lua; never linked to speech.
+option(LISR_REFLECTION_CANDIDATE "Build the version-pinned dialogue property reader" ON)
+if(LISR_REFLECTION_CANDIDATE)
+    FetchContent_Declare(reflection_fmt
+        URL https://codeload.github.com/fmtlib/fmt/zip/40626af88bd7df9a5fb80be7b25ac85b122d6c21
+        URL_HASH SHA256=9f80db8263c8607811f23db58c8eaffd85edc5f9f1f437e8279fc14875713e5f
+        SOURCE_SUBDIR include # headers only; no duplicate fmt/Lua implementation
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
+    FetchContent_MakeAvailable(reflection_fmt)
+    set(REFLECTION_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}/UE4SS-reflection.lib")
+    add_custom_command(OUTPUT "${REFLECTION_IMPLIB}"
+        COMMAND "${CMAKE_AR}" /nologo /machine:x64 /def:"${CMAKE_CURRENT_SOURCE_DIR}/cmake/UE4SS-reflection.def" /out:"${REFLECTION_IMPLIB}"
+        DEPENDS cmake/UE4SS-reflection.def)
+    add_custom_target(reflection_implib DEPENDS "${REFLECTION_IMPLIB}")
+    add_library(lisr_reflection SHARED src/reflection.cpp)
+    add_executable(reflection_abi tests/reflection_abi.cpp)
+    foreach(target lisr_reflection reflection_abi)
+        lisr_target(${target})
+        target_include_directories(${target} PRIVATE src third_party/ue4ss/include "${reflection_fmt_SOURCE_DIR}/include")
+        target_compile_definitions(${target} PRIVATE _ITERATOR_DEBUG_LEVEL=0)
+    endforeach()
+    target_compile_options(reflection_abi PRIVATE /d1reportSingleClassLayoutPusherParams)
+    add_dependencies(lisr_reflection reflection_implib)
+    target_link_libraries(lisr_reflection PRIVATE "${REFLECTION_IMPLIB}" bcrypt)
+    add_test(NAME reflection_abi COMMAND reflection_abi)
+    # Shared protocol instantiated with a strict fake stack; no loader or Lua runtime.
+    add_executable(reflection_protocol tests/reflection_protocol.cpp)
+    lisr_target(reflection_protocol)
+    target_include_directories(reflection_protocol PRIVATE src)
+    add_test(NAME reflection_protocol COMMAND reflection_protocol)
+endif()

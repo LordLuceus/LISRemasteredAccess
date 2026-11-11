@@ -47,6 +47,10 @@ try:
     if not native.exists():
         raise RuntimeError('Build the speech module first (see README)')
     sources.append((native, SCRIPTS / 'lisr_speech.dll'))
+    reflection = root / 'artifacts/build-native/Release/lisr_reflection.dll'
+    if not reflection.exists():
+        raise RuntimeError('Build the dialogue property reader first (see README)')
+    sources.append((reflection, SCRIPTS / 'lisr_reflection.dll'))
     # Cue sounds (provider audio, git-ignored): installed when present locally.
     for wav in sorted((root / 'assets' / 'audio').glob('*.wav')):
         sources.append((wav, SCRIPTS / 'audio' / wav.name))
