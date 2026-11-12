@@ -4,7 +4,7 @@ local function check(v,label)n=n+1;assert(v,label)end
 local old_find,old_hook=StaticFindObject,RegisterHook
 local inside=false
 local now=0
-local state={id=11,visible=true,asset='/Game/Pictures/One.One',index=0,count=2,text=''}
+local state={id=11,visible=true,asset='/Game/Pictures/One.One',index=0,count=2,text='',reading=false}
 local asset_reads=0
 local function obj(fields)
     return setmetatable({},{__index=function(_,key)
@@ -58,6 +58,8 @@ P.text=function(key,params)
     return key
 end
 P.language=function()return 'fr' end
+P.read_mode=function()assert(inside,'mode read outside owned callback');return state.reading end
+P.native_text=function(text,index,count)return text..(count>1 and (' Page '..index..' of '..count..'.') or '')end
 P.lookup=function(asset,language)
     check(language=='fr','current locale used')
     return ({['/game/pictures/one.one']='Picture one.',
@@ -93,7 +95,7 @@ state.count=1;P.request();event('Tick');check(said[#said]=='Picture one.','singl
 P.request();state.id=22;event('Tick')
 check(said[#said]=='picture_description_unavailable','new viewer cannot inherit old intent')
 P.request();state.asset='/Game/Pictures/Missing.Missing';event('Tick')
-check(said[#said]=='picture_description_unavailable','unknown asset is explicit')
+check(said[#said]=='viewer_no_description','unknown asset is explicit')
 state.asset='/Game/Pictures/One.One';state.visible=false;before=#said;P.request();event('Tick')
 check(#said==before,'hidden viewer never speaks its picture')
 now=1;P.poll();check(said[#said]=='picture_description_unavailable' and not P.active(),'hidden/stopped tick request expires')
@@ -114,17 +116,17 @@ function_address=101;check(P.install() and counts[P.VIEW..':Tick']==2,'reloaded 
 -- second reader that competes with it. Real texture reads stay inside Tick.
 P.lookup=function(asset)if asset:find('/missing.',1,true) then return nil end;return 'Visual description.' end
 state.id=44;state.index=0;state.count=2;state.text='';state.asset='/Game/Pictures/One.One'
-local page={id=44,index=1,count=2,text='',key='44:1:'}
+local page={id=44,index=1,count=2,text='',reading=false,key='44:1:'}
 check(P.automatic(page),'automatic intent can precede first owned Tick')
 before=#said;event('Tick')
 check(#said==before+1 and said[#said]=='Visual description. Page 1 of 2.','textless page described automatically')
 check(not P.automatic({index=1,count=2}),'missing observed identity cannot borrow a previous view')
 P.automatic(page);state.text='Native text arrived.';before=#said;event('Tick')
-check(#said==before,'late native text prevents automatic visual replacement')
+check(said[#said]=='Visual description. picture_has_text Page 1 of 2.','text-bearing picture describes and advertises native Read')
 P.request(page);event('Tick')
-check(said[#said]=='Visual description. Page 1 of 2.','manual description works on a text-bearing picture')
+check(said[#said]=='Visual description. picture_has_text Page 1 of 2.','contextual image reread preserves text availability')
 state.text='';P.automatic(page);P.request(page);P.automatic(page);before=#said;event('Tick')
-check(#said==before+1,'automatic intent cannot overwrite or duplicate explicit F5')
+check(#said==before+1,'automatic intent cannot overwrite or duplicate contextual reread')
 P.automatic(page);state.index=1;before=#said;event('Tick')
 check(#said==before,'old automatic page request does not describe a different page')
 state.index=0;P.automatic(page);event('Destruct');before=#said;now=now+1;P.poll()
@@ -133,6 +135,14 @@ state.id=55;page.id=55;P.automatic(page);now=now+1;P.poll()
 check(said[#said]=='picture_description_unavailable','missing hooks/ticks do not silently swallow automatic fallback')
 event('Tick');P.automatic(page);state.asset='/Game/Pictures/Missing.Missing';event('Tick')
 check(said[#said]=='viewer_no_description Page 1 of 2.','missing caption and text reported once with page last')
+state.text='Native text.';P.request(page);event('Tick')
+check(said[#said]=='picture_description_unavailable picture_has_text Page 1 of 2.','uncovered picture still advertises its text')
+P.automatic(page);state.reading=true;before=#said;event('Tick')
+check(#said==before,'entering Read discards stale automatic image request')
+P.request(page);local reads_before=asset_reads;event('Tick')
+check(said[#said]=='Native text. Page 1 of 2.' and asset_reads==reads_before,'manual request follows actual Read mode without touching texture')
+state.reading=nil;P.request(page);event('Tick')
+check(said[#said]=='Native text. Page 1 of 2.','unknown mode preserves accessible native text fallback')
 print('Picture descriptions: '..n..' checks passed')
 StaticFindObject=old_find;RegisterHook=old_hook
 package.loaded['descriptions.picture']=nil

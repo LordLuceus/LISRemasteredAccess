@@ -4,18 +4,19 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-12
 
-- Close-up pictures without a text version now use an available visual
-  description automatically. Pictures with text keep their existing automatic
-  reading; F5 adds the visual description without replacing the game's Read
-  action. F5 can also repeat a picture description. Opening instructions remain
-  in F1 help rather than automatic speech.
+- Close-ups read their available visual description first and say **Has text
+  version** when applicable. Enter/A opens the game's Read mode and reads its
+  text; returning to picture mode restores the description. Textless pictures
+  keep their automatic descriptions. F5 is no longer used.
+- Home and D-pad up now reread the current close-up mode, rather than falling
+  back to whichever announcement happened last. Ctrl+Home and the controller
+  repeat chord still repeat the last announcement. Control instructions remain
+  in F1 help rather than automatic opening speech.
 - Description coverage is currently limited to eleven English Episode 1 images.
   Uncovered pictures are reported explicitly. Automatic descriptions work with
-  either input device; D-pad up adds or repeats the description in an open
-  close-up. Left/right retain page changing, and Up outside the viewer keeps its
-  existing scanner readout.
-  Initial description reading has been tested in game. Wider picture coverage
-  and multipage behavior remain unverified.
+  either input device. Left/right retain page changing, and Up outside the viewer
+  keeps its existing scanner readout. The Read-mode interaction has been tested
+  in game; wider picture coverage and multipage behavior remain unverified.
 
 ## 2026-11-11
 

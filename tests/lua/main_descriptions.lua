@@ -1,5 +1,5 @@
 -- Execute the real entry point with engine/services replaced by inert fakes.
--- This checks actual binding/wiring, not merely whether the source names F5.
+-- This checks actual Home/Read-mode wiring, not just strings in source.
 package.path='src/?.lua;'..package.path
 local checks=0
 local function check(v,label)checks=checks+1;assert(v,label)end
@@ -47,26 +47,29 @@ local env=setmetatable({require=fake_require,Key=Key,ModifierKey={CONTROL=1,SHIF
     {__index=_G})
 env._G=env
 assert(loadfile('src/main.lua','t',env))()
-local f5=bound['116:none']
-check(type(f5)=='function','actual F5 key is bound without modifiers')
-current_page={id=1,index=1,count=1,text='Native page text.',key='1:1:text'}
-f5()
-check(spoken[#spoken]=='Native page text.','F5 preserves initial native text before requesting description')
-check(requested[#requested]==current_page,'F5 queues the currently observed picture')
-local n=#spoken;f5();check(#spoken==n,'repeat F5 does not reannounce unchanged native text')
-current_page={id=1,index=2,count=2,text='',key='1:2:'};f5()
-check(requested[#requested-1]=='auto:1:2:' and requested[#requested]==current_page,'no-text fallback and F5 reach their distinct queues')
-check(#spoken==n,'opening no-text line does not cut off its upcoming description')
-current_menu={label='Pause'};n=#requested;f5()
-check(#requested==n,'F5 does not act behind a menu')
-current_menu=nil;current_page=nil;f5()
-check(spoken[#spoken]=='No picture ready to describe.','F5 outside a picture gives explicit feedback')
-current_page={id=2,index=1,count=1,text='Controller text.',key='2:1:text'}
+check(bound['116:none']==nil,'extra F5 binding removed')
+check(bound['ENTER:none']==nil and bound['RETURN:none']==nil,'native Enter is not intercepted or reimplemented')
+local home,repeat_last=bound['HOME:none'],bound['HOME:ctrl']
+check(type(home)=='function' and type(repeat_last)=='function','contextual Home and literal repeat remain distinct')
+current_page={id=1,index=1,count=1,text='Native page text.',reading=false,key='1:1:picture'}
+home();check(requested[#requested]==current_page,'Home requests description in picture mode')
+picture.say('Image description. Has text version.')
+current_page={id=1,index=1,count=1,text='Native page text.',reading=true,key='1:1:read'}
+home();check(spoken[#spoken]=='Native page text.','Home in Read mode reads text even when description was last')
+bound['F1:none']();local help=spoken[#spoken]
+repeat_last();check(spoken[#spoken]==help,'Control Home repeats help literally')
+home();check(spoken[#spoken]=='Native page text.','Home still returns current native text after help')
+current_menu={label='Pause'};local n=#requested;home()
+check(#requested==n,'Home cannot request an image behind a menu')
+current_menu=nil;current_page={id=2,index=1,count=1,text='Controller text.',reading=true,key='2:1:read'}
 game_loop();buttons=1;game_loop()
-check(requested[#requested]==current_page,'real controller dispatch reaches current picture request')
-n=#requested;game_loop();check(#requested==n,'controller hold does not repeat')
-buttons=0;game_loop();buttons=0x41;game_loop()
-check(#requested==n,'controller help chord never also requests description')
+check(spoken[#spoken]=='Controller text.','actual D-pad Up reads current text mode, not description')
+n=#spoken;game_loop();check(#spoken==n,'controller hold does not repeat')
+buttons=0;game_loop();buttons=0x41;n=#requested;game_loop()
+check(#requested==n,'controller help chord does not also reread')
+buttons=0;current_page.reading=false;current_page.key='2:1:picture';game_loop()
+buttons=1;game_loop()
+check(requested[#requested]==current_page,'D-pad Up back in picture mode requests description')
 for _,name in ipairs({'hud.viewer','core.help','core.text','core.localization','descriptions.reader'}) do package.loaded[name]=nil end
 print('Main description wiring: '..checks..' checks passed')
 return checks

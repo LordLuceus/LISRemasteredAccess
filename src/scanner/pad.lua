@@ -26,7 +26,7 @@ function M:update(buttons,active,now,picture_open)
     -- Chords retain their existing meaning. Ignore Up held on viewer entry.
     if picture_open then
         active=false
-        if self.picture_open and not thumb and (edge&UP)~=0 then out[#out+1]="picture_describe" end
+        if self.picture_open and not thumb and (edge&UP)~=0 then out[#out+1]="picture_reread" end
     end
     self.picture_open=picture_open==true
     if (edge&THUMB)~=0 then self.thumb_used=false;self.thumb_started=active end

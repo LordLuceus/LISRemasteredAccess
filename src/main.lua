@@ -43,6 +43,7 @@ end
 -- announcement. Page Up/Down select scanner objects in play. Each key runs on
 -- the game thread; the loader only fires a binding for its exact modifiers.
 local reread=nil
+local picture_reread=nil
 local room_tick,room_last,room_pending,room_spoken,room_announced_once=0,nil,nil,nil,false
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
@@ -91,6 +92,7 @@ end
 bind_key(Key.HOME,on_game(function()
     padlock.check_presence()
     if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
+    if picture_reread and picture_reread() then return end
     if not can_scan() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
@@ -470,14 +472,13 @@ local function viewer_step()
     picture_reader.step(page)
     return page
 end
--- F5 is additional visual information, not a replacement for native Read.
-bind_key(Key.F5,on_game(function()
-    if in_menu() then return end
-    -- Process opening/native text first, so a later polling beat cannot cut off
-    -- the explicitly requested description with the same opening announcement.
-    local page=viewer_step()
-    if page then picture.request(page) else say(l10n.text("picture_description_not_ready"),true) end
-end))
+picture_reread=function()
+    if in_menu() then return false end
+    local ok,page=pcall(viewer.current)
+    if not ok or not page then return false end
+    picture.install()
+    return picture_reader.reread(page)
+end
 -- Journal: a new tab or page is announced with its first item; Up/Down
 -- (D-pad up/down) step through items one at a time.
 local function journal_step()
@@ -576,8 +577,11 @@ tutorial.text=function(key,p)return l10n.text(key,p)end
 tutorial.log=log
 viewer.text=function(key,p)return l10n.text(key,p)end
 viewer.clean=require("core.text").clean
+viewer.log=log
 picture.text=function(key,p)return l10n.text(key,p)end
 picture.clean=require("core.text").clean
+picture.read_mode=viewer.reading
+picture.native_text=viewer.describe
 picture.language=function()return l10n.language()end
 picture.log=log
 picture.say=function(text)say(text,true);log("picture_description spoken="..text)end
@@ -753,9 +757,7 @@ local function pad_step()
             local active=buttons>=0 and can_scan() and not journal_open and not picture_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock(),picture_open)) do
                 if cmd=="repeat" then speech.say(last_speech,true)
-                elseif cmd=="picture_describe" then
-                    local page=viewer_step()
-                    if page then picture.request(page) end
+                elseif cmd=="picture_reread" then picture_reread()
                 elseif cmd=="autowalk" then walk_toggle()
                 elseif cmd=="face" then face_selected()
                 elseif cmd=="help" then padlock.controller_help();show_help()

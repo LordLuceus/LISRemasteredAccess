@@ -5,7 +5,7 @@ local function commands(p,b,a,t,v)return table.concat(p:update(b,a,t,v),',')end
 local p=P.new()
 check(commands(p,1,true,0,true)=='','held Up ignored on viewer entry')
 commands(p,0,true,.1,true)
-check(commands(p,1,true,.2,true)=='picture_describe','picture overrides even a permissive world gate')
+check(commands(p,1,true,.2,true)=='picture_reread','picture reread overrides even a permissive world gate')
 check(commands(p,1,true,1,true)=='','holding Up does not repeat description')
 commands(p,0,true,1.1,true)
 check(commands(p,4,true,1.2,true)=='','left is left entirely to native paging')

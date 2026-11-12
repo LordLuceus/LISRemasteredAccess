@@ -1,10 +1,11 @@
--- Automatic descriptions for textless pictures; F5 for any open picture.
+-- Descriptions in picture mode, native text in the game's Read mode.
 -- Engine objects are accessed ONLY in the picture view's own Tick. Requests and
 -- expiry contain scalars, never retained widgets/brushes/textures. Asset identity
 -- is read when fulfilling the request, not cached from opening the picture.
 local M={clock=os.clock,say=function(_)end,log=function(_)end,
     text=function(key,_)return key end,language=function()return 'en' end,
-    clean=function(s)return s end,on_close=function(_)end,on_described=function(_,_)end}
+    clean=function(s)return s end,on_close=function(_)end,on_described=function(_,_)end,
+    read_mode=function(_)return nil end,native_text=function(text)return text end}
 local catalog=require('descriptions.catalog')
 local data=nil
 M.lookup=function(asset,language)
@@ -53,12 +54,14 @@ local function queue(page,automatic)
     if active and active.id~=id then clear() end
     if automatic and pending and not pending.automatic then return true end
     pending={id=id,generation=generation,expires=M.clock()+M.MAX_AGE,
-        automatic=automatic,index=page and page.index,count=page and page.count}
+        automatic=automatic,index=page and page.index,count=page and page.count,
+        reading=page and page.reading}
     return true
 end
 function M.request(page)return queue(page,false) end
 function M.automatic(page)return queue(page,true) end
 function M.cancel_auto()if pending and pending.automatic then pending=nil end end
+function M.cancel()pending=nil end
 -- Called from the existing game-thread loop; no object reads here.
 function M.poll()
     if pending and M.clock()>pending.expires then
@@ -88,18 +91,29 @@ local function capture(v)
         return
     end
     local index,count=(v.CurrentPicture or 0)+1,v.NumPages or 1
+    local reading=M.read_mode(v)
     if intent.automatic then
         if intent.index~=index then return end -- the next observed page queues its own request
-        local tb=v.TextBlock_PictureText
-        assert(valid(tb),'picture text status unavailable')
-        local body=M.clean(tb:GetText():ToString())
-        if body and body:find('%S') then return end -- native text arrived since observation
+        if intent.reading~=reading then return end -- don't speak an old mode after a switch
+    end
+    local tb=v.TextBlock_PictureText
+    assert(valid(tb),'picture text status unavailable')
+    local text=tb:GetText():ToString()
+    local body=M.clean(text)
+    local has_text=body~=nil and body:find('%S')~=nil
+    if reading==true or (reading==nil and has_text) then
+        M.on_described(id,index,reading,has_text)
+        M.say(M.native_text(text,index,count))
+        return
     end
     local asset=current_asset(v)
     local description=asset and M.lookup(asset,M.language())
     intent.index=index;intent.count=count
-    if not description then fail(nil,intent);return end
-    M.on_described(id,index)
+    if not description then
+        description=M.text(has_text and 'picture_description_unavailable' or 'viewer_no_description')
+    end
+    if has_text then description=description..' '..M.text('picture_has_text') end
+    M.on_described(id,index,reading,has_text)
     M.say(position(description,intent))
 end
 local function on_tick(self)

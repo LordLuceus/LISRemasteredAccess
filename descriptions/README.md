@@ -29,15 +29,20 @@ in-game close-ups are covered. The compiler refuses drafts, duplicate IDs within
 a language, provenance mismatches and extra private fields. Keep unfinished
 drafts outside the reviewed source file.
 
-Runtime integration uses `descriptions.picture.request(page)` for F5 and
-`automatic(page)` for a newly observed page with no native text. Each queues a scalar
+Runtime integration uses `descriptions.picture.request(page)` for contextual Home/
+D-pad-Up rereading and `automatic(page)` for a newly observed picture-mode page.
+Each queues a scalar
 intent; only the picture view's own Tick reads the currently displayed texture
 and resolves its caption. Closed/replaced/stopped views invalidate the request.
-An automatic request rechecks native text before speaking; late text is never
-replaced with a visual caption. The existing native reader remains responsible
-for text, coordinated by `descriptions.reader`. Late native text queues rather
-than cutting off an explicitly requested description. `poll()` handles expiry
+Native mode comes from `CanvasPanel_Read:IsVisible()`, matching the shipped Read
+and Back handlers. Text presence is availability, not mode: picture-mode speech
+appends "Has text version", and native text is spoken on entering Read mode.
+The existing native reader remains responsible for text, coordinated by
+`descriptions.reader`. Automatic requests recheck the mode before speaking; if it
+cannot be established, the previously working native text path remains available.
+`poll()` handles expiry
 without touching engine objects, and `install()` is retried after class loads.
-Initial reading is playtest-accepted; wider coverage and multipage behavior remain
-unverified. D-pad up uses the same request in an open viewer;
-the scanner's ordinary readout and native left/right paging remain separate.
+The mode-based interaction is playtest-accepted; wider coverage and multipage
+behavior remain unverified. F5 has been removed. Home and
+D-pad up follow the current mode; literal repeat remains separate, as do the
+scanner's ordinary readout and native left/right paging.

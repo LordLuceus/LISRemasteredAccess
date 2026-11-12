@@ -99,7 +99,7 @@ when they change.
 | Keyboard | Controller | Action |
 | --- | --- | --- |
 | Page Down / Page Up | D-pad right / left | Next / previous object (hold to repeat) |
-| Home | D-pad up | Describe the selected object again, with fresh distance and direction |
+| Home | D-pad up | Read the current close-up view again, or describe the selected world object with fresh distance and direction |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 | Shift+Home | D-pad down | Walk to the selected object; press again to stop |
 | F | Left-stick click | Turn toward the selected object |
@@ -108,7 +108,6 @@ when they change.
 | F2 | Hold left-stick click, then D-pad left | Preview the control and pool-guard cues and say what they mean |
 | F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
 | F4 | Hold left-stick click, then click the right stick | Room filter on or off: off lists every object nearby, for a room the filter misses |
-| F5 | D-pad up in a close-up | Describe the open close-up picture, including pictures that also have a text version |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -329,24 +328,26 @@ and the announced button.
 
 ### Close-ups
 
-When you look at a letter, poster or notice board, the mod reads the game's
-text version of it straight away; you don't need the game's Read button. If the
-picture has no text version, its available visual description is read automatically
-instead. **F5** (D-pad up in a close-up) reads the visual description on demand, including for pictures
-that have a text version. It also repeats an automatically read description.
-The game's Read button and page controls are unchanged. Pages are read as you
-turn them, with the page number at the end when there is more than one.
-Ctrl+Home (on a controller, hold the left-stick click and press D-pad right)
-repeats the last announcement. F1 gives the picture controls without adding
-instructions to every opening announcement.
+When you open a picture, letter or other close-up, the mod first reads a visual
+description when one is available. If the picture also has text, the announcement
+ends with **Has text version.** Use the game's **Read** action—Enter on keyboard,
+A on controller—to enter Read mode and hear that text. Escape or B returns to
+the picture and its description. Pictures without text keep their automatic
+descriptions; no extra description shortcut is needed.
+
+**Home**, or **D-pad up**, rereads the current view: the description in picture
+mode, the text in Read mode. **Ctrl+Home** (on a controller, hold the left-stick
+click and press D-pad right) instead repeats the last announcement, including
+help. F5 is no longer used. Page controls remain native, with page position spoken
+last. F1 gives the controls without adding instructions to each opening readout.
 
 **Picture descriptions are still in development.** The current English catalogue
 covers only a small selection of Episode 1 pictures, not the whole episode. A
 picture with neither text nor a description says so. Automatic and on-demand
 descriptions work with either input device. D-pad left/right retain the game's
 page controls; outside the viewer, D-pad up still reads the scanner selection.
-Initial description reading has been tested in game. Wider picture coverage and
-multipage behavior remain unverified.
+Description-first reading, native Read mode and contextual rereading have been
+tested in game. Wider picture coverage and multipage behavior remain unverified.
 
 ### The journal
 

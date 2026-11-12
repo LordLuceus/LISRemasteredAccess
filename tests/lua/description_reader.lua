@@ -8,35 +8,58 @@ V.text=function(key,p)
     return key
 end
 V.clean=function(s)return s:gsub('<[^>]+>','') end
-local out,queued,interrupts={},nil,{}
+local out,queued={},nil
 local picture={}
 picture.automatic=function(page)queued=page;return page.id~=nil end
+picture.request=function(page)queued=page;return true end
 picture.cancel_auto=function()queued=nil end
-local R=require('descriptions.reader').new(V,picture,function(s,interrupt)out[#out+1]=s;interrupts[#interrupts+1]=interrupt end,function()end)
-local text={id=1,index=1,count=1,text='Original native text.',key='1:1:text'}
-local photo={id=1,index=2,count=2,text='',key='1:2:'}
-R.step(text)
-check(out[1]=='Original native text.' and not queued,'native text preserved, no automatic caption')
-R.step(text);check(#out==1,'native text not repeated unchanged')
-R.step(photo);check(#out==1 and queued==photo,'no-text line suppressed while description is queued')
-queued=nil;R.step(photo);check(not queued and #out==1,'automatic description requested once per page')
-R.closed(1);R.step(photo);check(queued==photo,'same-address reopen automatically describes again')
-R.step(text);check(not queued and out[#out]=='Original native text.','native text appearance cancels queued fallback')
-R.step(nil);check(not queued,'closed viewer clears queue')
-photo.text='<b> </b>';photo.key='1:2:markup';R.step(photo)
-check(queued==photo,'markup-only text counts as no text after shared cleaning')
-R.step(nil);photo.id=nil;photo.key='unknown';R.step(photo)
-check(out[#out]=='viewer_no_text Page 2 of 2.','unavailable view identity retains existing native fallback')
--- The F5 wrapper first runs this same step, then queues its manual request.
--- A later normal poll must not overwrite the manual spoken description.
-R.step(nil);out={};R.step(text);out[#out+1]='Requested description.';R.step(text)
-check(#out==2 and out[2]=='Requested description.','F5 before normal poll is not interrupted by duplicate native text')
-R.step(nil);out={};R.step(text);R.step(text);out[#out+1]='Requested description.';R.step(text)
-check(#out==2 and out[2]=='Requested description.','normal poll before F5 preserves native read then requested description')
-R.step(nil);out={};R.described(1,1);R.step(text)
-check(out[1]=='Original native text.' and interrupts[#interrupts]==false,'late native text queues instead of interrupting F5')
-R.step(nil);photo.id=1;photo.text='';photo.key='1:2:';R.described(1,2);R.step(photo)
-check(not queued,'F5 on a freshly changed page prevents a duplicate automatic caption')
+picture.cancel=picture.cancel_auto
+local R=require('descriptions.reader').new(V,picture,function(s)out[#out+1]=s end,function()end)
+local image={id=1,index=1,count=1,text='Native text.',reading=false,key='1:1:image'}
+local read={id=1,index=1,count=1,text='Native text.',reading=true,key='1:1:read'}
+R.step(image)
+check(#out==0 and queued==image,'text-bearing picture describes instead of transcribing')
+queued=nil;R.step(image);check(not queued,'unchanged picture does not repeat')
+R.step(read)
+check(out[1]=='Native text.' and not queued,'entering native Read reads text and cancels pending image')
+R.step(read);check(#out==1,'unchanged Read mode stays quiet')
+out[#out+1]='Help announcement.';R.reread(read)
+check(out[#out]=='Native text.','Home in Read mode reads text rather than the last announcement')
+R.step(image);check(queued==image,'returning to picture describes again')
+queued=nil;R.reread(image);check(queued==image,'Home in picture mode requests its current description')
+queued=nil;R.step(image);check(not queued,'Home before regular poll does not cause duplicate auto speech')
+R.closed(1);R.step(image);check(queued==image,'same-address reopen describes again')
+R.step(nil);check(not queued,'closing clears queued automatic description')
+local photo={id=2,index=2,count=3,text='',reading=false,key='2:2:image'}
+R.step(photo);check(queued==photo,'textless pictures keep automatic descriptions')
+R.step(nil);out={};R.described(1,1,false,true);R.step(read)
+check(out[1]=='Native text.','prior image description cannot suppress entering Read mode')
+R.step(nil);out={};R.described(1,1,false,false);R.step(image)
+check(out[1]=='picture_has_text' and not queued,'late-loaded text announces availability, not transcription')
+R.step(nil);out={};local unknown={id=3,index=1,count=1,text='Accessible fallback.',key='3:1:unknown'}
+R.step(unknown);check(out[1]=='Accessible fallback.','unknown mode retains working native text access')
+R.step(nil);out={};local noid={index=1,count=1,text='Native text.',reading=false,key='noid'}
+R.step(noid);check(out[1]=='picture_description_unavailable picture_has_text','missing image identity does not transcribe known picture mode')
+local visible=false
+local widget={CanvasPanel_Read={IsValid=function()return true end,IsVisible=function()return visible end}}
+check(V.reading(widget)==false,'hidden native Read panel means picture mode')
+visible=true;check(V.reading(widget)==true,'visible native Read panel means text mode')
+check(V.reading({})==nil,'missing panel is unknown, not a fabricated mode')
+local old_find=FindAllOf
+widget.IsValid=function()return true end
+widget.IsVisible=function()return true end
+widget.IsInViewport=function()return true end
+widget.GetAddress=function()return 123 end
+widget.TextBlock_PictureText={IsValid=function()return true end,GetText=function()
+    return {ToString=function()return 'Unchanged text.' end}
+end}
+widget.CurrentPicture=0;widget.NumPages=2
+FindAllOf=function()return {widget} end
+visible=false;local a=V.current();visible=true;local b=V.current()
+check(a.text==b.text and a.key~=b.key and not a.reading and b.reading,'actual snapshot changes identity when only native Read visibility changes')
+FindAllOf=old_find
+R.step(nil);out={};R.reread(read);R.step(read)
+check(#out==1 and out[1]=='Native text.','Home on entering Read suppresses a duplicate automatic read')
 V.text,V.clean=old_text,old_clean
 print('Description coordination: '..n..' checks passed')
 return n
