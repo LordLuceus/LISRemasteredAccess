@@ -129,6 +129,7 @@ local rooms=require("scanner.rooms")
 local pool_guard=require("scenes.pool_guard")
 local polarewind=require("scenes.polarewind")
 local viewer=require("hud.viewer")
+local picture=require("descriptions.picture")
 local journal=require("hud.journal")
 local choice_stats=require("menus.choice_stats")
 local stats_cursor=choice_stats.cursor()
@@ -145,7 +146,7 @@ end
 local function show_help()
     padlock.check_presence()
     local gamepad=controls.using_gamepad()
-    say(padlock.help(gamepad) or help.speech(gamepad),true)
+    say(padlock.help(gamepad) or (picture.active() and l10n.text(gamepad and "picture_help_pad" or "picture_help_keys")) or help.speech(gamepad),true)
 end
 -- The cue plays ~0.9 s after its name (18 loop beats), on the game-thread loop.
 local delayed={}
@@ -459,17 +460,24 @@ local function tooltip_step()
     end
 end
 -- Object viewer: each page read when it is shown (Ctrl+Home repeats).
-local last_page=nil
+local picture_reader=require("descriptions.reader").new(viewer,picture,say,log)
+picture.on_close=picture_reader.closed
+picture.on_described=picture_reader.described
 local function viewer_step()
     local ok,page=pcall(viewer.current)
-    if not ok or not page then last_page=nil;return end
-    if page.key~=last_page then
-        last_page=page.key
-        local text=viewer.describe(page.text,page.index,page.count)
-        say(text,true)
-        log("viewer page="..page.index.."/"..page.count.." spoken="..text)
-    end
+    if not ok then return end
+    if page then picture.install() end
+    picture_reader.step(page)
+    return page
 end
+-- F5 is additional visual information, not a replacement for native Read.
+bind_key(Key.F5,on_game(function()
+    if in_menu() then return end
+    -- Process opening/native text first, so a later polling beat cannot cut off
+    -- the explicitly requested description with the same opening announcement.
+    local page=viewer_step()
+    if page then picture.request(page) else say(l10n.text("picture_description_not_ready"),true) end
+end))
 -- Journal: a new tab or page is announced with its first item; Up/Down
 -- (D-pad up/down) step through items one at a time.
 local function journal_step()
@@ -507,6 +515,7 @@ local arrows_done=false
 local function menu_step()
         local ok,err=pcall(function()
             settings_tick=settings_tick+1
+            if settings_tick%8==1 then picture.install() end
             -- Arrow keys mirror WASD. Applied once the title screen exists, so the
             -- player's input has been created and can rebuild its key maps.
             if not arrows_done and menu.title_ready() then arrows_done=true;pcall(require("core.arrow_keys").apply,log) end
@@ -567,6 +576,11 @@ tutorial.text=function(key,p)return l10n.text(key,p)end
 tutorial.log=log
 viewer.text=function(key,p)return l10n.text(key,p)end
 viewer.clean=require("core.text").clean
+picture.text=function(key,p)return l10n.text(key,p)end
+picture.clean=require("core.text").clean
+picture.language=function()return l10n.language()end
+picture.log=log
+picture.say=function(text)say(text,true);log("picture_description spoken="..text)end
 journal.text=function(key,p)return l10n.text(key,p)end
 journal.clean=require("core.text").clean
 journal.translate=function(key)return require("scanner.sources").translate(key)end
@@ -735,9 +749,13 @@ local function pad_step()
             else pad:reader_reset() end
             -- While the journal is open the D-pad reads it; scanner commands
             -- (D-pad down = autowalk) must not fire behind it.
-            local active=buttons>=0 and can_scan() and not journal_open
-            for _,cmd in ipairs(pad:update(buttons,active,os.clock())) do
+            local picture_open=not journal_open and not in_menu() and picture.active()
+            local active=buttons>=0 and can_scan() and not journal_open and not picture_open
+            for _,cmd in ipairs(pad:update(buttons,active,os.clock(),picture_open)) do
                 if cmd=="repeat" then speech.say(last_speech,true)
+                elseif cmd=="picture_describe" then
+                    local page=viewer_step()
+                    if page then picture.request(page) end
                 elseif cmd=="autowalk" then walk_toggle()
                 elseif cmd=="face" then face_selected()
                 elseif cmd=="help" then padlock.controller_help();show_help()
@@ -766,6 +784,7 @@ LoopInGameThreadWithDelay(50,function()
             padlock.check_presence()
         end
         run_keys()
+        picture.poll()
         run_delayed()
         pad_step()
         -- Recognize help before emitting a queued native digit change from

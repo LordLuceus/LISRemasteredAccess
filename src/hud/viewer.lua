@@ -3,18 +3,21 @@
 -- TextBlock_PictureText holds the page's text version even while the game's
 -- Read panel is closed, Button_Read is shown only when a text version exists,
 -- and CurrentPicture/NumPages give the page. Objects without a text version
--- (the classroom photo) leave the text empty: that is said plainly, since an
--- authored description does not exist yet.
+-- (the classroom photo) leave the text empty. The description coordinator adds
+-- authored image descriptions for those pages; native text stays unchanged.
 -- The text is read as soon as a page is shown, so the Read button is not needed.
 local M={}
 M.text=function(key,p)return key end
 M.clean=function(s)return s end
 -- Spoken form of one page. Pure. Page position goes last, and only when there
 -- is more than one page.
-function M.describe(text,index,count)
+function M.body(text)
     local body=text and M.clean(text) or nil
     if body and not body:find("%S") then body=nil end
-    local s=body or M.text("viewer_no_text")
+    return body
+end
+function M.describe(text,index,count)
+    local s=M.body(text) or M.text("viewer_no_text")
     if count and count>1 then s=s.." "..M.text("viewer_page",{index=index,count=count}) end
     return s
 end
@@ -31,14 +34,15 @@ function M.current()
         end
     end)
     if not found then return nil end
-    local text,index,count,id=nil,1,1,""
+    local text,index,count,id=nil,1,1,nil
     pcall(function()
         local tb=found.TextBlock_PictureText
         if tb and tb:IsValid() then text=tb:GetText():ToString() end
     end)
     pcall(function()index=(found.CurrentPicture or 0)+1 end)
     pcall(function()count=found.NumPages or 1 end)
-    pcall(function()id=string.format("%x",found:GetAddress())end)
-    return {text=text,index=index,count=count,key=id..":"..index..":"..tostring(text)}
+    pcall(function()id=found:GetAddress()end)
+    return {text=text,index=index,count=count,id=id,
+        key=(id and string.format("%x",id) or "")..":"..index..":"..tostring(text)}
 end
 return M

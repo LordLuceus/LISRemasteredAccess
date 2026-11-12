@@ -108,6 +108,7 @@ when they change.
 | F2 | Hold left-stick click, then D-pad left | Preview the control and pool-guard cues and say what they mean |
 | F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
 | F4 | Hold left-stick click, then click the right stick | Room filter on or off: off lists every object nearby, for a room the filter misses |
+| F5 | D-pad up in a close-up | Describe the open close-up picture, including pictures that also have a text version |
 
 An object is read with its distance, direction from where you are facing, height
 when it is more than 1.5 metres above or below, and its place in the list, for
@@ -329,11 +330,23 @@ and the announced button.
 ### Close-ups
 
 When you look at a letter, poster or notice board, the mod reads the game's
-text version of it straight away; you don't need the game's Read button. Things
-without a text version, such as photos, say "No text version." Pages are read
-as you turn them, with the page number at the end when there is more than one.
+text version of it straight away; you don't need the game's Read button. If the
+picture has no text version, its available visual description is read automatically
+instead. **F5** (D-pad up in a close-up) reads the visual description on demand, including for pictures
+that have a text version. It also repeats an automatically read description.
+The game's Read button and page controls are unchanged. Pages are read as you
+turn them, with the page number at the end when there is more than one.
 Ctrl+Home (on a controller, hold the left-stick click and press D-pad right)
-repeats it.
+repeats the last announcement. F1 gives the picture controls without adding
+instructions to every opening announcement.
+
+**Picture descriptions are still in development.** The current English catalogue
+covers only a small selection of Episode 1 pictures, not the whole episode. A
+picture with neither text nor a description says so. Automatic and on-demand
+descriptions work with either input device. D-pad left/right retain the game's
+page controls; outside the viewer, D-pad up still reads the scanner selection.
+Initial description reading has been tested in game. Wider picture coverage and
+multipage behavior remain unverified.
 
 ### The journal
 
@@ -391,8 +404,9 @@ none, every outcome reads 0 percent.
   The room filter can miss connections; F4 exposes the full nearby scanner list.
 - Photos and Places in the journal are not narrated. Character selection can
   skip grid entries; open a profile and use Left and Right as described above.
-- The mod does not describe arbitrary pictures or provide a full rewind-history
-  reader. The game's ordinary rewind controls still work.
+- Visual descriptions currently cover only a small selection of Episode 1
+  close-ups, in English. Other pictures and cutscenes are not described.
+  There is no full rewind-history reader; ordinary rewind controls still work.
 - Controller names use Xbox/XInput button labels. Other controller layouts have
   not been verified.
 - Coverage in later episodes is not yet fully tested. Please report inaccessible

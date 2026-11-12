@@ -763,7 +763,7 @@ end
 do
     package.loaded["core.help"]=nil;package.loaded["core.preview"]=nil
     local H=require("core.help");H.text=function(k)return k end
-    check("keyboard help",H.lines(false)[1]=="help_keys_select" and #H.lines(false)==7)
+    check("keyboard help",H.lines(false)[1]=="help_keys_select" and #H.lines(false)==8)
     check("controller help",H.lines(true)[3]=="help_pad_walk")
     local en=require("lang.en")
     local all=true;for _,g in ipairs({false,true}) do for _,k in ipairs(H.lines(g)) do if not en[k] then all=false end end end
@@ -2120,7 +2120,7 @@ do
         "FindAllOf FindFirstOf StaticFindObject FName FText RegisterHook RegisterKeyBind RegisterConsoleCommandHandler ExecuteInGameThread ExecuteWithDelay LoopAsync NotifyOnNewObject "..
         "LoopInGameThreadWithDelay CancelDelayedAction ExecuteAsync RegisterCustomEvent UEHelpers Key ModifierKey IsKeyBindRegistered print_lua CreateInvalidObject EObjectFlags StaticConstructObject FindObject FindObjects RegisterProcessConsoleExecPreHook RegisterProcessConsoleExecPostHook RegisterLoadMapPreHook RegisterLoadMapPostHook RegisterInitGameStatePreHook RegisterInitGameStatePostHook RegisterBeginPlayPreHook RegisterBeginPlayPostHook UnregisterHook"):gmatch("%S+") do allowed[w]=true end
     local luac="artifacts\\lua-5.4.7\\luac54.exe"
-    local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua')
+    local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua src\\descriptions\\*.lua src\\main.lua')
     local bad={}
     local listed=0
     if list then
@@ -2726,5 +2726,9 @@ end
 -- Keep the producer/planner regression in the ordinary test command as well.
 local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
 if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
+for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua'}) do
+    local ok,total=pcall(dofile,file)
+    if ok then count=count+total else check(file,false,tostring(total)) end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

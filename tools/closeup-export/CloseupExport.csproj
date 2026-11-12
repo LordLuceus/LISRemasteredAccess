@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CUE4Parse"><HintPath>$(DependencyDir)/CUE4Parse.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="CUE4Parse-Conversion"><HintPath>$(DependencyDir)/CUE4Parse-Conversion.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SkiaSharp"><HintPath>$(DependencyDir)/SkiaSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(DependencyDir)/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

@@ -16,12 +16,19 @@ local DELAY,RATE=0.45,0.18
 function M.new()return setmetatable({previous=0,thumb_used=false,thumb_started=false,repeat_at={}},M)end
 -- buttons: current bits (or -1 when no controller); now: seconds.
 -- Returns a list of command names.
-function M:update(buttons,active,now)
+function M:update(buttons,active,now,picture_open)
     local out={}
     if buttons<0 then buttons=0 end
     local edge=buttons & ~self.previous
     local released=self.previous & ~buttons
     local thumb=(buttons&THUMB)~=0
+    -- The picture owns plain Up, never world actions or page-changing keys.
+    -- Chords retain their existing meaning. Ignore Up held on viewer entry.
+    if picture_open then
+        active=false
+        if self.picture_open and not thumb and (edge&UP)~=0 then out[#out+1]="picture_describe" end
+    end
+    self.picture_open=picture_open==true
     if (edge&THUMB)~=0 then self.thumb_used=false;self.thumb_started=active end
     if not active then
         -- Without control (object viewer, cutscenes, menus) the left-stick

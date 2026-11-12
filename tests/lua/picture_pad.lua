@@ -1,0 +1,25 @@
+local P=require('scanner.pad')
+local n=0
+local function check(v,label)n=n+1;assert(v,label)end
+local function commands(p,b,a,t,v)return table.concat(p:update(b,a,t,v),',')end
+local p=P.new()
+check(commands(p,1,true,0,true)=='','held Up ignored on viewer entry')
+commands(p,0,true,.1,true)
+check(commands(p,1,true,.2,true)=='picture_describe','picture overrides even a permissive world gate')
+check(commands(p,1,true,1,true)=='','holding Up does not repeat description')
+commands(p,0,true,1.1,true)
+check(commands(p,4,true,1.2,true)=='','left is left entirely to native paging')
+commands(p,0,true,1.3,true)
+check(commands(p,8,true,1.4,true)=='','right is left entirely to native paging')
+commands(p,0,true,1.5,true)
+check(commands(p,2,true,1.6,true)=='','Down never starts autowalk behind picture')
+commands(p,0,true,1.7,true)
+check(commands(p,0x41,true,1.8,true)=='help','help chord does not also describe')
+commands(p,0,true,1.9,true)
+check(commands(p,0x48,true,2,true)=='repeat','repeat chord unchanged')
+commands(p,0,false,2.1,false)
+check(commands(p,1,false,2.2,false)=='','Up outside viewer without world control stays silent')
+commands(p,0,true,2.3,false)
+check(commands(p,1,true,2.4,false)=='describe','world Up still reads scanner')
+print('Picture controller: '..n..' checks passed')
+return n
