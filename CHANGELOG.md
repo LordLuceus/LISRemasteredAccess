@@ -4,6 +4,13 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-13
 
+- The journal's Photos tab now reads each episode's ten photo slots, including
+  collected status, the displayed image and position. All five episodes have
+  separate English descriptions for previews and collected photographs; an
+  uncollected preview never borrows the finished photo's description. Home
+  rereads the current photo, and F1 provides contextual controls. Controller
+  help chords no longer also move the journal reading cursor. The reader has
+  been tested in game; chronological ordering is a separate follow-up.
 - Expanded English close-up descriptions from eleven images to 105 distinct
   images across the Episode 1 school, campus, dormitories, Chloe's house and
   cliff. Each new caption was checked against its original artwork, with an

@@ -74,6 +74,9 @@ function M:reader(buttons,now)
     local prev=self.reader_prev or buttons -- ignore keys already held on entry
     local edge=buttons & ~prev
     self.reader_prev=buttons
+    -- Help/repeat chords must not also move the journal reading cursor. Keep
+    -- observing releases so dropping the stick while holding Up cannot leak it.
+    if (buttons&THUMB)~=0 then self.reader_bit=nil;self.reader_at=nil;return nil end
     for _,b in ipairs({{UP,-1},{DOWN,1}}) do
         local bit,dir=b[1],b[2]
         if (edge&bit)~=0 then self.reader_at=now+DELAY;self.reader_bit=bit;return dir end

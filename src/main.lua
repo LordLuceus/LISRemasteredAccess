@@ -44,6 +44,7 @@ end
 -- the game thread; the loader only fires a binding for its exact modifiers.
 local reread=nil
 local picture_reread=nil
+local journal_photo_reread=nil
 local room_tick,room_last,room_pending,room_spoken,room_announced_once=0,nil,nil,nil,false
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
@@ -97,6 +98,7 @@ end
 bind_key(Key.HOME,on_game(function()
     padlock.check_presence()
     if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
+    if journal_photo_reread and journal_photo_reread() then return end
     if picture_reread and picture_reread() then return end
     if not can_scan() then
         local text=nil
@@ -160,6 +162,7 @@ local function show_help()
     padlock.check_presence()
     local gamepad=controls.using_gamepad()
     say(padlock.help(gamepad) or (keybindings.active and l10n.text(gamepad and 'keybind_help_pad' or 'keybind_help_keys'))
+        or (journal_open and journal.photo_context(journal_cursor) and l10n.text(gamepad and 'journal_photo_help_pad' or 'journal_photo_help_keys'))
         or (picture.active() and l10n.text(gamepad and "picture_help_pad" or "picture_help_keys")) or help.speech(gamepad),true)
 end
 -- The cue plays ~0.9 s after its name (18 loop beats), on the game-thread loop.
@@ -518,6 +521,18 @@ local function journal_step()
     local text=journal_cursor:update(page)
     if text then say(text,true);log("journal "..tostring(page and page.kind).." spoken="..text) end
 end
+local function photo_command(direction)
+    if not journal_open or not journal.photo_context(journal_cursor) then return false end
+    local ok,text,handled=pcall(journal.photo_read,journal_cursor,direction)
+    if not ok then
+        log('journal_photo_error='..tostring(text))
+        say(l10n.text('journal_photo_unknown'),true)
+        return true
+    end
+    if handled and text then say(text,true) end
+    return handled==true
+end
+journal_photo_reread=function()return photo_command()end
 journal_move=function(direction)
     if not journal_open then return false end
     if stats_open then
@@ -525,6 +540,7 @@ journal_move=function(direction)
         if text then say(text,true) end
         return true
     end
+    if photo_command(direction) then return true end
     local text=journal_cursor:move(direction)
     if text then say(text,true) end
     return true
@@ -604,6 +620,7 @@ picture.language=function()return l10n.language()end
 picture.log=log
 picture.say=function(text)say(text,true);log("picture_description spoken="..text)end
 journal.text=function(key,p)return l10n.text(key,p)end
+journal.language=function()return l10n.language()end
 journal.clean=require("core.text").clean
 journal.translate=function(key)return require("scanner.sources").translate(key)end
 journal.say=function(text)say(text,true)end

@@ -20,6 +20,15 @@ class Captions(unittest.TestCase):
         self.assertEqual(compiler.render(self.rows).encode('utf-8'),
                          (ROOT / 'src/descriptions/data.lua').read_bytes())
 
+    def test_journal_catalogue_matches_every_native_variant(self):
+        rows = json.loads((ROOT / 'descriptions/journal_photos.en.json').read_text(encoding='utf-8'))
+        slots = json.loads((ROOT / 'descriptions/journal_photo_slots.json').read_text(encoding='utf-8'))
+        expected = {row[state].lower() for row in slots for state in ('locked', 'unlocked')}
+        self.assertEqual(len(rows), 100)
+        self.assertEqual({row['asset'].lower() for row in rows}, expected)
+        self.assertEqual(compiler.render(rows, 'descriptions/journal_photos.en.json').encode('utf-8'),
+                         (ROOT / 'src/descriptions/journal_photos_data.lua').read_bytes())
+
     def test_draft_rejected(self):
         self.rows[0]['status'] = 'draft'
         with self.assertRaisesRegex(ValueError, 'Draft'):
@@ -56,6 +65,28 @@ class Captions(unittest.TestCase):
 
     def test_deterministic_order(self):
         self.assertEqual(compiler.render(self.rows), compiler.render(list(reversed(self.rows))))
+
+    def test_alternate_catalogue_provenance(self):
+        text = compiler.render(self.rows, 'descriptions/journal_photos.en.json')
+        self.assertIn('edit descriptions/journal_photos.en.json.', text)
+        self.assertNotIn('edit descriptions/episode1.en.json.', text)
+        with self.assertRaisesRegex(ValueError, 'single line'):
+            compiler.render(self.rows, 'bad\nlabel')
+
+    def test_alternate_catalogue_cli(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / 'photos.json'
+            output = Path(folder) / 'photos.lua'
+            source.write_text(json.dumps(self.rows), encoding='utf-8')
+            command = [sys.executable, str(ROOT / 'scripts/compile_descriptions.py'),
+                       '--records', str(source), '--output', str(output)]
+            options = dict(capture_output=True, text=True,
+                           creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            result = subprocess.run(command, **options)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(output.read_bytes(), compiler.render(self.rows, 'photos.json').encode('utf-8'))
+            result = subprocess.run(command + ['--check'], **options)
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_check_mode_rejects_stale_file(self):
         with tempfile.TemporaryDirectory() as folder:

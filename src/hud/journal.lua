@@ -10,6 +10,7 @@
 -- to the same page), so diary paragraphs are put back in authored order by
 -- their text key (E1_Page05_A, _B, ...), and names keep a stable order.
 local M={}
+local photo_reader=require('hud.journal_photos')
 -- Designer placeholder text shipped in the journal widgets, never real content.
 M.PLACEHOLDERS={["I should go back upstairs and repair my camera"]=true,["Text Block"]=true}
 M.text=function(key,p)return key end
@@ -119,6 +120,7 @@ local function field_string(o,f)
     if s and s~="" and s~="None" then return s end
 end
 M.translate=function(key)return key end
+M.language=function()return 'en' end
 M.say=function(_)end
 M.log=function(_)end
 -- Pure: one message as spoken, like the original: "Sender, time: text".
@@ -267,6 +269,11 @@ function M.page()
     end
     local photos=live("DiaryPhotos_Widget_C")[1]
     if photos then
+        photo_reader.text=M.text
+        photo_reader.language=M.language
+        photo_reader.log=M.log
+        local detail=photo_reader.page(photos)
+        if detail then return detail end
         local b=highlighted(photos)
         local name=b and field_string(b,"LocalizedEpisodeTitle")
         return {kind="photos",title=M.text("journal_photos"),items=name and {M.clean(name)} or {},list=name~=nil}
@@ -335,5 +342,21 @@ end
 function Cursor:current()
     if not self.page then return nil end
     return M.describe_item(self.page,self.index)
+end
+-- Re-read the live page before a photo command: native left/right replaces the
+-- detail owner, and a key can arrive before the ordinary journal polling pass.
+-- Preserve other journal readers' established behavior.
+function M.photo_context(cursor)
+    local page=cursor and cursor.page
+    return type(page)=='table' and (page.kind=='photos' or page.kind=='photo_detail')
+end
+function M.photo_read(cursor,direction)
+    if not M.photo_context(cursor) then return nil,false end
+    local page=M.page()
+    local changed=cursor:update(page)
+    if changed then return changed,true end
+    if not page then return nil,true end
+    if direction then return cursor:move(direction),true end
+    return cursor:current(),true
 end
 return M

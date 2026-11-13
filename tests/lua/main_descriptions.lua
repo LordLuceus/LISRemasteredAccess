@@ -6,6 +6,7 @@ local function check(v,label)checks=checks+1;assert(v,label)end
 local bound,modules,spoken,requested={},{},{},{}
 local current_page,current_menu=nil,nil
 local buttons,game_loop=0,nil
+local logs={}
 local real_require=require
 local function stub()
     local s=setmetatable({},{__index=function()return function()end end})
@@ -40,10 +41,15 @@ picture.active=function()return current_page~=nil end
 fake_require('menus.main_menu').snapshot=function()return current_menu end
 fake_require('menus.keybindings').active=false
 fake_require('hud.padlock').active=function()return false end
+fake_require('hud.icons').tick=function()return {} end
 fake_require('core.controls').using_gamepad=function()return false end
 local Key=setmetatable({F5=0x74},{__index=function(t,k)rawset(t,k,k);return k end})
 local env=setmetatable({require=fake_require,Key=Key,ModifierKey={CONTROL=1,SHIFT=2},
-    print=function()end,LoopInGameThreadWithDelay=function(ms,fn)if ms==50 then game_loop=fn end;return 1 end,
+    pcall=function(fn,...)
+        local args=table.pack(...)
+        return xpcall(function()return fn(table.unpack(args,1,args.n))end,debug.traceback)
+    end,
+    print=function(line)logs[#logs+1]=tostring(line)end,LoopInGameThreadWithDelay=function(ms,fn)if ms==50 then game_loop=fn end;return 1 end,
     CancelDelayedAction=function()end,RegisterHook=function()end,FindAllOf=function()return {} end},
     {__index=_G})
 env._G=env
@@ -87,6 +93,34 @@ check(#requested==n,'controller help chord does not also reread')
 buttons=0;current_page.reading=false;current_page.key='2:1:picture';game_loop()
 buttons=1;game_loop()
 check(requested[#requested]==current_page,'D-pad Up back in picture mode requests description')
+-- A journal photo page must win over an underlying picture widget, and its
+-- real handlers must refresh current photo state rather than repeat old speech.
+local journal=fake_require('hud.journal')
+local photo_commands={}
+local journal_reads=0
+journal.page=function()journal_reads=journal_reads+1;return {kind='photo_detail'}end
+journal.photo_context=function()return true end
+journal.photo_read=function(_,direction)
+    photo_commands[#photo_commands+1]=direction or 0
+    return 'Current journal photo.',true
+end
+buttons=0
+for _=1,10 do game_loop() end
+check(journal_reads>0,'real journal polling reached the photo page: '..table.concat(logs,'; '))
+n=#requested;home()
+check(spoken[#spoken]=='Current journal photo.' and #requested==n,'Home reads the journal photo, not an underlying close-up')
+bound['DOWN_ARROW:none']();bound['UP_ARROW:none']()
+check(photo_commands[#photo_commands-1]==1 and photo_commands[#photo_commands]==-1,'real arrows reach fresh photo commands')
+bound['F1:none']()
+check(spoken[#spoken]==real_require('lang.en').journal_photo_help_keys,'photo F1 help uses keyboard controls')
+fake_require('core.controls').using_gamepad=function()return true end
+n=#photo_commands;buttons=0x41;game_loop()
+check(#photo_commands==n,'controller help chord cannot also browse a journal photo')
+check(spoken[#spoken]==real_require('lang.en').journal_photo_help_pad,'controller photo help uses controller controls')
+journal.page=function()return nil end
+buttons=0;for _=1,10 do game_loop() end
+n=#photo_commands;home()
+check(#photo_commands==n,'photo command gate releases when the journal closes')
 for _,name in ipairs({'hud.viewer','core.help','core.text','core.localization','descriptions.reader'}) do package.loaded[name]=nil end
 print('Main description wiring: '..checks..' checks passed')
 return checks

@@ -362,6 +362,7 @@ item. Then:
 | Keyboard | Controller | Action |
 | --- | --- | --- |
 | Up / Down | D-pad up / down | Previous / next item (hold to repeat) |
+| Home | No separate shortcut | Reread the current photo in Photos |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 
 - **Diary:** one paragraph at a time, in reading order, then the current
@@ -373,7 +374,17 @@ item. Then:
 - **Messages:** each contact, with how many messages are unread. A conversation
   starts at the latest message ("Kate, 09/25 10:51 am: Hey Max u around?") and
   Up goes back through older ones. New messages are announced as they arrive.
-- **Photos and Places** have nothing to read yet.
+- **Photos:** choose an episode and open it with Enter or A. Up and Down read
+  its ten photo slots, first the five on the left page, then the five on the
+  right. Each says whether it is collected, describes the image currently
+  displayed, and ends with its position. Uncollected slots describe their
+  previews, not the finished photographs. Left and Right change episode.
+  English descriptions cover all 50 photo slots and both image versions across
+  the five episodes. Home rereads the current photo; F1 gives contextual help
+  (hold the left stick and press D-pad up on a controller). The reader has been
+  tested in game. Its current ordering follows the journal layout, not the
+  sequence in which photos become available during the episode.
+- **Places** still has nothing to read.
 
 On the keyboard the game uses Escape both for Back and for the pause menu, so
 leaving a page with Escape can open the pause menu instead; B on a controller
@@ -443,11 +454,12 @@ none, every outcome reads 0 percent.
 
 - Autowalk can fail around obstacles or in places the story has not opened.
   The room filter can miss connections; F4 exposes the full nearby scanner list.
-- Photos and Places in the journal are not narrated. Character selection can
+- Places in the journal are not narrated. Character selection can
   skip grid entries; open a profile and use Left and Right as described above.
 - Visual descriptions cover extracted Episode 1 close-up artwork in English,
-  not all in-game views verified through play. Later-episode artwork and
-  cutscenes are not described.
+  not all in-game views verified through play. The journal's collectible photos
+  have separate descriptions for all five episodes. Other later-episode close-ups
+  and cutscenes are not described.
   There is no full rewind-history reader; ordinary rewind controls still work.
 - Controller names use Xbox/XInput button labels. Other controller layouts have
   not been verified.
