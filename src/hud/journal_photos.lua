@@ -1,6 +1,7 @@
 -- Immediate game-thread scalar snapshot. Never retain engine objects between calls.
 local catalog=require('descriptions.catalog')
 local model=require('hud.journal_photo_state').new(require('hud.journal_photo_slots'))
+local order=require('hud.journal_photo_order')
 local defaults={journal_photo_locked='Not collected.',journal_photo_unlocked='Collected.',
     journal_photo_unknown='Photo state unavailable.',journal_photo_no_description='Description unavailable.',
     journal_photo_position='{index} of {count}.'}
@@ -41,9 +42,9 @@ local function heading(detail)
     assert(type(fallback)=='string','invalid episode heading')
     return fallback
 end
-local function spoken(state,caption,index)
+local function spoken(state,caption,position)
     return M.text('journal_photo_'..state)..' '..(caption or M.text('journal_photo_no_description'))
-        ..' '..M.text('journal_photo_position',{index=index+1,count=10})
+        ..' '..M.text('journal_photo_position',{index=position,count=10})
 end
 local function snapshot(photos)
     if not visible(photos) or not class(photos,'DiaryPhotos_Widget_C') then return nil end
@@ -64,7 +65,10 @@ local function snapshot(photos)
     local id=address(detail)
     local items,seen={},{}
     local library=StaticFindObject('/Script/UMG.Default__WidgetBlueprintLibrary')
-    for index=0,9 do
+    for position=1,10 do
+        -- Browse by episode progression, but read and validate the ORIGINAL
+        -- native child identity. Reordering metadata would mix up photo states.
+        local index=assert(order.native_index(episode,position),'missing photo order')
         local state,caption='unknown',nil
         local ok,err=pcall(function()
             local child=canvas:GetChildAt(index)
@@ -84,7 +88,7 @@ local function snapshot(photos)
             caption=result.caption
         end)
         if not ok then report('slot_'..index,err) end
-        items[index+1]=spoken(state,caption,index)
+        items[position]=spoken(state,caption,position)
     end
     -- Reject a page replaced during a reentrant callback rather than return stale data.
     if not visible(photos) or not same(photos.Overlay_Conent,overlay) or not visible(overlay)

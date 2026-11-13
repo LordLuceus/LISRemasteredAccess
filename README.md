@@ -375,15 +375,16 @@ item. Then:
   starts at the latest message ("Kate, 09/25 10:51 am: Hey Max u around?") and
   Up goes back through older ones. New messages are announced as they arrive.
 - **Photos:** choose an episode and open it with Enter or A. Up and Down read
-  its ten photo slots, first the five on the left page, then the five on the
-  right. Each says whether it is collected, describes the image currently
+  its ten photos in the game's official photo-number order, following episode
+  progression rather than the journal's page layout. Each says whether it is
+  collected, describes the image currently
   displayed, and ends with its position. Uncollected slots describe their
   previews, not the finished photographs. Left and Right change episode.
   English descriptions cover all 50 photo slots and both image versions across
   the five episodes. Home rereads the current photo; F1 gives contextual help
   (hold the left stick and press D-pad up on a controller). The reader has been
-  tested in game. Its current ordering follows the journal layout, not the
-  sequence in which photos become available during the episode.
+  tested in game. Within the same area, some photos can be taken in another
+  order; the numbers stay consistent with the game's photo achievements.
 - **Places** still has nothing to read.
 
 On the keyboard the game uses Escape both for Back and for the pause menu, so

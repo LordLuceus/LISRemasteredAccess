@@ -2,6 +2,7 @@ package.path='src/?.lua;src/?/init.lua;'..package.path
 package.loaded['hud.journal_photos']=nil
 local M=require('hud.journal_photos')
 local definitions=require('hud.journal_photo_slots')
+local order=require('hud.journal_photo_order')
 local count,sequence,lookups,forbidden=0,0,0,0
 local function check(value,label)count=count+1;assert(value,label)end
 local function banned()forbidden=forbidden+1;error('forbidden engine operation')end
@@ -65,9 +66,41 @@ local p=M.page(owner)
 check(p and p.kind=='photo_detail' and #p.items==10,'first open works without hook')
 check(p.title=='Episode title 1' and p.ref==tostring(d.id)..':Episode1','heading and scalar owner identity')
 for i=1,10 do
-    check(p.items[i]:find(i%2==1 and '^Not collected%.' or '^Collected%.'),'mixed native states')
+    local native=order.native_index('Episode1',i)
+    check(p.items[i]:find(native%2==0 and '^Not collected%.' or '^Collected%.'),'native states survive chronological browsing')
+    check(p.items[i]:find(definitions[native+1][native%2==0 and 'locked' or 'unlocked']:lower(),1,true),'caption belongs to original native child')
     check(p.items[i]:sub(-#(i..' of 10.'))==i..' of 10.','position last')
 end
+-- User's real case: only the final Episode1 photo is missing. Native child4
+-- used to be announced fifth; narration must now place it tenth, still locked.
+for i=0,9 do
+    d.CanvasPanel_Content.children[i+1].Image_Photo.Brush.resource=texture(definitions[i+1][i==4 and 'locked' or 'unlocked'])
+end
+local user_case=M.page(owner)
+for i=1,9 do check(user_case.items[i]:find('^Collected%.'),'earlier collected photo '..i) end
+check(user_case.items[10]:find('^Not collected%.') and user_case.items[10]:sub(-9)=='10 of 10.',
+    'missing final photo is tenth')
+-- All100 real variants must survive the display permutation without swapping
+-- captions or collection states. The bound widget order itself never changes.
+for episode=1,5 do
+    for _,state in ipairs({'locked','unlocked'}) do
+        local page=detail(episode);owner.Overlay_Conent.children={page}
+        for native=0,9 do
+            page.CanvasPanel_Content.children[native+1].Image_Photo.Brush.resource=
+                texture(definitions[(episode-1)*10+native+1][state])
+        end
+        local result=M.page(owner)
+        check(result and #result.items==10,'complete chronological episode page')
+        for position=1,10 do
+            local native=order.native_index('Episode'..episode,position)
+            local expected=definitions[(episode-1)*10+native+1][state]:lower()
+            check(result.items[position]:find(expected,1,true),'correct original resource after permutation')
+            check(result.items[position]:find(state=='locked' and '^Not collected%.' or '^Collected%.'),
+                'correct collection state after permutation')
+        end
+    end
+end
+d=detail(1);owner.Overlay_Conent.children={d};p=M.page(owner)
 local function scalars(value)
     if type(value)=='table' then for k,v in pairs(value)do check(type(k)=='number' or type(k)=='string','scalar key');scalars(v)end
     else check(type(value)=='string' or type(value)=='number' or type(value)=='boolean','no retained engine values')end

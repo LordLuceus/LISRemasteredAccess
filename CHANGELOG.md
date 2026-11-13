@@ -10,7 +10,10 @@ Player-facing changes, newest first.
   uncollected preview never borrows the finished photo's description. Home
   rereads the current photo, and F1 provides contextual controls. Controller
   help chords no longer also move the journal reading cursor. The reader has
-  been tested in game; chronological ordering is a separate follow-up.
+  been tested in game. Browsing now follows the game's official photo numbers
+  through each episode rather than the journal layout: for example, Episode 1's
+  final photo is now tenth instead of fifth. Collection status and descriptions
+  remain attached to the same photos.
 - Expanded English close-up descriptions from eleven images to 105 distinct
   images across the Episode 1 school, campus, dormitories, Chloe's house and
   cliff. Each new caption was checked against its original artwork, with an
