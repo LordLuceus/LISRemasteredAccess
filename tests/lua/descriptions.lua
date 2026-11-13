@@ -30,5 +30,13 @@ check(translated.lookup(path,'pt-br')=='Portuguese caption.','locale separators 
 local alias={asset=path,language='pt-br',text='Duplicate.',status='reviewed',image_sha256=hash}
 check(not pcall(C.new,{portuguese,alias}),'locale aliases cannot duplicate a record')
 check(translated.lookup(path,'pt-')==nil,'invalid incomplete locale does not match translation')
+-- Check the actual compiled catalogue too: a valid authoring file is not enough
+-- if runtime identity normalization or reviewed-only filtering drops entries.
+local shipped=require('descriptions.data')
+local live=C.new(shipped)
+check(#shipped>0,'compiled catalogue is nonempty')
+for _,record in ipairs(shipped) do
+    check(live.lookup(record.asset,record.language)==record.text,'compiled caption reachable: '..record.asset)
+end
 print('Description catalogue: '..count..' checks passed')
 return count

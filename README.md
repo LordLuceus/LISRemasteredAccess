@@ -341,13 +341,17 @@ click and press D-pad right) instead repeats the last announcement, including
 help. F5 is no longer used. Page controls remain native, with page position spoken
 last. F1 gives the controls without adding instructions to each opening readout.
 
-**Picture descriptions are still in development.** The current English catalogue
-covers only a small selection of Episode 1 pictures, not the whole episode. A
+**Picture descriptions are still in development.** English descriptions cover
+photos, postcards, posters, documents, computer screens and maps from Episode 1's
+school, campus, dormitories, Chloe's house and cliff. The catalogue covers the
+extracted Episode 1 close-up artwork, but not every picture has been checked in
+play; some in-game views may still be missing. Cutscenes are not described. A
 picture with neither text nor a description says so. Automatic and on-demand
 descriptions work with either input device. D-pad left/right retain the game's
 page controls; outside the viewer, D-pad up still reads the scanner selection.
 Description-first reading, native Read mode and contextual rereading have been
-tested in game. Wider picture coverage and multipage behavior remain unverified.
+tested in game. Playtesting also covered a broad sample across the dorms,
+campus, Chloe's house and cliff, including pictures with multiple pages.
 
 ### The journal
 
@@ -441,8 +445,9 @@ none, every outcome reads 0 percent.
   The room filter can miss connections; F4 exposes the full nearby scanner list.
 - Photos and Places in the journal are not narrated. Character selection can
   skip grid entries; open a profile and use Left and Right as described above.
-- Visual descriptions currently cover only a small selection of Episode 1
-  close-ups, in English. Other pictures and cutscenes are not described.
+- Visual descriptions cover extracted Episode 1 close-up artwork in English,
+  not all in-game views verified through play. Later-episode artwork and
+  cutscenes are not described.
   There is no full rewind-history reader; ordinary rewind controls still work.
 - Controller names use Xbox/XInput button labels. Other controller layouts have
   not been verified.

@@ -4,6 +4,14 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-13
 
+- Expanded English close-up descriptions from eleven images to 105 distinct
+  images across the Episode 1 school, campus, dormitories, Chloe's house and
+  cliff. Each new caption was checked against its original artwork, with an
+  independent review. Photos, posters, documents, screens and maps now have
+  much broader coverage. This covers the extracted artwork, not a claim that
+  every close-up has been tested in play; cutscenes remain outside this work.
+  A broad sample across the dorms, campus, Chloe's house and cliff has been
+  playtested successfully, including pictures with multiple pages.
 - The keyboard binding editor now reads actions, primary/secondary slots and
   current keys. W/S move between actions, keeping the selected column; A/D select
   primary/secondary. This replaces Page Up/Page Down in the editor and leaves
@@ -27,11 +35,11 @@ Player-facing changes, newest first.
   back to whichever announcement happened last. Ctrl+Home and the controller
   repeat chord still repeat the last announcement. Control instructions remain
   in F1 help rather than automatic opening speech.
-- Description coverage is currently limited to eleven English Episode 1 images.
+- Initial description coverage included eleven English Episode 1 images.
   Uncovered pictures are reported explicitly. Automatic descriptions work with
   either input device. Left/right retain page changing, and Up outside the viewer
-  keeps its existing scanner readout. The Read-mode interaction has been tested
-  in game; wider picture coverage and multipage behavior remain unverified.
+  keeps its existing scanner readout. The initial Read-mode interaction was
+  tested in game; broader coverage followed on 13 November.
 
 ## 2026-11-11
 
