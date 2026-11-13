@@ -4,6 +4,10 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-12
 
+- Fixed a scanner regression that revealed Max's desk items before looking at
+  the photo and the junkyard shooting targets before their turn. Each aiming
+  phase now lists only its own four targets. The truck and lamp protections
+  against objects disappearing from the list remain in place.
 - Close-ups read their available visual description first and say **Has text
   version** when applicable. Enter/A opens the game's Read mode and reads its
   text; returning to picture mode restores the description. Textless pictures

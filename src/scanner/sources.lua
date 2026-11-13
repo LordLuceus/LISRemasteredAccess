@@ -177,20 +177,16 @@ local function interactions(controller,out)
                     return nil
                 end
                 if not available(a,is_active) then
-                    -- Still listed while the game itself shows its pop-up (3 Nov:
-                    -- the truck vanished as autowalk arrived, so Face had no target).
-                    local shown=false
-                    pcall(function()shown=a.bObjectInDisplay==true end)
                     -- "Look at it" conditions: a level script sets a *_Check_* fact
                     -- only while the camera points at the object (4 Nov: the diner
                     -- truck's Photo needs E3_6B_DinerPark_LD_Check_Truck, set by a
                     -- screen-centre check). Facing it is how the player meets
                     -- them, so the object stays listed for Face to turn to.
-                    if not shown then
-                        local looking=function(f)if M.LOOK_FACTS[f] then return true end;return is_active(f) end
-                        if available(a,looking) then shown=true end
-                    end
-                    if not shown then return nil end
+                    -- bObjectInDisplay is NOT permission to bypass story gates:
+                    -- the classroom camera/pencilcase have it set before their
+                    -- photo prerequisite. Relax only the reviewed camera facts.
+                    local looking=function(f)if M.LOOK_FACTS[f] then return true end;return is_active(f) end
+                    if not available(a,looking) then return nil end
                 end
                 local key=a.objectName:ToString()
                 if key=="" or key=="None" then return nil end

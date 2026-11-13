@@ -2603,8 +2603,8 @@ do
         check("truck listed while registered",res[1]=="Bike,Truck",res[1])
         check("truck stays listed after the game drops it",res[2]=="Bike,Truck",res[2])
         check("a dropped object the story hides is not listed",res[3]=="Bike",res[3])
-        -- While the game shows an object's pop-up it stays listed even if a story
-        -- check says no (3 Nov: the truck vanished on arrival, Face had no target).
+        -- Display state never overrides a story rejection. The truck/lamp
+        -- camera-only exceptions below are separate from story availability.
         local gated=actor("Photo_7")
         local gate={["and"]={{fact="Gone",want=true}},["or"]={}}
         gated.Actions={ForEach=function(_,f)f(1,{get=function()return {bEnabled=true,FactCondAND={ForEach=function(_,g)g(1,{get=function()return {FactName={ToString=function()return "Gone" end},bFactActive=true} end}) end},FactCondOR={ForEach=function()end}} end}) end}
@@ -2615,7 +2615,7 @@ do
         gated.bObjectInDisplay=true
         local okB,with=pcall(names2)
         check("a story-gated object is not listed",okA and not tostring(without):find("Photo"),tostring(without))
-        check("unless its pop-up is showing",okB and tostring(with):find("Photo")~=nil,tostring(with))
+        check("display state cannot bypass a story gate",okB and not tostring(with):find("Photo"),tostring(with))
         -- A "look at it" condition (the truck's Check_Truck, set only while the
         -- camera faces it): listed, so Face can turn Max to it.
         local looked=actor("Truck_9")
@@ -2726,7 +2726,7 @@ end
 -- Keep the producer/planner regression in the ordinary test command as well.
 local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
 if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
-for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua'}) do
+for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua'}) do
     local ok,total=pcall(dofile,file)
     if ok then count=count+total else check(file,false,tostring(total)) end
 end
