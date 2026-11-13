@@ -32,7 +32,7 @@ return {
     keybind_swapped="Swapped with {name}; now {key}.",
     keybind_reset="Reset to defaults",
     keybind_back="Back",
-    keybind_help_keys="Page Up and Page Down browse every binding. Enter changes the highlighted binding. Escape saves and returns, except during capture, when it is assigned. Home rereads. Conflicts swap keys. These settings do not rebind the mod's shortcuts.",
+    keybind_help_keys="W and S select the previous and next action. A selects its primary binding; D selects its secondary binding. Enter changes the highlighted binding. Escape saves and returns, except during capture, when it is assigned. Home rereads. Conflicts swap keys. These settings do not rebind the mod's shortcuts.",
     keybind_help_pad="The editor changes keyboard and mouse bindings, not controller buttons. It has primary and secondary bindings for each action. The game swaps conflicting bindings automatically. Leaving the editor saves changes. Mod shortcuts keep their fixed keys.",
     percent="{value} percent",
     dialog_confirm_cancel="{confirm_key} to confirm, {back_key} to cancel",

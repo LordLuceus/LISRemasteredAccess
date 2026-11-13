@@ -87,10 +87,10 @@ end
 function M.closed()
     M.active=false;M.capturing=false;focused_view=nil;presentation:clear()
 end
--- A flat, complete route through both slots, independent of Slate's spatial
+-- A logical row/column route through both slots, independent of Slate's spatial
 -- arrow navigation (which skipped cells in the native editor). Keep arrows
 -- untouched; use the same SetKeyboardFocus operation verified in game.
-function M.move(direction)
+function M.move(row_delta,column)
     if M.poll_capture() then return nil end
     local view=M.live()
     if not view then return nil end
@@ -106,9 +106,10 @@ function M.move(direction)
             if focused then current=i end
         end
     end
-    local count=#State.rows*2
-    current=current or (direction>0 and 0 or 1)
-    local target=((current-1+direction)%count)+1
+    if not current then current=1;row_delta=0 end
+    local row=((current-1)//2+(row_delta or 0))%#State.rows
+    local slot=column or ((current-1)%2+1)
+    local target=row*2+slot
     local moved=read('move',function()
         local s=selectors[target]
         if not valid(s) then return false end

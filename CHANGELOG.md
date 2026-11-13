@@ -5,8 +5,9 @@ Player-facing changes, newest first.
 ## In development — 2026-11-13
 
 - The keyboard binding editor now reads actions, primary/secondary slots and
-  current keys. Page Up/Page Down step through every slot without relying on
-  the native arrows, which can skip cells. Enter uses the game's own key capture;
+  current keys. W/S move between actions, keeping the selected column; A/D select
+  primary/secondary. This replaces Page Up/Page Down in the editor and leaves
+  the native arrows alone. Enter uses the game's own key capture;
   conflicting bindings are announced when they swap. Quick Undo's two Ctrl
   bindings can be changed separately. Escape assigns Escape during capture,
   rather than cancelling; outside capture it leaves the editor and saves.

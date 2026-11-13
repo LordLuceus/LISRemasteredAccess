@@ -107,14 +107,14 @@ bind_key(Key.HOME,on_game(function()
     end
 end))
 bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
-bind_key(Key.PAGE_DOWN,on_game(function()
-    if keybindings.active and keybind_move then keybind_move(1)
-    elseif can_scan() then scanner.command("next") end
-end),{["repeat"]=true})
-bind_key(Key.PAGE_UP,on_game(function()
-    if keybindings.active and keybind_move then keybind_move(-1)
-    elseif can_scan() then scanner.command("previous") end
-end),{["repeat"]=true})
+bind_key(Key.PAGE_DOWN,on_game(function()if can_scan() then scanner.command("next") end end),{["repeat"]=true})
+bind_key(Key.PAGE_UP,on_game(function()if can_scan() then scanner.command("previous") end end),{["repeat"]=true})
+-- These letters retain their native behavior elsewhere and are suppressed,
+-- along with other mod shortcuts, while the native editor captures a key.
+bind_key(Key.W,on_game(function()if keybindings.active and keybind_move then keybind_move(-1) end end),{["repeat"]=true})
+bind_key(Key.S,on_game(function()if keybindings.active and keybind_move then keybind_move(1) end end),{["repeat"]=true})
+bind_key(Key.A,on_game(function()if keybindings.active and keybind_move then keybind_move(0,1) end end))
+bind_key(Key.D,on_game(function()if keybindings.active and keybind_move then keybind_move(0,2) end end))
 -- Shift+Home walks to the selected object; pressing it again while walking stops.
 local autowalk=require("autowalk.autowalk")
 local function walk_toggle()
@@ -250,8 +250,8 @@ do
     end
 end
 local tracker=require("menus.tracker").new()
-keybind_move=function(direction)
-    local snap,detail=keybindings.move(direction)
+keybind_move=function(row_delta,column)
+    local snap,detail=keybindings.move(row_delta,column)
     if not snap then return end
     local text=tracker:update(snap)
     if text then say(text,true);log('menu_readout '..tostring(detail)..' spoken='..text) end

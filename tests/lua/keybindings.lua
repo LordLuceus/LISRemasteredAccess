@@ -82,13 +82,27 @@ check(K.block_keyboard(1) and K.block_pad(1),'assignment between polls consumes 
 check(K.block_keyboard(0) and not K.block_keyboard(0),'keyboard guard clears only after neutral input')
 check(K.block_pad(0) and not K.block_pad(0),'controller guard clears independently after release')
 focus=1
-local visited={[1]=true}
-for i=2,24 do local next=K.move(1);check(next and next.index==i,'sequential next reaches slot '..i);visited[next.index]=true end
-check(K.move(1).index==1,'next wraps after the secondary quick-undo slot')
-for i=24,1,-1 do check(K.move(-1).index==i,'sequential previous reaches slot '..i) end
+local visited={}
+for column=1,2 do
+    check(K.move(0,column).index==column,'column selection preserves the first action')
+    visited[column]=true
+    for row=2,12 do
+        local next=K.move(1);local i=(row-1)*2+column
+        check(next and next.index==i,'next action preserves column '..column..', row '..row)
+        visited[next.index]=true
+    end
+    check(K.move(1).index==column,'next wraps actions within the same column')
+    for row=12,1,-1 do check(K.move(-1).index==(row-1)*2+column,'previous action preserves column') end
+end
+focus=23
+check(K.move(0,2).index==24,'D selects secondary on the same action')
+check(K.move(0,2).index==24,'D never wraps into another action')
+check(K.move(0,1).index==23,'A selects primary on the same action')
+check(K.move(0,1).index==23,'A stays in primary at the left boundary')
 local total=0;for _ in pairs(visited) do total=total+1 end
 check(total==24,'all actual native selector fields reachable without spatial navigation')
 capture=23;local prior=focus;check(K.move(1)==nil and focus==prior,'sequential browsing never steals native capture')
+check(K.move(0,2)==nil and focus==prior,'column selection cannot steal capture either')
 capture=nil;popup=true;check(K.move(-1)==nil and focus==prior,'capture popup also blocks browsing')
 popup=false
 open=false;K.closed()

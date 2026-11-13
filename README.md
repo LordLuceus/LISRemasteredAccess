@@ -384,7 +384,8 @@ a primary and a secondary slot. The mod reads the action, slot and current key.
 
 | Key | Action |
 |---|---|
-| Page Down / Page Up | Next / previous binding slot; wraps through all 24 slots |
+| W / S | Previous / next action; wraps, keeping the selected binding column (hold to repeat) |
+| A / D | Select the current action's primary / secondary binding |
 | Arrow keys | Native spatial navigation, which can skip cells |
 | Enter | Start assigning the highlighted binding; then press the replacement key |
 | Home | Read the current binding, outside capture |
@@ -407,7 +408,7 @@ settings change the game's keyboard/mouse bindings, not the mod's fixed shortcut
 or controller buttons. Avoid assigning game actions to mod shortcuts unless you
 want both actions on the same key.
 
-Sequential Page-key browsing has been verified in play.
+Page Up/Down no longer browse this editor. Native arrow behavior is unchanged.
 Cancellation, clearing a binding, reset-button accessibility and persistence
 across a complete game restart have not been verified. Both changed Ctrl slots
 were written to the isolated test profile's saved configuration.

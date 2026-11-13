@@ -17,5 +17,13 @@ check(#k:update(1,7,true)==0,'entering capture clears a repeat already in progre
 check(#k:update(1,8,false)==0,'that old repeat cannot resume on capture exit')
 k:update(0,9)
 check(k:update(1,10)[1]==action,'ordinary input resumes after release')
+for _,vk in ipairs({0x57,0x53,0x41,0x44}) do
+    local letters=Keys.new();letters:bind(vk,'none',action,{['repeat']=true})
+    letters:update(0,0)
+    check(#letters:update(1,.1,true)==0,'WASD binding can be captured without navigating')
+    check(#letters:update(1,.8,false)==0,'held captured letter cannot start a repeat')
+    letters:update(0,1)
+    check(letters:update(1,1.1)[1]==action,'released letter resumes deliberate navigation')
+end
 print('Keybind capture input: '..n..' checks passed')
 return n

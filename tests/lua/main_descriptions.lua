@@ -54,14 +54,19 @@ local home,repeat_last=bound['HOME:none'],bound['HOME:ctrl']
 local editor=fake_require('menus.keybindings')
 editor.active=true
 local directions={}
-editor.move=function(d)
-    directions[#directions+1]=d
+editor.move=function(d,column)
+    directions[#directions+1]={d,column}
     return {screen='keybinds@test',index=#directions,label='Quick Undo',value='U'},'screen=keybinds'
 end
-bound['PAGE_DOWN:none']();bound['PAGE_UP:none']()
-check(directions[1]==1 and directions[2]==-1,'Page keys reach the editor traversal in both directions')
+bound['S:none']();bound['W:none']();bound['A:none']();bound['D:none']()
+check(directions[1][1]==1 and directions[2][1]==-1,'S/W move between actions')
+check(directions[3][1]==0 and directions[3][2]==1 and directions[4][2]==2,'A/D select primary/secondary')
 check(spoken[#spoken]=='Quick Undo, U','editor movement announces the selected native binding immediately')
+bound['PAGE_DOWN:none']();bound['PAGE_UP:none']()
+check(#directions==4,'Page keys no longer navigate the editor')
 editor.active=false
+bound['W:none']();bound['S:none']();bound['A:none']();bound['D:none']()
+check(#directions==4,'WASD mod handlers do nothing outside the editor')
 check(type(home)=='function' and type(repeat_last)=='function','contextual Home and literal repeat remain distinct')
 current_page={id=1,index=1,count=1,text='Native page text.',reading=false,key='1:1:picture'}
 home();check(requested[#requested]==current_page,'Home requests description in picture mode')
