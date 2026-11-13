@@ -23,11 +23,15 @@ end
 -- when unavailable). Returns the functions of the shortcuts pressed since the
 -- previous reading, in binding order, plus repeats of held repeating keys.
 -- Keys already down at the first reading are ignored. now: seconds.
-function M:update(mask,now)
+-- blocked consumes presses without dispatching them (native key capture).
+-- Keep observing releases and discard repeat timers, so the newly assigned
+-- key cannot also run a mod shortcut when the capture dialog closes.
+function M:update(mask,now,blocked)
     local out={}
     now=now or 0
     if type(mask)~="number" then self.due={};return out end
     local prev=self.prev;self.prev=mask
+    if blocked then self.due={};return out end
     if prev==nil then return out end
     local shift=(mask&SHIFT)~=0
     local ctrl=(mask&CTRL)~=0

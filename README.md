@@ -377,8 +377,43 @@ always goes back.
 
 The pause menu, its settings and its confirmations read the same way.
 
-Coverage outside the screens described here is incomplete, including the
-keybinding editor and other Extras screens. The Choices screen is covered below.
+### Keyboard bindings
+
+Open **Settings > Game Settings > Edit keybindings**. Each of the 12 actions has
+a primary and a secondary slot. The mod reads the action, slot and current key.
+
+| Key | Action |
+|---|---|
+| Page Down / Page Up | Next / previous binding slot; wraps through all 24 slots |
+| Arrow keys | Native spatial navigation, which can skip cells |
+| Enter | Start assigning the highlighted binding; then press the replacement key |
+| Home | Read the current binding, outside capture |
+| F1 | Editor help, outside capture |
+| Escape | Save and return, **only outside capture** |
+
+**Choose your replacement before pressing Enter. During capture, Escape assigns
+Escape; it does not cancel.** Mod shortcuts are suspended while the editor waits
+for a key. Some keys may be ignored by the native picker; F1 was not accepted in
+testing. Choose another key if capture stays open.
+
+An occupied key swaps with its existing binding. The mod announces the other
+affected action and its new key. Leaving the editor saves changes; there is no
+separate Apply button.
+
+Quick Undo defaults to **left Ctrl in the primary slot and right Ctrl in the
+secondary slot**. Change both if you want neither Ctrl key to activate it. U and I
+worked as distinct replacement keys in testing; you can choose others. These
+settings change the game's keyboard/mouse bindings, not the mod's fixed shortcuts
+or controller buttons. Avoid assigning game actions to mod shortcuts unless you
+want both actions on the same key.
+
+Sequential Page-key browsing has been verified in play.
+Cancellation, clearing a binding, reset-button accessibility and persistence
+across a complete game restart have not been verified. Both changed Ctrl slots
+were written to the isolated test profile's saved configuration.
+
+Coverage outside the screens described here is incomplete, including other
+Extras screens. The Choices screen is covered below.
 
 
 ### The Choices screen

@@ -2,6 +2,16 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-13
+
+- The keyboard binding editor now reads actions, primary/secondary slots and
+  current keys. Page Up/Page Down step through every slot without relying on
+  the native arrows, which can skip cells. Enter uses the game's own key capture;
+  conflicting bindings are announced when they swap. Quick Undo's two Ctrl
+  bindings can be changed separately. Escape assigns Escape during capture,
+  rather than cancelling; outside capture it leaves the editor and saves.
+  Reset controls, clearing, cancellation and restart persistence remain unverified.
+
 ## In development — 2026-11-12
 
 - Fixed a scanner regression that revealed Max's desk items before looking at

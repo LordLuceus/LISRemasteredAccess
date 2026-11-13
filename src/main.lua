@@ -65,6 +65,9 @@ end
 -- no mod code ever runs on the loader's input thread. bind_key keeps the
 -- loader's call shape: bind_key(key, fn) or bind_key(key, {modifier}, fn).
 local keys=require("core.keys").new()
+local keybindings=require('menus.keybindings')
+keybindings.text=function(key,p)return l10n.text(key,p)end
+keybindings.log=log
 local padlock=require("hud.padlock")
 padlock.text=function(key,p)return l10n.text(key,p)end
 padlock.log=log
@@ -79,12 +82,14 @@ local function bind_key(key,mods,fn,opts)
     keys:bind(key,m,fn,opts)
 end
 local keys_reported=false
+local keybind_move=nil
 local function run_keys()
     if not speech.keys then
         if not keys_reported then keys_reported=true;log("keys_unavailable: lisr_keys missing from lisr_speech.dll") end
         return
     end
-    for _,fn in ipairs(keys:update(speech.keys(table.unpack(keys.vks)),os.clock())) do
+    local mask=speech.keys(table.unpack(keys.vks))
+    for _,fn in ipairs(keys:update(mask,os.clock(),keybindings.block_keyboard(mask))) do
         local ok,err=pcall(fn)
         if not ok then log("key_error="..tostring(err)) end
     end
@@ -102,8 +107,14 @@ bind_key(Key.HOME,on_game(function()
     end
 end))
 bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
-bind_key(Key.PAGE_DOWN,on_game(function()if can_scan() then scanner.command("next") end end),{["repeat"]=true})
-bind_key(Key.PAGE_UP,on_game(function()if can_scan() then scanner.command("previous") end end),{["repeat"]=true})
+bind_key(Key.PAGE_DOWN,on_game(function()
+    if keybindings.active and keybind_move then keybind_move(1)
+    elseif can_scan() then scanner.command("next") end
+end),{["repeat"]=true})
+bind_key(Key.PAGE_UP,on_game(function()
+    if keybindings.active and keybind_move then keybind_move(-1)
+    elseif can_scan() then scanner.command("previous") end
+end),{["repeat"]=true})
 -- Shift+Home walks to the selected object; pressing it again while walking stops.
 local autowalk=require("autowalk.autowalk")
 local function walk_toggle()
@@ -148,7 +159,8 @@ end
 local function show_help()
     padlock.check_presence()
     local gamepad=controls.using_gamepad()
-    say(padlock.help(gamepad) or (picture.active() and l10n.text(gamepad and "picture_help_pad" or "picture_help_keys")) or help.speech(gamepad),true)
+    say(padlock.help(gamepad) or (keybindings.active and l10n.text(gamepad and 'keybind_help_pad' or 'keybind_help_keys'))
+        or (picture.active() and l10n.text(gamepad and "picture_help_pad" or "picture_help_keys")) or help.speech(gamepad),true)
 end
 -- The cue plays ~0.9 s after its name (18 loop beats), on the game-thread loop.
 local delayed={}
@@ -238,6 +250,12 @@ do
     end
 end
 local tracker=require("menus.tracker").new()
+keybind_move=function(direction)
+    local snap,detail=keybindings.move(direction)
+    if not snap then return end
+    local text=tracker:update(snap)
+    if text then say(text,true);log('menu_readout '..tostring(detail)..' spoken='..text) end
+end
 require("core.text").report=log
 reread=function()
     if stats_open then return stats_cursor:current() end
@@ -746,6 +764,9 @@ local pad_errors=0
 local function pad_step()
         local ok,err=pcall(function()
             local buttons=pad_read and pad_read() or -1
+            if keybindings.block_pad(buttons) then
+                pad:reader_reset();pad:update(0,false,os.clock(),false);return
+            end
             padlock.observe_buttons(buttons)
             if journal_open and buttons>=0 then
                 local dir=pad:reader(buttons,os.clock())

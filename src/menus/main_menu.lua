@@ -5,6 +5,7 @@
 -- CurrentInteractable / CurrentInteractableIndex, not through UMG focus.
 -- Read-only: no input, no setters, no global widget scans.
 local M={}
+local keybindings=require('menus.keybindings')
 local cached=nil
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function call_bool(o,fn)
@@ -98,7 +99,7 @@ end
 -- Shared two-button confirmation popup (MainMenu_2Option_PopUp_Widget, e.g.
 -- "Quit the game?"). Its buttons don't report a highlight to the game's menu
 -- parent, so only the question and its two choices are read.
-local POPUPS={"PauseMenu_PopUp_Widget_C","MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}
+local POPUPS={"KeybindPopUp_C","PauseMenu_PopUp_Widget_C","MainMenu_2Option_PopUp_Widget_C","MainMenu_1Option_PopUp_Widget_C","MainMenu_PopUp_Widget_C"}
 local function find_popup()
     for _,c in ipairs(POPUPS) do
         for _,p in ipairs(FindAllOf(c) or {}) do
@@ -282,10 +283,17 @@ function M.snapshot()
     local gamma=find_gamma()
     if gamma then return gamma_snapshot(gamma) end
     local popup=find_popup()
+    local editor=keybindings.live()
+    local editor_snapshot,editor_detail
+    if editor then
+        keybindings.footer_label=label_of
+        editor_snapshot,editor_detail=keybindings.snapshot(editor,popup~=nil)
+    else keybindings.closed() end
     if popup then
         local s,d=popup_snapshot(popup)
         if s then return s,d end
     end
+    if editor_snapshot then return editor_snapshot,editor_detail end
     for _,class in ipairs(M.standalone) do
         local w=find_live(class)
         if w then

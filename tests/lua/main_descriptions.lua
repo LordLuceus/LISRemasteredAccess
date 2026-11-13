@@ -16,7 +16,7 @@ local function fake_require(name)
     if name=='LISNavRequest' then return {} end
     if modules[name] then return modules[name] end
     local s
-    if name=='core.localization' or name=='core.text' or name=='core.help' or name=='descriptions.reader' or name=='scanner.pad' then
+    if name=='core.localization' or name=='core.text' or name=='core.help' or name=='descriptions.reader' or name=='scanner.pad' or name=='menus.tracker' then
         s=real_require(name)
     elseif name=='hud.viewer' then
         s=real_require(name)
@@ -38,6 +38,7 @@ picture.request=function(page)requested[#requested+1]=page end
 picture.automatic=function(page)requested[#requested+1]='auto:'..page.key;return true end
 picture.active=function()return current_page~=nil end
 fake_require('menus.main_menu').snapshot=function()return current_menu end
+fake_require('menus.keybindings').active=false
 fake_require('hud.padlock').active=function()return false end
 fake_require('core.controls').using_gamepad=function()return false end
 local Key=setmetatable({F5=0x74},{__index=function(t,k)rawset(t,k,k);return k end})
@@ -50,6 +51,17 @@ assert(loadfile('src/main.lua','t',env))()
 check(bound['116:none']==nil,'extra F5 binding removed')
 check(bound['ENTER:none']==nil and bound['RETURN:none']==nil,'native Enter is not intercepted or reimplemented')
 local home,repeat_last=bound['HOME:none'],bound['HOME:ctrl']
+local editor=fake_require('menus.keybindings')
+editor.active=true
+local directions={}
+editor.move=function(d)
+    directions[#directions+1]=d
+    return {screen='keybinds@test',index=#directions,label='Quick Undo',value='U'},'screen=keybinds'
+end
+bound['PAGE_DOWN:none']();bound['PAGE_UP:none']()
+check(directions[1]==1 and directions[2]==-1,'Page keys reach the editor traversal in both directions')
+check(spoken[#spoken]=='Quick Undo, U','editor movement announces the selected native binding immediately')
+editor.active=false
 check(type(home)=='function' and type(repeat_last)=='function','contextual Home and literal repeat remain distinct')
 current_page={id=1,index=1,count=1,text='Native page text.',reading=false,key='1:1:picture'}
 home();check(requested[#requested]==current_page,'Home requests description in picture mode')
