@@ -92,6 +92,8 @@ normally; the mod does not edit your save files.
 - Confirmation dialogs read their question and how to answer, such as "Quit the
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
 - **Home** rereads what is on screen now, for example the current countdown.
+- Return to the main menu before closing the game window. Closing a loaded scene
+  directly can trigger an existing native shutdown crash.
 
 ### First-run privacy and terms
 
