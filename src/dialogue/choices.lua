@@ -268,10 +268,10 @@ function M.install()
         -- A choice made by any route (controller, mouse, the mod's keys) runs
         -- the view's ChooseSentense; the next list then starts empty.
         RegisterHook(VIEW..":ChooseSentense",function()
-            diag.event('lifecycle','event=chosen generation='..generation);M.clear("chosen_event")
+            M.clear("chosen_event")
         end)
         RegisterHook(VIEW..":Destruct",function()
-            diag.event('lifecycle','event=destruct generation='..generation);M.clear("destruct")
+            M.clear("destruct")
         end)
         -- Main read: on the view's own Tick (the game is running the view's
         -- code, so the view and its buttons are alive), at most READ_RATE

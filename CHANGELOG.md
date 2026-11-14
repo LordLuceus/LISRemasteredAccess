@@ -11,6 +11,10 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-13
 
+- Restored dialogue cleanup after a choice is made or its view closes. Leftover
+  diagnostic calls could interrupt that cleanup and leave old answers available.
+  This fixes the logged cleanup errors; the separately reported mid-dialogue
+  native crash is still under investigation.
 - The journal's Photos tab now reads each episode's ten photo slots, including
   collected status, the displayed image and position. All five episodes have
   separate English descriptions for previews and collected photographs; an
