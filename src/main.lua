@@ -67,6 +67,9 @@ end
 -- loader's call shape: bind_key(key, fn) or bind_key(key, {modifier}, fn).
 local keys=require("core.keys").new()
 local keybindings=require('menus.keybindings')
+local consent=require('menus.consent')
+consent.text=function(key,p)return l10n.text(key,p)end
+consent.log=log
 keybindings.text=function(key,p)return l10n.text(key,p)end
 keybindings.log=log
 local padlock=require("hud.padlock")
@@ -161,7 +164,9 @@ end
 local function show_help()
     padlock.check_presence()
     local gamepad=controls.using_gamepad()
-    say(padlock.help(gamepad) or (keybindings.active and l10n.text(gamepad and 'keybind_help_pad' or 'keybind_help_keys'))
+    local current=menu_snapshot and menu_snapshot()
+    local consent_help=current and current.consent and consent.help(gamepad)
+    say(consent_help or padlock.help(gamepad) or (keybindings.active and l10n.text(gamepad and 'keybind_help_pad' or 'keybind_help_keys'))
         or (journal_open and journal.photo_context(journal_cursor) and l10n.text(gamepad and 'journal_photo_help_pad' or 'journal_photo_help_keys'))
         or (picture.active() and l10n.text(gamepad and "picture_help_pad" or "picture_help_keys")) or help.speech(gamepad),true)
 end
@@ -180,6 +185,11 @@ bind_key(Key.F,on_game(face_selected))
 local actions=require("scanner.actions")
 for n,k in ipairs({Key.ONE,Key.TWO,Key.THREE,Key.FOUR}) do
     bind_key(k,on_game(function()
+        local current=menu_snapshot and menu_snapshot()
+        if current and current.consent then
+            local handled,message=consent.open_document(n)
+            if handled then if message then say(message,true)end;return end
+        end
         if in_menu() then return end
         -- An open dialogue choice takes the number keys (control is not
         -- required: the game holds Max during conversations).
@@ -266,7 +276,7 @@ reread=function()
     if choices.options() then return choices.current(controls.using_gamepad()) end
     local snap=menu.snapshot()
     if not snap or not snap.label or snap.label=="" then return nil end
-    return require("core.text").join(snap.label,snap.value)
+    return snap.reread or require("core.text").join(snap.label,snap.value)
 end
 -- Tutorial prompts: spoken once when a new one appears (Ctrl+Home repeats it).
 local last_tutorial=nil

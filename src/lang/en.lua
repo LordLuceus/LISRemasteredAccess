@@ -2,6 +2,15 @@
 -- lang_<code>.lua with the same keys. {placeholders} are filled in by the mod,
 -- for example with the spoken name of a key for the input device in use.
 return {
+    consent_checked="checked",
+    consent_unchecked="not checked",
+    consent_available="available",
+    consent_unavailable="unavailable",
+    consent_link_unavailable="Could not open that document.",
+    consent_document_open="Close the current document before opening another.",
+    consent_document_unreadable="The in-game legal document viewer is not narrated yet.",
+    consent_help_keys="Enter or Space checks the next unchecked item: Privacy Policy, then Terms of Service. Once both are checked, it confirms. These native presses check items; they do not toggle them off. 1 opens the Terms of Service. 2 opens the Privacy Policy. Home rereads the dialog.",
+    consent_help_pad="A checks the next unchecked item: Privacy Policy, then Terms of Service. Once both are checked, A confirms. These native presses check items; they do not toggle them off. X opens the Terms of Service. Y opens the Privacy Policy. Hold the left stick and press D-pad right to repeat the last announcement.",
     checking="Checking the isolated navigation test.",
     waiting="Waiting for the opening scene to release movement.",
     waiting_control="Waiting for player movement to become available.",

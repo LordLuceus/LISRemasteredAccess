@@ -4,6 +4,13 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-14
 
+- Added a reader for the first-run privacy/terms dialog: its greeting, checkbox
+  states and whether OK is available. Changed states are announced without
+  repeating the entire dialog; Home rereads everything and F1 gives contextual
+  help. The native Enter/Space/A confirmation sequence is unchanged, and keyboard
+  1/2 opens the Terms/Privacy links, matching controller X/Y. Nothing is accepted
+  automatically. The keyboard consent flow and both browser links have been
+  verified in-game; the alternate in-game legal-text viewer is not yet narrated.
 - Added narration for startup text notices and the episode-opening “Life Is
   Strange is a story based game…” message. Notices use the game's displayed,
   localized text, wait for it to become visible, and are read once per appearance.

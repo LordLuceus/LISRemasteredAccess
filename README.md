@@ -93,6 +93,25 @@ normally; the mod does not edit your save files.
   game? Enter to confirm, Escape to cancel" (A and B on a controller).
 - **Home** rereads what is on screen now, for example the current countdown.
 
+### First-run privacy and terms
+
+The consent dialog reads its greeting, both checkbox states, and whether **OK**
+is available. Its first readout queues behind startup notices; later state changes
+read only the changed items. **Home** rereads the complete dialog, and **F1**
+(hold left-stick click and press D-pad up) explains the controls for your device.
+
+| Keyboard | Controller | Action in the consent dialog |
+| --- | --- | --- |
+| Enter or Space | A | Check the next unchecked item: Privacy Policy, then Terms of Service. Once both are checked, confirm. |
+| 1 | X | Open the game's Terms of Service link |
+| 2 | Y | Open the game's Privacy Policy link |
+
+These are the game's native confirmation steps: they check items rather than
+toggling them off. Nothing is checked or accepted automatically. Document links
+use the game's own opening actions. An alternate in-game legal-document viewer
+is not yet narrated. The keyboard consent flow and both native browser links
+have been verified in-game.
+
 ## In play: the scanner
 
 The scanner lists the objects you can interact with, plus a scene's goal where

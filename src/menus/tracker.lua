@@ -28,25 +28,39 @@ end
 function M:update(s)
     if not s or not s.screen then
         self.screen,self.index,self.label,self.value,self.key=nil,nil,nil,nil,nil
+        self.rows,self.silent=nil,nil
         return nil
     end
     local same_option=s.screen==self.screen and s.index==self.index
     local same_label=same_option and ident(s)==(self.key or self.label)
     if same_label and s.value==self.value then
         self.label=s.label -- keep the latest wording without speaking it
+        self.rows,self.silent=s.rows,s.silent
         return nil
     end
-    local new_screen=s.screen~=self.screen
+    local new_screen=s.screen~=self.screen or (self.silent and not s.silent)
+    local previous_rows=self.rows
     local already_spoken=s.once and self.once_screen==s.screen
     self.screen,self.index,self.label,self.value,self.key=s.screen,s.index,s.label,s.value,s.key
+    self.rows,self.silent=s.rows,s.silent
     if s.silent then return nil end
     if s.label==nil or s.label=="" then return nil,true end
     if already_spoken then return nil end
     if s.once then self.once_screen=s.screen end
     local interrupt=s.interrupt~=false
+    if new_screen and s.entry_interrupt==false then interrupt=false end
     -- A screen heading (such as the episode shown) leads the readout when the
     -- screen or its subject changes.
     if new_screen and s.context and s.context~="" then return join(s.context,join(s.label,s.value)),false,interrupt end
+    -- Compound controls (consent checkboxes/OK): full context on entry, only
+    -- changed rows afterwards. current()/manual reread retain the full state.
+    if not new_screen and s.rows and previous_rows then
+        local delta
+        for i,row in ipairs(s.rows)do
+            if row~=previous_rows[i] then delta=join(delta,row)end
+        end
+        if delta then return delta,false,interrupt end
+    end
     if same_label then
         if s.value==nil or s.value=="" then return s.label,false,interrupt end
         return s.value,false,interrupt

@@ -2732,7 +2732,7 @@ end
 -- Keep the producer/planner regression in the ordinary test command as well.
 local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
 if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
-for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua','tests/lua/journal_order.lua','tests/lua/notices.lua','tests/lua/choice_lifecycle.lua'}) do
+for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua','tests/lua/journal_order.lua','tests/lua/notices.lua','tests/lua/consent.lua','tests/lua/choice_lifecycle.lua'}) do
     local ok,total=pcall(dofile,file)
     if ok then count=count+total else check(file,false,tostring(total)) end
 end

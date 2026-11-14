@@ -7,6 +7,7 @@
 local M={}
 local keybindings=require('menus.keybindings')
 local notices=require('menus.notices')
+local consent=require('menus.consent')
 local cached=nil
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function call_bool(o,fn)
@@ -295,6 +296,10 @@ function M.snapshot()
         if s then return s,d end
     end
     if editor_snapshot then return editor_snapshot,editor_detail end
+    -- First-run consent is over the title, not LastCreatedWidget; native popup
+    -- dialogs above it still take precedence (including error dialogs).
+    local agreement,agreement_detail=consent.snapshot()
+    if agreement then return agreement,agreement_detail end
     local notice,notice_detail=notices.snapshot()
     if notice then return notice,notice_detail end
     for _,class in ipairs(M.standalone) do
