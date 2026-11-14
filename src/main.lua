@@ -628,8 +628,8 @@ choice_stats.text=function(key,p)return l10n.text(key,p)end
 choice_stats.clean=require("core.text").clean
 choice_stats.log=log
 journal.log=log
--- Diary paragraphs in authored order: the game's text for each authored key,
--- translated once per language, maps a shown paragraph back to its key.
+-- Legacy diary fallback when native layout positions are unavailable. Map
+-- translated text back to a sortable key; keys are not always reading order.
 do
     local keys=require("hud.diary_keys")
     local map,map_lang=nil,nil

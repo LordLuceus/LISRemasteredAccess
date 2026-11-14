@@ -6,17 +6,18 @@
 --   with one DiaryElement_Widget per paragraph (Text_Data);
 -- * characters: DiaryCharacterPortrait_Widget names (TextBlock_NAME);
 -- * messages: DiaryMessageEmitter_Widget contacts (TextBlock_Data).
--- The game's widget order is NOT reading order (it changed between two visits
--- to the same page), so diary paragraphs are put back in authored order by
--- their text key (E1_Page05_A, _B, ...), and names keep a stable order.
+-- Widget enumeration is NOT reading order (it changed between two visits).
+-- Read positioned paragraphs using the native centred page layout. Text keys
+-- remain a best-effort fallback only when usable positions are unavailable;
+-- neither key names nor the authored element array always follow reading order.
 local M={}
 local photo_reader=require('hud.journal_photos')
 -- Designer placeholder text shipped in the journal widgets, never real content.
 M.PLACEHOLDERS={["I should go back upstairs and repair my camera"]=true,["Text Block"]=true}
 M.text=function(key,p)return key end
 M.clean=function(s)return s end
--- Paragraph text -> its authored key (E0_Page00_C...), which sorts in reading
--- order. Built per language from the game's own translator by the caller.
+-- Paragraph text -> legacy sortable text key (E0_Page00_C...). Built per
+-- language from the game's translator; NOT a guaranteed reading-order index.
 M.key_order=function(_)return nil end
 -- Pure: a sortable key from "E1_Page05_C" (episode, page, letter).
 function M.sort_key(key)
@@ -59,24 +60,25 @@ local function paragraph_items()
     end
     return out
 end
--- Pure: reading order of a page's paragraphs. With positions: the left page
--- (or column) top to bottom, then the right one - the original's rule, which
--- fixed Victoria (C,B,D,E,A) and the principal (B,A,C) there. Without usable
--- positions: authored key order (key_of), then the rest as given.
+-- Pure: left page top to bottom, then right. In Steam build 11330282,
+-- DiaryParentalObject.SetElementSlot (used by diary AND character profiles)
+-- sets anchors to (.5,.5), position to authored PositionX/Y * 1.5 and text
+-- alignment to (0,0). Thus x=0 is the native gutter, not a fitted threshold.
+-- Do not infer it from visible text bounds: an indented left-page paragraph
+-- (E4_Page05_C) can lie beyond their midpoint. Story visibility and one-sided
+-- spreads must not change the boundary. Without usable positions retain the
+-- existing best-effort key fallback, then unrecognized text as given.
 function M.reading_order(items,key_of)
     local have=true
-    local minx,maxx=math.huge,-math.huge
     for _,it in ipairs(items) do
         if type(it.x)~="number" or type(it.y)~="number" then have=false;break end
-        minx=math.min(minx,it.x);maxx=math.max(maxx,it.x)
     end
     if have and #items>1 then
         local all_same=true
         for _,it in ipairs(items) do if it.x~=items[1].x or it.y~=items[1].y then all_same=false end end
         if not all_same then
-            local split=(maxx-minx)>200 and (minx+maxx)/2 or math.huge
             local list={}
-            for i,it in ipairs(items) do list[i]={it=it,i=i,col=(it.x>=split) and 1 or 0} end
+            for i,it in ipairs(items) do list[i]={it=it,i=i,col=(it.x>=0) and 1 or 0} end
             table.sort(list,function(a,b)
                 if a.col~=b.col then return a.col<b.col end
                 if a.it.y~=b.it.y then return a.it.y<b.it.y end

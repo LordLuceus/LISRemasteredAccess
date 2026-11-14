@@ -365,9 +365,10 @@ item. Then:
 | Home | No separate shortcut | Reread the current photo in Photos |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 
-- **Diary:** one paragraph at a time, in reading order, then the current
-  objective. The page number is read when you change page. Backing out of the
-  diary opens the list of days, read as you move.
+- **Diary:** one paragraph at a time, down the left page and then the right,
+  using the game's page layout, followed by the current objective. The page
+  number is read when you change page. Backing out of the diary opens the list
+  of days, read as you move.
 - **Characters:** the highlighted character as you move through them. A profile
   reads one paragraph at a time. The picker is a grid that can skip people when
   moved by key; open any profile and use Left and Right to go through the rest.

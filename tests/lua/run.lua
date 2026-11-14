@@ -1243,12 +1243,12 @@ do
     check("days menu",J.cursor():update(days)=="Days Monday")
     package.loaded["hud.journal"]=nil
 end
--- Paragraph order from page positions: left column top-down, then right (the
--- original's rule; Victoria's authored keys C,B,D,E,A read in that layout).
+-- Synthetic comparator checks in the native centre-origin coordinate system.
+-- Real shipped paragraph data and the page producer are tested in journal_order.
 do
     package.loaded["hud.journal"]=nil
     local J=require("hud.journal")
-    local items={{text="A",x=900,y=500},{text="B",x=100,y=300},{text="C",x=100,y=50},{text="D",x=100,y=600},{text="E",x=900,y=80}}
+    local items={{text="A",x=900,y=500},{text="B",x=-100,y=300},{text="C",x=-100,y=50},{text="D",x=-100,y=600},{text="E",x=900,y=80}}
     local o,how=J.reading_order(items,function()return nil end)
     check("columns then top-down",table.concat(o,",")=="C,B,D,E,A" and how=="position",table.concat(o,","))
     local single={{text="B",x=100,y=300},{text="A",x=110,y=40},{text="C",x=105,y=700}}
@@ -2726,7 +2726,7 @@ end
 -- Keep the producer/planner regression in the ordinary test command as well.
 local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
 if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
-for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua'}) do
+for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua','tests/lua/journal_order.lua'}) do
     local ok,total=pcall(dofile,file)
     if ok then count=count+total else check(file,false,tostring(total)) end
 end

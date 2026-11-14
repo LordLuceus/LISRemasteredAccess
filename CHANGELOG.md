@@ -2,6 +2,13 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-14
+
+- Journal paragraphs follow the game's left and right pages rather than a
+  guessed dividing line. Indented text such as “Or what I call REVENGE.” now
+  stays with the preceding paragraph instead of being read after the opposite
+  page. This also keeps the order stable when only part of a spread is shown.
+
 ## In development — 2026-11-13
 
 - The journal's Photos tab now reads each episode's ten photo slots, including
