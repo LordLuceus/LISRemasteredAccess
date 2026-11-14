@@ -231,9 +231,10 @@ end
 bind_key(Key.F4,on_game(toggle_room_filter))
 require("scanner.scanner").filter_key=function()return controls.name("room_filter") end
 
--- Menu narration: the title prompt and the highlighted main menu option,
--- spoken whenever it changes. Four reads a second, menu widgets only.
+-- Menu narration: notices, the title prompt and highlighted menu options,
+-- observed by the existing game-thread loop.
 local menu=require("menus.main_menu")
+require('menus.notices').log=log
 menu_snapshot=menu.snapshot
 menu.format_percent=function(p)return l10n.text("percent",{value=p})end
 menu.format_choices=function(confirm,cancel)
@@ -564,10 +565,10 @@ local function menu_step()
             journal_step()
             if settings_tick%8==1 then refresh_settings() end
             local snap,detail=menu.snapshot()
-            local text,fallback=tracker:update(snap)
+            local text,fallback,interrupt=tracker:update(snap)
             if fallback then text=l10n.text("menu_unlabelled") end
             if text then
-                say(text,true)
+                say(text,interrupt~=false)
                 -- Log exactly what was spoken, so a readout can be checked from the log.
                 log("menu_readout "..tostring(detail).." spoken="..text)
             end

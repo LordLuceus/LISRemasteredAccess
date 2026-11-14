@@ -8,6 +8,9 @@
 --   label text itself: a countdown inside a message ("restored in 22 seconds")
 --   then doesn't re-read the message every second.
 -- Never speaks the same readout twice in a row.
+-- once snapshots carry a presentation-generation screen ID. Keep its receipt
+-- across temporary nil snapshots (fades); a later real presentation gets a new
+-- ID. interrupt=false queues automatic text without changing manual rereads.
 local M={}
 M.__index=M
 function M.new()
@@ -15,7 +18,7 @@ function M.new()
 end
 local join=require("core.text").join
 local function ident(s)return s.key or s.label end
--- Returns text,is_fallback when something should be spoken, otherwise nil.
+-- Returns text,is_fallback,interrupt when something should be spoken, else nil.
 -- is_fallback means the option had no readable label.
 -- Full readout of the current state, for rereading on request.
 function M:current()
@@ -34,15 +37,20 @@ function M:update(s)
         return nil
     end
     local new_screen=s.screen~=self.screen
+    local already_spoken=s.once and self.once_screen==s.screen
     self.screen,self.index,self.label,self.value,self.key=s.screen,s.index,s.label,s.value,s.key
+    if s.silent then return nil end
     if s.label==nil or s.label=="" then return nil,true end
+    if already_spoken then return nil end
+    if s.once then self.once_screen=s.screen end
+    local interrupt=s.interrupt~=false
     -- A screen heading (such as the episode shown) leads the readout when the
     -- screen or its subject changes.
-    if new_screen and s.context and s.context~="" then return join(s.context,join(s.label,s.value)),false end
+    if new_screen and s.context and s.context~="" then return join(s.context,join(s.label,s.value)),false,interrupt end
     if same_label then
-        if s.value==nil or s.value=="" then return s.label,false end
-        return s.value,false
+        if s.value==nil or s.value=="" then return s.label,false,interrupt end
+        return s.value,false,interrupt
     end
-    return join(s.label,s.value),false
+    return join(s.label,s.value),false,interrupt
 end
 return M

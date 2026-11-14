@@ -4,6 +4,13 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-14
 
+- Added narration for startup text notices and the episode-opening “Life Is
+  Strange is a story based game…” message. Notices use the game's displayed,
+  localized text, wait for it to become visible, and are read once per appearance.
+  Startup notices and the title prompt queue rather than cutting each other off;
+  normal menu navigation and deliberate rereads still interrupt. Native screen
+  timing is unchanged. Startup notices and the episode-opening message have
+  been verified in-game.
 - Journal paragraphs follow the game's left and right pages rather than a
   guessed dividing line. Indented text such as “Or what I call REVENGE.” now
   stays with the preceding paragraph instead of being read after the opposite

@@ -3,9 +3,10 @@
 -- screen it creates afterwards (LastCreatedWidget, derived from
 -- BP_LiS_MainMenu_Parent_Widget_C) tracks the highlighted option itself in
 -- CurrentInteractable / CurrentInteractableIndex, not through UMG focus.
--- Read-only: no input, no setters, no global widget scans.
+-- Read-only: no input or setters; discover only the known widget classes.
 local M={}
 local keybindings=require('menus.keybindings')
+local notices=require('menus.notices')
 local cached=nil
 local function valid(o)return o~=nil and o:IsValid() and not o:HasAnyFlags(EObjectFlags.RF_BeginDestroyed|EObjectFlags.RF_FinishDestroyed)end
 local function call_bool(o,fn)
@@ -294,6 +295,8 @@ function M.snapshot()
         if s then return s,d end
     end
     if editor_snapshot then return editor_snapshot,editor_detail end
+    local notice,notice_detail=notices.snapshot()
+    if notice then return notice,notice_detail end
     for _,class in ipairs(M.standalone) do
         local w=find_live(class)
         if w then
@@ -320,7 +323,9 @@ function M.snapshot()
     if aok and can==true then
         local tok,tap=pcall(function()return title.TapToStart end)
         if tok and valid(tap) and call_bool(tap,"IsVisible") then
-            return {screen="title",index=0,label=text_of(tap)},"screen=title"
+            -- Do not automatically cut off queued startup notices. Entering a
+            -- menu or deliberately rereading still interrupts normally.
+            return {screen="title",index=0,label=text_of(tap),interrupt=false},"screen=title"
         end
     end
     return nil

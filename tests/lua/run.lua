@@ -2120,13 +2120,15 @@ do
         "FindAllOf FindFirstOf StaticFindObject FName FText RegisterHook RegisterKeyBind RegisterConsoleCommandHandler ExecuteInGameThread ExecuteWithDelay LoopAsync NotifyOnNewObject "..
         "LoopInGameThreadWithDelay CancelDelayedAction ExecuteAsync RegisterCustomEvent UEHelpers Key ModifierKey IsKeyBindRegistered print_lua CreateInvalidObject EObjectFlags StaticConstructObject FindObject FindObjects RegisterProcessConsoleExecPreHook RegisterProcessConsoleExecPostHook RegisterLoadMapPreHook RegisterLoadMapPostHook RegisterInitGameStatePreHook RegisterInitGameStatePostHook RegisterBeginPlayPreHook RegisterBeginPlayPostHook UnregisterHook"):gmatch("%S+") do allowed[w]=true end
     local luac="artifacts\\lua-5.4.7\\luac54.exe"
-    local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua src\\descriptions\\*.lua src\\dialogue\\*.lua src\\main.lua')
+    local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua src\\descriptions\\*.lua src\\dialogue\\*.lua src\\menus\\*.lua src\\main.lua')
     local bad={}
     local listed=0
     local dialogue_scanned=0
+    local menus_scanned=0
     if list then
         for path in list:lines() do
             if path:find('\\dialogue\\',1,true) then dialogue_scanned=dialogue_scanned+1 end
+            if path:find('\\menus\\',1,true) then menus_scanned=menus_scanned+1 end
             local h=io.popen(luac..' -l -p "'..path..'"')
             if h then
                 for line in h:lines() do
@@ -2143,7 +2145,8 @@ do
     do local h=io.popen('cmd /c dir /b /s src\\scenes\\*.lua');if h then for _ in h:lines() do scanned=scanned+1 end;h:close() end end
     check("global scan actually ran (files found and compiler listing read)",scanned>0 and listed>0,tostring(scanned).."/"..tostring(listed))
     check("global scan includes dialogue modules",dialogue_scanned>=2,tostring(dialogue_scanned))
-    check("no unexpected globals in scene, scanner, autowalk, nav, hud and dialogue modules",#bad==0,table.concat(bad,", "))
+    check("global scan includes menu modules",menus_scanned>=6,tostring(menus_scanned))
+    check("no unexpected globals in scene, scanner, autowalk, nav, hud, dialogue and menu modules",#bad==0,table.concat(bad,", "))
 end
 -- Stall retries: try again from where Max stopped while each try gets closer.
 do
@@ -2729,7 +2732,7 @@ end
 -- Keep the producer/planner regression in the ordinary test command as well.
 local garage_ok,garage_count=pcall(dofile,"tests/lua/garage_filter.lua")
 if garage_ok then count=count+garage_count else check("garage filter regression suite",false,tostring(garage_count)) end
-for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua','tests/lua/journal_order.lua','tests/lua/choice_lifecycle.lua'}) do
+for _,file in ipairs({'tests/lua/descriptions.lua','tests/lua/picture_descriptions.lua','tests/lua/description_reader.lua','tests/lua/main_descriptions.lua','tests/lua/picture_pad.lua','tests/lua/scanner_story_gates.lua','tests/lua/keybind_state.lua','tests/lua/keybind_capture.lua','tests/lua/keybindings.lua','tests/lua/journal_photo_state.lua','tests/lua/journal_photos.lua','tests/lua/journal_photo_reader.lua','tests/lua/journal_photo_order.lua','tests/lua/journal_order.lua','tests/lua/notices.lua','tests/lua/choice_lifecycle.lua'}) do
     local ok,total=pcall(dofile,file)
     if ok then count=count+total else check(file,false,tostring(total)) end
 end

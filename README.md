@@ -65,7 +65,17 @@ every launch. Scanning and narration work alongside the game's normal controls;
 automatic walking and interaction shortcuts act when requested. The game saves
 normally; the mod does not edit your save files.
 
-- At the title screen it says **Click To Start** once the game accepts a key.
+- Startup text notices are read as they appear: the fictional-content disclaimer
+  and copyright, middleware notice, health warning and autosave notice. Their
+  speech is queued so the next splash does not cut the previous notice short;
+  it can continue after the screen changes. Entering a menu or deliberately
+  rereading with Home interrupts normally. Logo-only screens stay silent.
+- At the title screen it says **Click To Start** once the game accepts a key,
+  without automatically interrupting queued notices.
+- The **“Life Is Strange is a story based game…”** message is read when its
+  episode-opening screen appears. Home rereads a notice while it is displayed;
+  Ctrl+Home repeats the last announcement. Game timing and controls are unchanged.
+  Startup text notices and the episode-opening message have been verified in-game.
 - In the main menu and settings it reads the highlighted option as you move.
   Menus move with **W** and **S**, the arrow keys, the D-pad or the left stick.
 - Settings read their name and current value, such as "Vsync, On" or
