@@ -136,7 +136,7 @@ when they change.
 | F | Left-stick click | Turn toward the selected object |
 | 1 to 4 | Face buttons | Answer a dialogue choice, or use the focused object's actions, as announced |
 | F1 | Hold left-stick click, then D-pad up | Help: the mod's keys for your device |
-| F2 | Hold left-stick click, then D-pad left | Preview the control and pool-guard cues and say what they mean |
+| F2 | Hold left-stick click, then D-pad left | Preview the control, pool-guard and rewind cues and say what they mean |
 | F3 | Hold left-stick click, then D-pad down | During the pool guard's patrol (Episode 3): turn hiding from him on or off |
 | F4 | Hold left-stick click, then click the right stick | Room filter on or off: off lists every object nearby, for a room the filter misses |
 
@@ -483,6 +483,25 @@ Each outcome is read with the percentage the game shows and "your choice" for
 the one you picked. Friends stats come from Steam friends who have played; with
 none, every outcome reads 0 percent.
 
+### Rewinding
+
+Automatic control-loss and control-return cues stay quiet during rewinding,
+including the return to normal play. Later cutscenes still use those cues normally.
+
+The two rewind sounds from the original mod follow the game's last-action mark:
+
+- A short double tick means you are approaching the starting last-action mark.
+- A descending sound means you have reached or crossed it.
+
+Each sound plays at most once per rewind. The starting mark remains the target
+even if the game moves its marker to an earlier action. Use **F2**, or hold
+left-stick click and press D-pad left, to hear and identify the sounds.
+
+These cues do not stop rewinding, name the action, or guarantee that a particular
+conversation has been preserved. There is no continuous progress tone or new
+gauge readout. Missing marks and hidden gauges are silent, and very fast operations
+can occur between samples: silence is not confirmation that an action is safe.
+
 ## Known limitations
 
 - Autowalk can fail around obstacles or in places the story has not opened.
@@ -539,6 +558,7 @@ Requirements: Visual Studio 2022 (C++ build tools), CMake 3.24 or later, Python 
 cmake -S native -B artifacts/build-native -G "Visual Studio 17 2022" -A x64
 cmake --build artifacts/build-native --config Release
 artifacts\build-native\Release\speech_smoke.exe --quiet
+python scripts\generate_rewind_cues.py
 python scripts\deploy_probe.py
 ```
 
@@ -551,8 +571,11 @@ replacing it, and removes installed modules whose source was renamed or deleted.
 
 `scripts/package_release.py` creates a full **fresh-install** tester ZIP without
 touching the installed game or launching it. It uses the built Release DLLs, the
-pinned upstream UE4SS ZIP, the six existing processed WAVs, and the pinned Prism
-source archive. It does not generate new sounds or compile native code. The local
+pinned upstream UE4SS ZIP, the six existing processed WAVs, the two synthesized
+rewind WAVs, and the pinned Prism source archive. Generate the rewind defaults with
+`python scripts/generate_rewind_cues.py`; this touches only those two files under
+`assets/audio`, not the other cues. Packaging does not generate sounds or compile
+native code. The local
 defaults match the paths used by the build and deployment tools above; individual
 input paths can be overridden (see `--help`). For worktrees, `--inputs-root` can
 point to the checkout holding these inputs.

@@ -1,0 +1,12 @@
+{
+  "source": "LISAccess/src/output/rewind_audio.h, RewindPcm",
+  "generator": "scripts/generate_rewind_cues.py",
+  "licence": "Original synthesized mod cues; MIT, as the source code",
+  "format": "24000 Hz, mono PCM16, peak amplitude 12000",
+  "cues": {
+    "rewind_approach.wav": "Two 18 ms 1600 Hz ticks separated by 32 ms; sine envelopes; 1632 samples",
+    "rewind_crossed.wav": "120 ms descending chirp; phase 2*pi*(1000*t-2500*t*t), sine envelope; 2880 samples"
+  },
+  "external_provider": false,
+  "other_cues_modified": false
+}

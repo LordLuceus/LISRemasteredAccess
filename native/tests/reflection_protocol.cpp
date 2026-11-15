@@ -23,6 +23,7 @@ struct Stack {
     std::vector<int64_t> integers;
     int duplicates=0, calls=0, discarded=0;
     bool violation=false, prepare_throw=false, resolver_throw=false, getter_throw=false;
+    bool rewind_view=false;
     int index(int i) const {
         const int n=int(values.size()); const int x=i<0?n+i:i-1;
         if (x<0 || x>=n) throw std::runtime_error("fake stack index");
@@ -50,7 +51,7 @@ struct Stack {
         return v.number;
     }
     void prepare_function_call(std::string_view name) {
-        if (name!=lisr::reflection::resolver) { violation=true; throw std::runtime_error("resolver name"); }
+        if (name!=(rewind_view ? lisr::reflection::rewind_resolver : lisr::reflection::resolver)) { violation=true; throw std::runtime_error("resolver name"); }
         values.push_back({Value::Function,0,{}});
         if (prepare_throw) throw std::runtime_error("prepare after push");
     }
@@ -112,6 +113,18 @@ int main(int argc,char** argv) {
         {Stack s;s.values[0]=Value::num(123);rejected(s,"numeric owner forbidden");}
         {Stack s;s.values[1]=Value::num(123);rejected(s,"numeric property forbidden");}
         {Stack s;s.values[1]=Value::str("OtherProperty");rejected(s,"whitelist");}
+        {Stack s;s.values[1]=Value::str("Overlay_Rewind");rejected(s,"dialogue export does not acquire rewind fields");}
+        for (auto name : {"RewindBarMaterialInstance","Overlay_Rewind","CanvasPanel_Rewind","Button_RewindIndicator","Image_RewindButtonIndicator"}) {
+            Stack s; s.rewind_view=true;s.values[1]=Value::str(name);s.results[3]=Value::num(2);
+            int pushes=0;
+            int r=lisr::reflection::read(s,[&](bool array,uintptr_t owner,uintptr_t property,uintptr_t offset){
+                check(!array && owner==65536 && property==131072 && offset==48,"rewind typed fresh object pusher");
+                ++pushes;s.values.push_back({Value::Userdata,77,{}});
+            },true);
+            check(r==1 && pushes==1 && !s.violation,"separate rewind resolver and whitelist");
+        }
+        {Stack s;s.rewind_view=true;int pushes=0;auto r=lisr::reflection::read(s,[&](bool,uintptr_t,uintptr_t,uintptr_t){++pushes;},true);
+            check(r==2 && !pushes && !s.calls,"rewind export cannot acquire dialogue arrays");}
         {Stack s;s.prepare_throw=true;rejected(s,"prepare partial push");}
         {Stack s;s.resolver_throw=true;rejected(s,"resolver partial push/nonstandard exception");}
         {Stack s;s.getter_throw=true;rejected(s,"getter throws after destructive read");}

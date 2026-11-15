@@ -50,6 +50,10 @@ by this ZIP. Screen-reader software is not bundled.
 
 ## Sound cues
 
+The two rewind cues are synthesized by the mod's own MIT-licensed code, ported
+from LISAccess. Their generator is `scripts/generate_rewind_cues.py`; these are
+not provider output or extracted game sounds.
+
 The six processed WAV cues were generated with ElevenLabs and processed for this
 mod. The return-of-control cue is the control-loss cue played backwards. These are
 provider output, **not MIT-licensed source code or game audio**.

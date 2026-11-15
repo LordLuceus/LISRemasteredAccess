@@ -1,7 +1,7 @@
 """Build a deterministic, fresh-install tester ZIP. Never installs or launches anything.
 
 Inputs are explicit: the pinned upstream loader ZIP, built native DLL directory,
-the six approved processed audio cues, and the pinned Prism source archive.
+the six approved processed cues, two synthesized rewind cues, and the pinned Prism source archive.
 --preflight checks inputs and renders docs, but produces no release ZIP.
 Packaging does not compile: build native/ in Release first (see README).
 """
@@ -16,7 +16,7 @@ LOADER_DLL_SHA='ce5e3c46a920cc00b2817ac61e438c9162830290379d0b5b9c4dfc2b29459290
 PRISM_SHA='c5d3f0be06bd34fea0478f1c38ce4de85cd3a21dbd2a1ed869b21c8a0a80ebaf'
 MOD='files/ue4ss/Mods/LISRemasteredAccess/Scripts/'
 HOOKS={'HookEngineTick','HookProcessInternal','HookProcessLocalScriptFunction','HookUObjectProcessEvent'}
-CUES=('control_lost','control_back','sneak_spotted','sneak_hidden','focus_tick_a','focus_tick_b')
+CUES=('control_lost','control_back','sneak_spotted','sneak_hidden','focus_tick_a','focus_tick_b','rewind_approach','rewind_crossed')
 
 def digest(data):return hashlib.sha256(data).hexdigest()
 def git(root,*args):

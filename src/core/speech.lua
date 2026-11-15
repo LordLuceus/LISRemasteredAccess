@@ -30,6 +30,8 @@ do
         if f9 then M.tick_load=function(ch,path)local tok,v=pcall(f9,math.floor(ch),path);return tok and v==true end end
         local f6=package.loadlib(dll,"lisr_play")
         if f6 then M.play=function(path)local pok,v=pcall(f6,path);return pok and v==true end end
+        local focused=package.loadlib(dll,"lisr_focused")
+        if focused then M.focused=function()local fok,v=pcall(focused);return fok and v==true end end
     end
 end
 -- Returns true when the native module queued it.

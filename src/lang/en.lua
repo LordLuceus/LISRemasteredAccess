@@ -185,6 +185,8 @@ return {
     stats_loading="The choices are still loading.",
     cue_control_lost="Game takes control.",
     cue_control_back="You have control.",
+    cue_rewind_approach="Approaching the starting last-action mark.",
+    cue_rewind_crossed="Starting last-action mark reached or passed.",
     scanner_distance="{value} metres",
     scanner_distance_one="1 metre",
     scanner_up="{value} metres up",

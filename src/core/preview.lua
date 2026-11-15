@@ -7,6 +7,8 @@ M.cues={
     {file="control_back.wav",key="cue_control_back"},
     {file="sneak_spotted.wav",key="cue_sneak_spotted"},
     {file="sneak_hidden.wav",key="cue_sneak_hidden"},
+    {file="rewind_approach.wav",key="cue_rewind_approach"},
+    {file="rewind_crossed.wav",key="cue_rewind_crossed"},
 }
 M.text=function(key)return key end
 M.say=function(_)end

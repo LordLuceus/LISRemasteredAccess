@@ -184,6 +184,14 @@ __declspec(dllexport) int lisr_keys(lua_State* state) {
     lua.set_integer(mask);
     return 1;
 }
+// Read-only OS focus check, independent of controller presence or held keys.
+// Automatic rewind cues must not leak into another application.
+__declspec(dllexport) int lisr_focused(lua_State* state) {
+    DWORD pid = 0;
+    if (HWND fg = GetForegroundWindow()) GetWindowThreadProcessId(fg, &pid);
+    Lua(state).set_bool(pid == GetCurrentProcessId());
+    return 1;
+}
 // lisr_play(path) -> true when playback started. Plays a WAV file
 // asynchronously through the default output device (PlaySound), replacing any
 // cue still playing. Never blocks the game thread.

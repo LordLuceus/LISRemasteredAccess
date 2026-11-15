@@ -2,6 +2,13 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-15
+
+- Control-loss and control-return sounds no longer compete with rewinding. The
+  original mod's double-tick approach cue and descending reached/crossed cue
+  follow the starting last-action mark, and both are in the sound-preview cycle.
+  Rewinding itself is unchanged: no automatic stop or continuous tone.
+
 ## In development — 2026-11-14
 
 - Added a reader for the first-run privacy/terms dialog: its greeting, checkbox

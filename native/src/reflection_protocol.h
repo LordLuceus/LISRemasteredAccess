@@ -7,16 +7,19 @@
 #include <string>
 namespace lisr::reflection {
 inline constexpr char resolver[] = "__lisr_reflection_resolve_83330635";
+inline constexpr char rewind_resolver[] = "__lisr_rewind_view_resolve_v1";
 template<class Stack, class Push>
-int read(Stack& lua, Push&& push) {
+int read(Stack& lua, Push&& push, bool rewind_view = false) {
     const int top = lua.get_stack_size();
     try {
         if (top != 2 || !lua.is_userdata(1) || !lua.is_string(2)) throw std::runtime_error("reflection arguments");
         lua.insert_value(2, top+1); // duplicate; getter removes only the copy
         const std::string name(lua.get_string(-1));
-        const bool array = name == "DialogButtons_Array";
-        if (!array && name != "DialogText") throw std::runtime_error("reflection whitelist");
-        lua.prepare_function_call(resolver);
+        const bool array = !rewind_view && name == "DialogButtons_Array";
+        const bool view_field = name == "RewindBarMaterialInstance" || name == "Overlay_Rewind" ||
+            name == "CanvasPanel_Rewind" || name == "Button_RewindIndicator" || name == "Image_RewindButtonIndicator";
+        if (rewind_view ? !view_field : (!array && name != "DialogText")) throw std::runtime_error("reflection whitelist");
+        lua.prepare_function_call(rewind_view ? rewind_resolver : resolver);
         lua.insert_value(1, lua.get_stack_size()+1);
         lua.insert_value(2, lua.get_stack_size()+1);
         lua.call_function(2, 4);

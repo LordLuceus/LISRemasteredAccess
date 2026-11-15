@@ -51,6 +51,20 @@ local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
 -- Scanner and autowalk work only while the player controls Max (see core/control.lua).
 local control=require("core.control").new()
 local control_world=nil
+local rewind=require('rewind.runtime').new({
+    control=control,log=log,text=function(k)return l10n.text(k)end,
+    say=function(t)say(t,false)end,
+    play=function(file)return speech.play and speech.play(speech.audio_dir..file)end,
+    focused=function()return speech.focused and speech.focused()end,
+    in_menu=in_menu,
+    identity=function()
+        local c=scanner.controller()
+        if not c then return nil end
+        local w=c:GetWorld()
+        if not w or not w:IsValid() or w:GetFName():ToString()=='WhatIf_Menu' then return nil end
+        return tostring(w:GetAddress())..':'..w:GetFullName(),c:GetAddress()
+    end,
+})
 local function playable()return not in_menu() and control:has_control() end
 -- The scanner, facing and Home also work while Max chooses a shooting target
 -- in the junkyard (the game holds her, but the camera aims; keyboard players
@@ -837,6 +851,10 @@ LoopInGameThreadWithDelay(50,function()
         run_keys()
         picture.poll()
         run_delayed()
+        -- Fresh native state before the slower control-cue poll. Short/fast
+        -- rewinds can begin and finish between those polls.
+        local rok,rerr=pcall(rewind.tick,rewind,os.clock())
+        if not rok then rewind:cancel();log('rewind_error='..tostring(rerr))end
         pad_step()
         -- Recognize help before emitting a queued native digit change from
         -- the same controller press.
