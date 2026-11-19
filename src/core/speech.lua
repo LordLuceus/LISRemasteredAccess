@@ -6,6 +6,7 @@ local M={native=false,load_error=nil}
 local here=debug.getinfo(1,"S").source:gsub("^@",""):gsub("[^/\\]+$","")
 local dll=here:gsub("core[/\\]$","").."lisr_speech.dll"
 local speak_fn,stop_fn,status_fn
+local speech_owner=nil
 do
     local ok,err=pcall(function()
         local f1,e1=package.loadlib(dll,"lisr_speak");if not f1 then error(e1) end
@@ -36,16 +37,30 @@ do
 end
 -- Returns true when the native module queued it.
 local tidy=require("core.text").tidy
-function M.say(text,interrupt)
+function M.say(text,interrupt,owner)
     if type(text)~="string" or text=="" then return false end
     text=tidy(text)
+    -- Optional owned narration yields before another source queues speech.
+    -- Ordinary callers have no owner and retain their existing queue behavior.
+    if speech_owner~=nil and speech_owner~=owner then M.stop() end
+    -- Do not place an owned group behind unowned speech: a later owner-scoped
+    -- stop could then cut off that earlier readout. A fresh group starts now;
+    -- only subsequent lines from that same owner may queue without interrupting.
+    if owner~=nil and speech_owner~=owner then interrupt=true end
     print("[LISNavSay] "..text.."\n")
     if not M.native then return false end
     local ok,queued=pcall(speak_fn,text,interrupt~=false)
+    speech_owner=ok and queued==true and owner or nil
     return ok and queued==true
 end
 function M.stop()
+    speech_owner=nil
     if M.native then pcall(stop_fn) end
+end
+-- Never cancel newer menu/help/dialogue speech when a movie ends or is skipped.
+function M.stop_owned(owner)
+    if owner~=nil and speech_owner==owner then M.stop();return true end
+    return false
 end
 function M.status()
     if not M.native then return "native=false error="..tostring(M.load_error) end

@@ -40,6 +40,7 @@ picture.automatic=function(page)requested[#requested+1]='auto:'..page.key;return
 picture.active=function()return current_page~=nil end
 fake_require('menus.main_menu').snapshot=function()return current_menu end
 fake_require('menus.keybindings').active=false
+fake_require('cutscenes.runtime').active=false
 fake_require('hud.padlock').active=function()return false end
 fake_require('hud.icons').tick=function()return {} end
 fake_require('core.controls').using_gamepad=function()return false end
@@ -121,6 +122,20 @@ journal.page=function()return nil end
 buttons=0;for _=1,10 do game_loop() end
 n=#photo_commands;home()
 check(#photo_commands==n,'photo command gate releases when the journal closes')
+local movies=fake_require('cutscenes.runtime');local movie_reads=0
+movies.reread=function()
+    if not movies.active then return false end
+    movie_reads=movie_reads+1;return true
+end
+movies.active=true
+home();check(movie_reads==1,'real Home reaches the movie reader')
+buttons=0;game_loop();buttons=1;game_loop()
+check(movie_reads==2,'real D-pad Up reaches the movie reader without world actions')
+fake_require('core.controls').using_gamepad=function()return false end
+bound['F1:none']();check(spoken[#spoken]==real_require('lang.en').cutscene_help_keys,'movie keyboard help')
+fake_require('core.controls').using_gamepad=function()return true end
+bound['F1:none']();check(spoken[#spoken]==real_require('lang.en').cutscene_help_pad,'movie controller help')
+movies.active=false;home();check(movie_reads==2,'movie gate releases to the existing readers')
 for _,name in ipairs({'hud.viewer','core.help','core.text','core.localization','descriptions.reader'}) do package.loaded[name]=nil end
 print('Main description wiring: '..checks..' checks passed')
 return checks

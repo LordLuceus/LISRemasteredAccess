@@ -19,6 +19,8 @@ HOOKS={'HookEngineTick','HookProcessInternal','HookProcessLocalScriptFunction','
 CUES=('control_lost','control_back','sneak_spotted','sneak_hidden','focus_tick_a','focus_tick_b','rewind_approach','rewind_crossed')
 
 def digest(data):return hashlib.sha256(data).hexdigest()
+def description_track(name):
+    return re.fullmatch(r'cutscenes/tracks/[a-z]{2}/episode0[1-5]/[a-z0-9_-]+\.mp4\.ad\.srt',name) is not None
 def git(root,*args):
     p=subprocess.run(['git','-C',str(root),*args],check=True,capture_output=True,
         creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0),timeout=30)
@@ -52,6 +54,16 @@ def loader_settings(data):
     if enabled!=HOOKS:raise ValueError('Loader hook inventory changed')
     out=io.StringIO();c.write(out);return out.getvalue().encode('utf-8')
 
+def collect_scripts(root):
+    payload={}
+    for name in git(root,'ls-files','-z','--','src').split('\0'):
+        if not name or name.startswith('src/dev/'):continue
+        if not (name.endswith('.lua') or description_track(name.removeprefix('src/'))):continue
+        p=root/name
+        if p.is_symlink():raise ValueError('Source symlink not permitted: '+name)
+        payload[MOD+name[4:]]=p.read_bytes()
+    return payload
+
 def collect(args,root=ROOT):
     root=Path(root);payload={}
     provenance=json.loads((root/'native/third_party/reflection-source.json').read_text(encoding='utf-8'))
@@ -74,12 +86,7 @@ def collect(args,root=ROOT):
     add('files/ue4ss/VTableLayout.ini',(root/'compatibility/VTableLayout.ini').read_bytes())
     add('files/ue4ss/Mods/mods.txt',b'LISRemasteredAccess : 1\n')
     add('files/ue4ss/Mods/mods.json',b'[{"mod_name":"LISRemasteredAccess","mod_enabled":true}]\n')
-    tracked=git(root,'ls-files','-z','--','src').split('\0')
-    for name in tracked:
-        if not name or not name.endswith('.lua') or name.startswith('src/dev/'):continue
-        p=root/name
-        if p.is_symlink():raise ValueError('Source symlink not permitted: '+name)
-        add(MOD+name[4:],p.read_bytes())
+    for name,data in collect_scripts(root).items():add(name,data)
     add(MOD+'LISNavRequest.lua',b"return {scene='inspect'}\n")
     for name in ('lisr_speech.dll','lisr_reflection.dll'):
         data=(Path(args.native_dir)/name).read_bytes();check_pe(data,name);add(MOD+name,data)
@@ -130,11 +137,11 @@ def validate_payload(payload):
         if name.startswith('files/'):
             tail=name.removeprefix(MOD)
             allowed=name in fixed or (name.startswith(MOD) and
-                (tail.endswith('.lua') and not tail.startswith('dev/') or
+                (tail.endswith('.lua') and not tail.startswith('dev/') or description_track(tail) or
                  tail in ('lisr_speech.dll','lisr_reflection.dll') or
                  tail in {'audio/'+n+'.wav' for n in CUES}))
             if not allowed:raise ValueError('Unexpected private/debug/game runtime payload: '+name)
-        if name.endswith(('.lua','.dll','.md','.html','.json','.txt')) and private_path(data):
+        if name.endswith(('.lua','.dll','.md','.html','.json','.txt','.srt')) and private_path(data):
             raise ValueError('Personal machine path in '+name)
     request=payload.get(MOD+'LISNavRequest.lua')
     if request!=b"return {scene='inspect'}\n":raise ValueError('Non-neutral test-session request')

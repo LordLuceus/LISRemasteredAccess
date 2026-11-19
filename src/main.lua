@@ -13,10 +13,10 @@ log("loaded speech_module "..speech.status())
 
 local last_speech=""
 local menu_snapshot=nil
-local function say(text,interrupt)
+local function say(text,interrupt,owner)
     if type(text)~="string" or text=="" then return end
     last_speech=text
-    speech.say(text,interrupt~=false)
+    return speech.say(text,interrupt~=false,owner)
 end
 
 -- Follow the game's language and input mode; both getters are side-effect free.
@@ -45,6 +45,7 @@ end
 local reread=nil
 local picture_reread=nil
 local journal_photo_reread=nil
+local cutscenes=nil
 local room_tick,room_last,room_pending,room_spoken,room_announced_once=0,nil,nil,nil,false
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
@@ -113,6 +114,7 @@ local function run_keys()
     end
 end
 bind_key(Key.HOME,on_game(function()
+    if cutscenes and cutscenes:reread() then return end
     padlock.check_presence()
     if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
     if journal_photo_reread and journal_photo_reread() then return end
@@ -170,12 +172,21 @@ local journal_cursor=journal.cursor()
 local journal_open=false
 local journal_move -- defined with the journal step below
 local choices=require("dialogue.choices")
+cutscenes=require('cutscenes.runtime').new({
+    root=debug.getinfo(1,'S').source:gsub('^@',''):gsub('[^/\\]+$','')..'cutscenes',
+    language=l10n.language,focused=function()return speech.focused and speech.focused()end,
+    allowed=function()return not in_menu() and not choices.options()end,
+    say=say,stop=speech.stop_owned,log=log,text=function(key)return l10n.text(key)end,
+})
 local function face_selected()
     if not can_scan() then return end
     local c=scanner.controller()
     if c then face.start(c,scanner.selected()) end
 end
 local function show_help()
+    if cutscenes and cutscenes.active then
+        say(l10n.text(controls.using_gamepad() and 'cutscene_help_pad' or 'cutscene_help_keys'),true);return
+    end
     padlock.check_presence()
     local gamepad=controls.using_gamepad()
     local current=menu_snapshot and menu_snapshot()
@@ -816,11 +827,13 @@ local function pad_step()
             else pad:reader_reset() end
             -- While the journal is open the D-pad reads it; scanner commands
             -- (D-pad down = autowalk) must not fire behind it.
-            local picture_open=not journal_open and not in_menu() and picture.active()
+            local movie_open=cutscenes and cutscenes.active
+            local picture_open=not journal_open and not in_menu() and (movie_open or picture.active())
             local active=buttons>=0 and can_scan() and not journal_open and not picture_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock(),picture_open)) do
                 if cmd=="repeat" then speech.say(last_speech,true)
-                elseif cmd=="picture_reread" then picture_reread()
+                elseif cmd=="picture_reread" then
+                    if movie_open then cutscenes:reread()else picture_reread()end
                 elseif cmd=="autowalk" then walk_toggle()
                 elseif cmd=="face" then face_selected()
                 elseif cmd=="help" then padlock.controller_help();show_help()
@@ -855,6 +868,8 @@ LoopInGameThreadWithDelay(50,function()
         -- rewinds can begin and finish between those polls.
         local rok,rerr=pcall(rewind.tick,rewind,os.clock())
         if not rok then rewind:cancel();log('rewind_error='..tostring(rerr))end
+        local cok,cerr=pcall(cutscenes.tick,cutscenes)
+        if not cok then cutscenes:cancel();log('cutscene_error='..tostring(cerr))end
         pad_step()
         -- Recognize help before emitting a queued native digit change from
         -- the same controller press.

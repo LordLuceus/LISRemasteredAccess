@@ -130,7 +130,7 @@ when they change.
 | Keyboard | Controller | Action |
 | --- | --- | --- |
 | Page Down / Page Up | D-pad right / left | Next / previous object (hold to repeat) |
-| Home | D-pad up | Read the current close-up view again, or describe the selected world object with fresh distance and direction |
+| Home | D-pad up | Reread the current close-up or movie description, or describe the selected world object with fresh distance and direction |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 | Shift+Home | D-pad down | Walk to the selected object; press again to stop |
 | F | Left-stick click | Turn toward the selected object |
@@ -285,6 +285,51 @@ past it. Stop each control at its fastest ticking.
 A soft descending tone plays when a cutscene takes control of Max, and an
 ascending one when you get control back. While the game has control, the scanner
 and autowalk do nothing. Ctrl+Home still repeats the last announcement.
+
+### Movie descriptions
+
+This candidate adds automatic English visual descriptions to the two pre-rendered
+story movies near the end of Episode 1, including the ending montage. They follow
+the movie's playback position, not a timer started when Max loses control. Dense
+dialogue is left alone; descriptions use gaps in the shipped English subtitle
+timings. Very slow speech settings can still overlap the next line of dialogue.
+
+Home, or D-pad up, rereads the latest description while a movie is showing. Before
+the first description it says that none has appeared yet. F1, or left-stick click
+with D-pad up, gives the controls for your current device. Other announcements can
+replace narration, and a later timed description can replace an older readout.
+
+Description speech stops when the movie disappears, pauses, or the game loses
+focus. Returning does not play missed descriptions in a rush. This does not add
+pause or skip controls, or promise that the game itself pauses when unfocused.
+Ordinary in-engine cutscenes, other episodes, Japanese/platform movie variants,
+recaps and the short next-episode teaser are not currently described.
+
+**Integration status:** the native playback clock, all three descriptions in the
+first movie and keyboard rereading have been exercised in-game. The first movie
+also completed normally through its story sequence. Ending-montage playback has
+also been player-tested. Controller input and pause/focus handling have
+offline coverage only. The native clock reader requires the supported game build.
+
+#### Customizing movie descriptions
+
+Bundled tracks are plain UTF-8 SRT files under
+`ue4ss/Mods/LISRemasteredAccess/Scripts/cutscenes/tracks/en/episode01/`:
+`bik_e1_6a_dialend.mp4.ad.srt` and `bik_e1_7a_snowing.mp4.ad.srt`.
+To override one, copy it to the same language/episode path under
+`Scripts/cutscenes/overrides/` instead. An empty override disables that movie's
+descriptions. Overrides are not owned or replaced by the deployment script.
+Restart the game after editing a track.
+
+Cues are numbered consecutively from 1, have non-overlapping start/end times,
+and contain plain prose, not subtitle markup. End times are the last opportunity
+to **start** a description; they do not cut off a sentence already being spoken.
+Leave enough time for the sentence to finish before dialogue resumes. Malformed
+tracks are rejected as a whole. Tracks are selected by the actual movie filename
+and current text-language code; there is no automatic English timing fallback
+for another language. Additional tracks can cover other story movies played by
+the same game player, but adding a file does not make an unrelated video player
+or a real-time cutscene supported.
 
 ### Facing and interacting
 

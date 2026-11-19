@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include "rewind_snapshot.h"
+#include "movie_time.h"
 using RC::LuaMadeSimple::Lua;
 namespace {
 bool exact_module(HMODULE module, const unsigned char (&expected)[32]) noexcept {
@@ -48,6 +49,38 @@ bool guarded_copy(uintptr_t address, void* output, size_t size) noexcept {
     __try { std::memcpy(output, reinterpret_cast<const void*>(address), size); return true; }
     __except(EXCEPTION_EXECUTE_HANDLER) { return false; }
 }
+bool guarded_movie_getter(uintptr_t function, uintptr_t player, int64_t& ticks) noexcept {
+    // MS x64 member convention established from the pinned execGetTime thunk.
+    using Getter = int64_t* (__fastcall*)(void*, int64_t*);
+    __try { return reinterpret_cast<Getter>(function)(reinterpret_cast<void*>(player), &ticks) == &ticks; }
+    __except(EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+}
+// Game-thread only, with freshly reacquired exact D9MediaPlayer and MediaPlayer
+// class GetAddress() integers. Returns only a scalar protocol string. No cache.
+extern "C" __declspec(dllexport) int lisr_movie_time(lua_State* state) noexcept {
+    static const bool compatible = exact_loader();
+    if (!compatible) return 0;
+    try {
+        Lua lua(state);
+        if (lua.get_stack_size() != 2 || !lua.is_integer(1) || !lua.is_integer(2)) {
+            lua.set_string("LISRMT1|status=arguments"); return 1;
+        }
+        const auto klass = lua.get_integer(-1), player = lua.get_integer(-1);
+        if (klass <= 0 || player <= 0) { lua.set_string("LISRMT1|status=arguments"); return 1; }
+        static HMODULE module = GetModuleHandleW(nullptr);
+        static const bool game = [] {
+            constexpr unsigned char expected[] = {0xc1,0x41,0xab,0x07,0xaa,0x9b,0x7f,0x77,0xad,0xde,0x73,0x3f,0xc0,0x48,0x10,0x42,0xfe,0x3e,0x63,0x72,0x46,0x39,0x70,0x13,0x22,0xe6,0x59,0xd6,0x11,0x51,0x9c,0xf2};
+            return exact_module(module, expected);
+        }();
+        auto memory = [](uintptr_t p, void* out, size_t n) { return guarded_copy(p, out, n); };
+        const auto result = lisr::movie::sample(memory, reinterpret_cast<uintptr_t>(module), game,
+            static_cast<uintptr_t>(player), static_cast<uintptr_t>(klass), guarded_movie_getter);
+        std::ostringstream out; out.imbue(std::locale::classic());
+        out << "LISRMT1|status=" << result.status;
+        if (std::strcmp(result.status, "ok") == 0) out << "|seconds=" << std::setprecision(17) << result.seconds;
+        const auto text = out.str(); lua.set_string(std::string_view(text)); return 1;
+    } catch (...) { return 0; }
 }
 extern "C" __declspec(dllexport) int lisr_reflection_read(lua_State* state) noexcept {
     // A mismatch returns no result without constructing a potentially wrong ABI wrapper.

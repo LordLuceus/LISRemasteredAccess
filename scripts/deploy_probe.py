@@ -43,6 +43,9 @@ try:
         manifest.write_text(json.dumps(data, indent=4), encoding='utf-8')
         print('Leftover test-session request found and reset to neutral')
     sources = [(s, SCRIPTS / s.relative_to(root / 'src')) for s in sorted((root / 'src').rglob('*.lua'))]
+    # Bundled timed descriptions only. User overrides are never deploy-owned.
+    for track in sorted((root / 'src/cutscenes/tracks').rglob('*.ad.srt')):
+        sources.append((track, SCRIPTS / track.relative_to(root / 'src')))
     native = root / 'artifacts/build-native/Release/lisr_speech.dll'
     if not native.exists():
         raise RuntimeError('Build the speech module first (see README)')

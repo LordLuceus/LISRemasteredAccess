@@ -100,6 +100,8 @@ template<class Memory> class Reader {
     }
 public:
     Reader(Memory& m, uintptr_t module) : memory(m), base(module) {}
+    // Raw UObject validation also used by read-only native scalar adapters.
+    bool valid_object(uintptr_t object) { return object && valid(object); }
     Snapshot sample() {
         Snapshot s; Weak w{}; uintptr_t manager{}, klass{};
         if (!base || !get(base + pinned::manager_weak, w) || !resolve(w, manager) || !valid(manager) ||

@@ -2,6 +2,17 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-18
+
+- Added a candidate automatic description track for each of Episode 1's two
+  pre-rendered story movies, including the ending montage. Home or D-pad up
+  rereads the latest description. Custom SRT overrides can replace or disable
+  individual tracks. The first movie's descriptions and keyboard rereading have
+  been exercised, including normal story-driven completion; ending-montage
+  playback has also been player-tested. Ending descriptions identify Wells and
+  Nathan and clarify details such as David's camera repair and Victoria discarding
+  Rachel's poster. The teaser and in-engine cutscenes are not covered.
+
 ## In development — 2026-11-15
 
 - Control-loss and control-return sounds no longer compete with rewinding. The
