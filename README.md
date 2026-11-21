@@ -130,7 +130,7 @@ when they change.
 | Keyboard | Controller | Action |
 | --- | --- | --- |
 | Page Down / Page Up | D-pad right / left | Next / previous object (hold to repeat) |
-| Home | D-pad up | Reread the current close-up or movie description, or describe the selected world object with fresh distance and direction |
+| Home | D-pad up | Reread the current close-up, movie or supported scene description, or describe the selected world object with fresh distance and direction |
 | Ctrl+Home | Hold left-stick click, then D-pad right | Repeat the last announcement |
 | Shift+Home | D-pad down | Walk to the selected object; press again to stop |
 | F | Left-stick click | Turn toward the selected object |
@@ -302,17 +302,9 @@ replace narration, and a later timed description can replace an older readout.
 Description speech stops when the movie disappears, pauses, or the game loses
 focus. Returning does not play missed descriptions in a rush. This does not add
 pause or skip controls, or promise that the game itself pauses when unfocused.
-
-On Max's first visit to the photography classroom, the English scene reader
-describes the room, Stella retrieving her pen and Taylor throwing a paper ball
-at Kate. Home or D-pad up repeats the latest cue when Max's speech allows it.
-
-During Episode 1 gameplay, the English room reader describes the setting when
-it identifies a location. Selected in-engine actions also have spoken cues,
-including Max photographing the butterfly and Juliet unlocking Dana's door.
-Coverage and in-game timing of these cues are still being verified.
-Movie tracks for other episodes, Japanese/platform variants, recaps and the
-short next-episode teaser are still outstanding.
+Other episodes, Japanese/platform movie variants,
+recaps and the short next-episode teaser are not currently described.
+English in-engine descriptions cover the classroom introductions and selected scenes throughout Episode 1.
 
 **Integration status:** the native playback clock, all three descriptions in the
 first movie and keyboard rereading have been exercised in-game. The first movie
@@ -332,13 +324,77 @@ Restart the game after editing a track.
 
 Cues are numbered consecutively from 1, have non-overlapping start/end times,
 and contain plain prose, not subtitle markup. End times are the last opportunity
-to **start** a description; they do not cut off a sentence already being spoken.
+to **start** a description. The bundled English tracks also stop the narrator
+when dialogue resumes. A requested reread waits for the next gap.
 Leave enough time for the sentence to finish before dialogue resumes. Malformed
 tracks are rejected as a whole. Tracks are selected by the actual movie filename
 and current text-language code; there is no automatic English timing fallback
 for another language. Additional tracks can cover other story movies played by
 the same game player, but adding a file does not make an unrelated video player
 or a real-time cutscene supported.
+
+### Episode 1 scene descriptions (candidate)
+
+On the first classroom visit in Episode 1, three short descriptions introduce
+the room, Stella retrieving her pen, and Taylor throwing a paper ball at Kate.
+They follow the scene's actual playback position. Brief overlap with Jefferson's
+lecture is intentional; the reader reserves Max's scripted speech windows and
+stops its own narration before her next line, even if a slow readout is unfinished.
+It never pauses, skips or mutes the game's dialogue.
+
+Home or D-pad up rereads the latest scene description. A request during Max's
+protected lines waits; before the first description, it waits for that description.
+Ctrl+Home and the controller repeat chord also respect this protection when
+repeating scene narration. F1 or left-stick click with D-pad up gives contextual
+help. New visual cues may replace an older readout. Requests expire when the intro
+ends; old scene descriptions are not replayed over a later conversation.
+
+Pausing, opening a menu, losing focus or rewinding stops scene narration. Returning
+does not play missed descriptions in a rush. A description can finish across the
+intro's camera-sequence transition instead of being cut off just because that
+segment ends. Normal scanner controls resume afterwards.
+
+The reader requires English in the game's language settings. On the return to class,
+Max's desk description fits between her English lines. A disposable-profile
+playthrough reached all three first-visit cue windows with the game in focus.
+Slow-reader cancellation and input timing have offline regression coverage.
+
+English scene descriptions follow the remaster's playback clock. The table
+follows the story sections in the [Episode 1 transcript](https://life-is-strange.fandom.com/wiki/Episode_1:_Chrysalis_-_Script).
+
+| Story section | Examples of what the reader describes |
+| --- | --- |
+| Opening nightmare | Max on the rain-soaked path, the tornado, the boat striking the lighthouse |
+| Blackwell | Both classroom visits, the butterfly, the bathroom confrontation, the fire alarm and Wells's questioning |
+| Main campus | The fountain, students on the lawn, conversations, Trevor's skateboard tricks and Brooke's drone |
+| Dormitories | Students on the steps, Samuel's ladder, the paint falling and Victoria's reaction |
+| Girls' dormitories | Max's room, Juliet guarding Dana's door, the printed email and Warren's flash drive |
+| Dormitories with the flash drive | Alyssa and the football, David confronting Kate, taking the photo or stepping in |
+| Parking lot | Warren reaching for a hug, Nathan's attack and Chloe's pickup |
+| Chloe's car | The conversation in the cab, Max's broken camera and the arrival at the house |
+| Chloe's house | Rachel's photo, the garage tools, Chloe giving Max a camera, dancing and the alternate outcomes when David enters |
+| Lighthouse | The doe, the trail, Chloe overlooking the bay and the conversation on the cliff |
+| Second nightmare | Falling debris, the doe crossing the gap, the newspaper and the storm over the bay |
+| Epilogue | The first snowflakes, people across Arcadia Bay watching the snow, and the red binders |
+
+Descriptions use gaps in the English dialogue where possible. Brief cues can
+overlap another character where the dialogue leaves no gap, including during
+Principal Wells's questioning. Both branches reserve Max's recorded lines.
+
+At the backyard swing and living-room couch, Max sits down and remembers a
+conversation with Chloe. Stay seated to hear descriptions of the repeating
+shots after their voices finish.
+
+During exploration, the reader announces the setting when it detects a room change. Your first **Home** or **D-pad up** scanner readout in an
+Episode 1 location also describes the surroundings in English. The selected
+object and its direction come first. For close-ups such as the bathroom graffiti
+and Max's teddy bear, this command also describes the object before you choose
+Look and hear Max's thoughts.
+
+In some conversations, the camera holds while Max chooses an answer. The
+reader announces the answers first, then describes the shot. For example,
+it describes Daniel when he asks to sketch Max. Selecting an answer stops
+the readout so the next line can be heard.
 
 ### Facing and interacting
 
@@ -420,6 +476,11 @@ A on controller—to enter Read mode and hear that text. Escape or B returns to
 the picture and its description. Pictures without text keep their automatic
 descriptions; no extra description shortcut is needed.
 
+On pages with a timed English line from Max, the automatic description waits
+for her to finish. On Max's laptop this applies separately to the sketch,
+camera website and email. Turning a page or closing the picture stops its
+automatic narration.
+
 **Home**, or **D-pad up**, rereads the current view: the description in picture
 mode, the text in Read mode. **Ctrl+Home** (on a controller, hold the left-stick
 click and press D-pad right) instead repeats the last announcement, including
@@ -430,7 +491,7 @@ last. F1 gives the controls without adding instructions to each opening readout.
 photos, postcards, posters, documents, computer screens and maps from Episode 1's
 school, campus, dormitories, Chloe's house and cliff. The catalogue covers the
 extracted Episode 1 close-up artwork, but not every picture has been checked in
-play; some in-game views may still be missing. Cutscenes are not described. A
+play; some in-game views may still be missing. A
 picture with neither text nor a description says so. Automatic and on-demand
 descriptions work with either input device. D-pad left/right retain the game's
 page controls; outside the viewer, D-pad up still reads the scanner selection.

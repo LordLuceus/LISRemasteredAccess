@@ -17,11 +17,26 @@ function M:update(frame,request)
     local stage=stages.returning and 'returning' or 'intro'
     local intro=stages[stage];local old=self.previous[stage]
     local restart=intro and (not old or intro.key~=old.key or
-        (finite(intro.time)and finite(old.time)and intro.time<.5 and old.time>1 and not intro.reverse))
+        (not self.data.stages[stage].loop and finite(intro.time)and finite(old.time)
+         and intro.time<.5 and old.time>1 and not intro.reverse))
     local reset=self.world~=frame.world or restart
     if reset then
         self.seen={};self.previous={};self.last=nil;self.requested=nil;stop=true
     end
+    -- Some moments of calm play a separate, one-time voice sequence. Wait
+    -- for a forward end-to-start wrap before using their repeating shots.
+    local definition=self.data.stages[stage]
+    if definition.after_first_loop then
+        if reset or not intro then
+            self.loop_ready=false
+            self.seen={};self.last=nil;self.requested=nil
+        elseif self.active and old and old.forward and intro.rate==1 and not intro.reverse
+            and finite(old.time) and old.time>=definition.length-.8
+            and finite(intro.time) and intro.time>=0 and intro.time<.8 then
+            self.loop_ready=true
+        end
+    end
+    local waiting=definition.after_first_loop and not self.loop_ready
     self.world=frame.world
     local active,suspended=false,frame.allowed~=true
     local protected,invalid=false,false
@@ -44,7 +59,7 @@ function M:update(frame,request)
     if frame.allowed~=true then self.requested=nil end
     if invalid then self.requested=nil;self.last=nil end
     if request and active and frame.allowed==true and not invalid then self.requested=request end
-    local blocked=suspended or protected
+    local blocked=suspended or protected or waiting
     local resumed=self.suspended and not reset
     local cue
     for _,id in ipairs(self.data.order)do
@@ -52,7 +67,7 @@ function M:update(frame,request)
         if s and finite(s.time)then
             for i,c in ipairs(self.data.stages[id].cues)do
                 local key=id..':'..i
-                if s.time>=c.start and not self.seen[key]then
+                if not waiting and s.time>=c.start and not self.seen[key]then
                     -- Missed/obscured cues are consumed, never replayed as backlog.
                     self.seen[key]=true
                     if not blocked and not resumed and s.time<c.finish then cue=c.key end
@@ -62,7 +77,7 @@ function M:update(frame,request)
     end
     -- Absence is not a new playback generation. Retain scalar identity/position
     -- across an empty sample, just as across a failed sample.
-    for id,s in pairs(stages)do self.previous[id]={key=s.key,time=s.time}end
+    for id,s in pairs(stages)do self.previous[id]={key=s.key,time=s.time,forward=s.rate==1 and not s.reverse}end
     self.blocked=blocked or not active
     self.suspended=suspended
     if self.blocked then return nil,true end

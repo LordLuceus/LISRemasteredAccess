@@ -2,14 +2,17 @@
 
 Player-facing changes, newest first.
 
-## In development — 2026-11-19
+## In development ? 2026-11-21
 
-- Added a candidate description track for the first classroom introduction:
-  the room, Stella retrieving her pen, and Taylor throwing a paper ball at Kate.
-  Descriptions may briefly overlap Jefferson but wait or stop for Max's scripted
-  lines. Home or D-pad up rereads them during the intro. This English-language
-  pilot does not cover the later return to class or Victoria's phone, and the
-  complete reader has not yet been playtested. Movie descriptions are unchanged.
+- Added English scene descriptions throughout Episode 1, from the first
+  nightmare to the snowfall montage. They cover story scenes, alternate
+  decisions, optional conversations and all six Moments of Calm.
+- On the first explicit scanner readout in a location, Home or D-pad up also
+  describes the surroundings. Some optional objects have a visual description
+  here so players can hear it before choosing Look.
+- Protected Max's English lines with timed cue cutoffs. The couch and swing
+  leave the childhood conversation free and describe the repeating shots
+  if the player stays seated.
 
 ## In development — 2026-11-18
 

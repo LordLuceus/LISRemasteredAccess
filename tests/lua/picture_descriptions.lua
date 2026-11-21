@@ -143,6 +143,24 @@ P.request(page);local reads_before=asset_reads;event('Tick')
 check(said[#said]=='Native text. Page 1 of 2.' and asset_reads==reads_before,'manual request follows actual Read mode without touching texture')
 state.reading=nil;P.request(page);event('Tick')
 check(said[#said]=='Native text. Page 1 of 2.','unknown mode preserves accessible native text fallback')
+state.reading=false;state.index=1;page.index=2;page.id=state.id;page.reading=false
+P.language=function()return 'en' end
+state.asset='/Game/Packages/ShowPicture/Episode01/TX_E1_3C/TX_E1_3C_VicRoom_VictoriaLaptop_SP04.TX_E1_3C_VicRoom_VictoriaLaptop_SP04'
+P.lookup=default_lookup
+before=#said;P.automatic(page);event('Tick')
+now=now+7.5;event('Tick')
+check(#said==before,'wait for Max to finish identifying the email')
+now=now+.6;event('Tick')
+check(#said==before+1 and said[#said]:find('webmail',1,true),'describe the email when its page is still visible')
+local stopped=0;P.stop=function()stopped=stopped+1 end
+P.cancel_auto();P.cancel_auto()
+check(stopped==1,'leaving the page stops only its owned automatic narration')
+before=#said;P.automatic(page);event('Tick');P.cancel_auto();now=now+8;event('Tick')
+check(#said==before,'closing the laptop during Max dialogue cancels the deferred description')
+P.lookup=function() return 'A silent photograph.' end
+P.automatic(page);event('Tick');local prior_stops=stopped
+P.automatic({id=page.id,index=1,count=2,reading=false})
+check(stopped==prior_stops+1,'turning a silent page stops its description before the next voice line')
 print('Picture descriptions: '..n..' checks passed')
 StaticFindObject=old_find;RegisterHook=old_hook
 package.loaded['descriptions.picture']=nil

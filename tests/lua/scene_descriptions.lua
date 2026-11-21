@@ -15,6 +15,19 @@ do
     local _,stop=replay:update(frame(19.11,'returning'))
     check(stop,'stop return cue before Max speaks again')
 end
+do
+    local loop=Policy.new({order={'intro'},stages={intro={loop=true,length=5,protect={},
+        cues={{start=1,finish=2,key='quiet-room'}}}}})
+    check(loop:update(frame(1))=='quiet-room','idle sequence speaks on entry')
+    for cycle=1,2 do
+        loop:update(frame(4.9))
+        loop:update(frame(.1))
+        check(not loop:update(frame(1.1)),'idle sequence stays quiet on wrap')
+    end
+    local nextVisit=frame(1.1)
+    nextVisit.stages.intro.key='new-actor'
+    check(loop:update(nextVisit)=='quiet-room','new actor re-arms idle description')
+end
 local p=Policy.new(Data)
 for _,t in ipairs({0,.5,2.1,4.4})do local s,stop=p:update(frame(t));check(not s and stop,'protect first Max lines')end
 check(p:update(frame(4.5))=='scene_classroom_room','room after Max')
@@ -84,6 +97,180 @@ api.all=function()return{a,a}end;missing,why=Runtime.sample(c,api);check(not mis
 api.all=function()return{a}end;a.GetWorld=function()return obj({GetAddress=function()return 99 end})end
 check(not next(Runtime.sample(c,api).stages),'old-world actors excluded')
 a.GetWorld=function()return world end
+-- The remaster returns the streamed package world for a playing scene actor.
+-- A visible level in the controller's world must own that exact instance.
+do
+    local visible=true
+    local package_level=obj({GetAddress=function()return 57 end})
+    local stream=obj({LoadedLevel=package_level,IsLevelVisible=function()return visible end})
+    local streamed=obj({GetAddress=function()return 100 end,
+        GetFName=function()return {ToString=function()return 'E1_2A_ArtClass_LD' end} end,
+        PersistentLevel=package_level})
+    world.StreamingLevels={ForEach=function(_,visit)visit(1,{get=function()return stream end})end}
+    a.GetWorld=function()return streamed end
+    check(Runtime.sample(c,api).stages.intro~=nil,'streamed classroom belongs to controller world')
+    visible=false
+    check(not next(Runtime.sample(c,api).stages),'hidden sublevel excluded')
+    visible=true;stream.LoadedLevel=obj({GetAddress=function()return 81 end})
+    check(not next(Runtime.sample(c,api).stages),'same package from earlier load excluded')
+    a.GetWorld=function()return world end
+end
+-- In normal gameplay these starts can coincide with earlier free-roam
+-- thoughts. The tree's later shot and the door's scanner readout carry them.
+do
+    local tracks=require('cutscenes.episode1')
+    check(not tracks.E1_3A_CampusA_LD_Tree_ZenStart and tracks.E1_3A_CampusA_LD_Tree_ZenLoop,
+        'Warren reminder stays clear when Max sits at the tree')
+    check(not tracks.E1_5B_LivingRoom_LD_BayWindow_Interact01 and
+        require('descriptions.episode1_rooms').objects.E1_5B_LivingRoom_LD.LiSInteractionActor_BayWindow_87,
+        'yard description available without interrupting living-room thought')
+end
+-- Named story beats survive catalogue edits. Iterating the remaining tracks
+-- alone would still pass if an entire chapter or a choice outcome disappeared.
+do
+    local tracks=require('cutscenes.episode1')
+    local beats={
+        E1_1A_CliffFuture={'IntroStorm','LighthouseBreak'},
+        E1_2A_ArtClass={'BellRing','MaxAnswers'},
+        E1_2A_Toilets={'Butterfly_Photo','NathanAndChloe','FireAlarm_Interact01'},
+        E1_2A_Corridor={'DenounceNathan','ProtectNathan'},
+        E1_3A_CampusA={'Insertion_CampusAReveal','CHTrevor_Fail','CHTrevor_SuccessMax'},
+        E1_3B_CampusB={'VictoriaDeniesAccess','VIctoria_Comfort','VIctoria_TakePhoto',
+            'AlyssaHurt','AlyssaMoveSit02','KateDavid_TakePhoto','KateDavid_Intervene'},
+        E1_3C_Corridor={'JulietLocksDoor','JulietUnlocksDana'},
+        E1_3C_DanaRoom={'USBKey_Take'},
+        E1_3D_CampusPark={'IntroDialWarren_RTC','NathanArrives_Part02'},
+        E1_4A_ChloeCar={'FirstReunion','BrokenCamera'},
+        E1_5A_ChloeRoom={'RepairFail','FriendAgain','DavidFurious_BlameChloe','DavidFurious_TakeBlame'},
+        E1_6A_CliffNow={'Insertion_Reveal00','CHChloe_Photo'},
+        E1_6B_CliffFuture={'Reveal01','Doe_JumpOverHole','Ending_Part01'},
+    }
+    for location,scenes in pairs(beats) do
+        for _,scene in ipairs(scenes) do
+            local name=location..'_LD_'..scene
+            check(tracks[name] and #tracks[name].windows>0,'missing story beat '..name)
+        end
+    end
+end
+-- Sample every authored Episode 1 actor through the runtime entry point.
+for actor,definition in pairs(require('cutscenes.episode1'))do
+    local level=actor:match('^(E1_%d%u)_')
+    local location=obj({GetAddress=function()return 123 end,
+        GetFName=function()return{ToString=function()return level end}end})
+    local player=obj({GetWorld=function()return location end,GetCurrentLanguage=function()return 'en'end})
+    local segment=obj({GetWorld=function()return location end,GetAddress=function()return 456 end,
+        GetFName=function()return{ToString=function()return actor end}end,
+        InterpPosition=0,bIsPlaying=true,PlayRate=1})
+    local api={all=function()return{segment}end,find=function()return obj({IsGamePaused=function()return false end})end}
+    local heard,stopped={},false
+    local reader=Runtime.new({sample=function()return Runtime.sample(player,api)end,
+        allowed=function()return true end,focused=function()return true end,
+        text=function(k)return assert(require('lang.en')[k])end,
+        say=function(line)heard[#heard+1]=line;stopped=false end,stop=function()stopped=true end})
+    reader:tick()
+    if definition.after_first_loop then
+        segment.InterpPosition=definition.windows[1][1]+.05;reader:tick()
+        reader:reread();check(#heard==0,'recorded dialogue owns the first loop')
+        segment.InterpPosition=0;reader:tick()
+        segment.InterpPosition=definition.windows[1][1]+.05;reader:tick()
+        check(#heard==0,'early restart does not release voice protection')
+        segment.InterpPosition=definition.length-.1;reader:tick()
+        segment.InterpPosition=.05;reader:tick()
+        segment.InterpPosition=.15;reader:tick()
+    end
+    for i,window in ipairs(definition.windows)do
+        segment.InterpPosition=window[1]+.05;reader:tick()
+        check(#heard==i and heard[i]==require('lang.en')[window[3]],'scheduled cue '..actor)
+        reader:tick();check(#heard==i,'held clock '..actor)
+        segment.InterpPosition=window[2]+.01;reader:tick()
+        check(stopped,'end narration at window boundary '..actor)
+    end
+end
+-- The principal talks through the available windows. Keep Max's English
+-- voice events independent of cue edits (Matinee onset plus recording length).
+local principal_lines={
+    DenounceNathan={{.122,4.833},{8.259,6.716},{20.394,4.895},{44.036,6.636},{58.575,2.378}},
+    ProtectNathan={{.108,3.596},{9.313,3.769},{15.524,4.880}},
+}
+for branch,lines in pairs(principal_lines)do
+    local track=require('cutscenes.episode1')['E1_2A_Corridor_LD_'..branch]
+    for _,window in ipairs(track.windows)do
+        for _,line in ipairs(lines)do
+            check(window[2]<=line[1]-.55 or window[1]>=line[1]+line[2]+.5,
+                branch..' cue preserves Max voice margins')
+        end
+    end
+end
+-- When Ctrl+Home samples a new branch first, the old branch's text expires.
+do
+    local function branch(key)
+        return {order={'intro'},stages={intro={length=4,protect={},
+            cues={{start=.2,finish=1,key=key}}}}}
+    end
+    local observed=frame(.4);observed.data=branch('first')
+    local heard={}
+    local reader=Runtime.new({sample=function()return observed end,
+        focused=function()return true end,allowed=function()return true end,
+        stop=function()end,text=function(key)return key end,say=function(line)heard[#heard+1]=line end})
+    reader:tick()
+    observed=frame(.4);observed.data=branch('second')
+    reader:repeat_owned(reader.owner)
+    check(table.concat(heard,',')=='first,second','literal repeat belongs to the new branch')
+end
+-- The explicit scanner readout adds the setting once and keeps the selection first.
+do
+    local sources=require('scanner.sources')
+    local collect,room,find=sources.collect,sources.room,FindAllOf
+    local position={X=0,Y=0,Z=0}
+    local pawn=obj({K2_GetActorLocation=function()return position end})
+    local player=obj({Pawn=pawn,GetControlRotation=function()return {Yaw=0}end})
+    FindAllOf=function()return {player}end
+    local scanner=dofile('src/scanner/scanner.lua')
+    local heard,language='', 'en'
+    scanner.say=function(text)heard=text end
+    scanner.language=function()return language end
+    local location='E1_5B_Garden_LD'
+    sources.collect=function()
+        sources.room=location
+        return {{id='swing',label='Swing',pos=position}}
+    end
+    scanner.command('next')
+    check(not heard:find('backyard',1,true),'cycling objects stays brief')
+    scanner.command('describe')
+    check(heard:find('Swing',1,true)==1 and heard:find('backyard',1,true),'explicit readout includes room')
+    scanner.command('describe')
+    check(not heard:find('backyard',1,true),'repeated readout keeps only the object')
+    location='E1_5B_Garage_LD';scanner.command('previous')
+    location='E1_5B_Garden_LD';language='fr';scanner.command('describe')
+    check(not heard:find('backyard',1,true),'room readout respects language')
+    language='en';scanner.command('describe')
+    check(heard:find('backyard',1,true),'returning to a room restores its description')
+    sources.collect=function()
+        sources.room='E1_2A_Toilets_LD'
+        return {{id='Map:PersistentLevel.LiSInteractionActor_Graffiti_3',
+            label='Graffiti',sublevel=sources.room,pos=position}}
+    end
+    scanner.command('describe');scanner.command('describe')
+    check(heard:find('eye at its center',1,true),'optional close-up can be described before Max speaks')
+    scanner.command('next')
+    check(not heard:find('eye at its center',1,true),'close-up detail only on explicit readout')
+    local actions=require('scanner.actions')
+    local available,look=actions.available,'Look01'
+    actions.available=function()return {{name=look}}end
+    sources.collect=function()
+        sources.room='E1_3C_VicRoom_LD'
+        return {{id='Map:PersistentLevel.LiSInteractionActor_Photos_21',
+            label='Photos',sublevel=sources.room,pos=position}}
+    end
+    scanner.command('describe')
+    check(heard:find('neat grid',1,true) and not heard:find('middle finger',1,true),'original photo arrangement')
+    look='Look02';scanner.command('describe')
+    check(heard:find('middle finger',1,true),'rearranged photos follow the native action')
+    look='Look01';scanner.command('describe')
+    check(heard:find('neat grid',1,true),'rewinding restores the original grid')
+    actions.available=available
+    sources.collect,sources.room,FindAllOf=collect,room,find
+end
 -- Actual runtime, owned cancellation, contextual requests and stale repeats.
 local current=frame(4.5);local events={};local focused,allowed=true,true
 local r=Runtime.new({sample=function()return current end,focused=function()return focused end,

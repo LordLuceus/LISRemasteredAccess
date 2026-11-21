@@ -8,6 +8,7 @@ local sources=require("scanner.sources")
 local list=L.new()
 M.say=function(_)end
 M.log=function(_)end
+M.language=function()return "" end
 M.text=function(key,p)return key end
 local function valid(o)
     local ok,r=pcall(function()return o~=nil and o:IsValid()end)
@@ -24,9 +25,12 @@ local function viewpoint(c)
     local yaw=c:GetControlRotation().Yaw
     return {X=p.X,Y=p.Y,Z=p.Z},yaw
 end
+local described_room
 local function refresh(c)
     local player=viewpoint(c)
-    return list:update(sources.collect(c),player)
+    local entries=sources.collect(c)
+    if described_room~=sources.room then described_room=nil end
+    return list:update(entries,player)
 end
 -- Once per room, on the first readout there: how many objects the room filter
 -- left out, and the key that shows them (3 Nov: the player had no way to know
@@ -38,12 +42,13 @@ function M.filter_hint(room,shown,total,filtered)
     hint_room=room
     return M.text("scanner_filter_hint",{total=total,key=M.filter_key()})
 end
-local function announce(entry,index)
+local function announce(entry,index,setting)
     local c=controller();if not c then return end
     local player,yaw=viewpoint(c)
     local text=R.describe(entry,index,#list.entries,player,yaw)
     local hint=M.filter_hint(sources.room,#list.entries,sources.total,sources.filtered)
     if hint then text=text..". "..hint end
+    if setting then text=text:gsub("%.$","")..". "..setting end
     M.say(text)
     M.log("scanner_readout spoken="..text)
 end
@@ -63,8 +68,26 @@ function M.command(cmd)
     elseif cmd=="describe" then
         local e,i=list:current()
         if not e then e,i=list:move(1) end
-        if not e then M.say(M.text("scanner_empty"));return true end
-        announce(e,i)
+        local setting
+        if M.language()=="en" then
+            local descriptions=require("descriptions.episode1_rooms")
+            if sources.room and sources.room~=described_room then
+                setting=descriptions[sources.room]
+                if setting then described_room=sources.room end
+            end
+            local objects=e and descriptions.objects[e.sublevel]
+            local detail=objects and objects[e.id:match("PersistentLevel%.([^%.]+)$")]
+            if type(detail)=="table" then
+                local variants=detail
+                detail=nil
+                for _,action in ipairs(require("scanner.actions").available(e.actor)) do
+                    if variants[action.name] then detail=variants[action.name];break end
+                end
+            end
+            if detail then setting=setting and (detail.." "..setting) or detail end
+        end
+        if e then announce(e,i,setting)
+        else M.say(setting or M.text("scanner_empty")) end
     end
     return true
 end

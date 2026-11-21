@@ -125,6 +125,7 @@ buttons=0;for _=1,10 do game_loop() end
 n=#photo_commands;home()
 check(#photo_commands==n,'photo command gate releases when the journal closes')
 local movies=fake_require('cutscenes.runtime');local movie_reads=0
+movies.owner={}
 movies.reread=function()
     if not movies.active then return false end
     movie_reads=movie_reads+1;return true
@@ -139,6 +140,11 @@ fake_require('core.controls').using_gamepad=function()return true end
 bound['F1:none']();check(spoken[#spoken]==real_require('lang.en').cutscene_help_pad,'movie controller help')
 movies.active=false;home();check(movie_reads==2,'movie gate releases to the existing readers')
 local scenes=fake_require('cutscenes.scene');local scene_reads,scene_repeats=0,0;local scene_owner={}
+scenes.o.say('Owned movie description',true,movies.owner)
+n=#spoken;repeat_last();check(#spoken==n,'global repeat cannot speak a movie cue after the movie ends')
+movies.active=true;repeat_last()
+check(movie_reads==3 and #spoken==n,'global repeat follows movie dialogue protection')
+movies.active=false
 scenes.reread=function()if not scenes.active then return false end;scene_reads=scene_reads+1;return true end
 scenes.repeat_owned=function(_,owner)if owner~=scene_owner then return false end;scene_repeats=scene_repeats+1;return true end
 scenes.help=function(_,pad)scenes.o.say(pad and 'scene pad help'or'scene keyboard help',true,scene_owner)end

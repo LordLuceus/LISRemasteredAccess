@@ -52,6 +52,14 @@ focused=true;time=4.5;runtime:tick();check(events[#events][1]=='stop','no backlo
 shown=false;runtime:tick();check(events[#events][1]=='stop','end/close clears description')
 shown=true;time=0;runtime:tick()
 check(runtime:reread() and events[#events][2]=='cutscene_not_yet','entry before first cue does not repeat stale world speech')
+track.dialogue={{2.5,3.5}}
+time=1;runtime:tick()
+time=2.51;runtime:tick()
+check(events[#events][1]=='stop' and events[#events][2]==owner,'dialogue stops a slow movie readout')
+n=#events
+check(runtime:reread() and #events==n,'manual reread waits through protected dialogue')
+time=3.55;runtime:tick()
+check(events[#events][2]=='First.' and events[#events][4]==owner,'reread resumes in the next gap')
 local main=assert(io.open('src/main.lua','rb')):read('*a')
 local start=assert(main:find('local beat=0',1,true))
 local finish=assert(main:find('-- Development test session',start,true))

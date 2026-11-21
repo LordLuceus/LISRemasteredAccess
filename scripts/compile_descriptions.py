@@ -8,6 +8,7 @@ of complete in-game coverage.
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 
@@ -22,8 +23,12 @@ def validate(records):
     seen = set()
     result = []
     for record in records:
-        if not isinstance(record, dict) or set(record) != set(FIELDS):
+        if not isinstance(record, dict) or set(record) - {'voice_delay'} != set(FIELDS):
             raise ValueError('Runtime records must contain only caption fields')
+        if 'voice_delay' in record:
+            delay = record['voice_delay']
+            if type(delay) not in (float, int) or not math.isfinite(delay) or delay <= 0:
+                raise ValueError('Voice delay must be a positive finite duration in seconds')
         if not all(isinstance(record[k], str) for k in FIELDS):
             raise ValueError('Caption fields must be strings')
         asset = record['asset']
@@ -61,6 +66,8 @@ def render(records, source='descriptions/episode1.en.json'):
         lines.append('    {')
         for field in FIELDS:
             lines.append('        ' + field + '=' + lua_string(record[field]) + ',')
+        if 'voice_delay' in record:
+            lines.append(f"        voice_delay={record['voice_delay']},")
         lines.append('    },')
     return '\n'.join(lines + ['}', ''])
 
