@@ -14,7 +14,7 @@ local ok,err=pcall(function()
     states[draw]=false
     assert(looks.describe(entry,controller):find("Will bang 4 Jesus",1,true))
     local quiet=false
-    local poll,request=looks.new(function()return quiet end)
+    local poll,request,draw_pending=looks.new(function()return quiet end)
     local heard={}
     local function tick(enabled)
         poll(controller,enabled,function(line,interrupt)
@@ -36,15 +36,17 @@ local ok,err=pcall(function()
     states[draw]=true
     assert(looks.describe(entry,controller):find("peace sign",1,true))
     states[look]=false;tick(true)
+    local action_line=require("lang.en").scene_e1_3c_corridor_kateslate_interact01_1
+    assert(heard[2]==action_line,"in silence Draw speaks at the start of the animation")
     states[look]=true;tick(false);tick(true)
     tick(true)
-    assert(#heard==1,"a suppressed completion must not replay")
+    assert(#heard==2,"a suppressed completion must not replay")
     local second=prefix.."Look02_Triggered"
     states[second]=false;tick(true)
     quiet=false;states[second]=true;tick(true)
     states[draw]=false
     quiet=true;tick(true)
-    assert(#heard==1,"discard the pending description when the board changes")
+    assert(#heard==2,"discard the pending description when the board changes")
     assert(looks.describe(entry,controller)==heard[1],"rewind restores the original wording")
     local rereads=0
     local repeat_request
@@ -63,11 +65,14 @@ local ok,err=pcall(function()
     quiet=true;tick(true)
     assert(rereads==2,"leaving the context discards a deferred manual request")
     local draw_action=prefix.."Interact01_Triggered"
-    states[draw]=true;states[draw_action]=false;tick(true)
-    quiet=false;states[draw_action]=true;tick(true)
-    assert(#heard==1,"Draw waits if another line is playing")
+    states[draw_action]=false;quiet=false
+    request(entry,controller,reread)
+    states[draw]=true;tick(true)
+    assert(#heard==2 and draw_pending(),"Draw supersedes the stale board read and waits for dialogue")
     quiet=true;tick(true)
-    assert(heard[2]==require("lang.en").scene_e1_3c_corridor_kateslate_interact01_1)
+    assert(heard[3]==action_line and not draw_pending())
+    states[draw_action]=true;tick(true)
+    assert(#heard==3,"the completion flag does not narrate Draw again")
     entry.sublevel="E2_3C_Corridor_LD"
     assert(looks.describe(entry,controller)==nil)
 end)
@@ -99,4 +104,4 @@ local passed,reason=pcall(function()
 end)
 FindAllOf=original_find
 assert(passed,reason)
-return 25
+return 27

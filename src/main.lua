@@ -546,6 +546,7 @@ end
 -- New text messages, announced once when the HUD's notification appears.
 -- Consequence butterfly and new-fact icons: queued after current speech, so
 -- they never cut off the line or choice that caused them.
+local world_draw_pending
 local pending_icons,icons_world={},nil
 local function icons_step()
     -- A pause menu is not the end of the gameplay session. Keep already observed
@@ -568,7 +569,7 @@ local function icons_step()
     for _,t in ipairs(lines) do pending_icons[#pending_icons+1]=t end
     -- An owned description can be stopped at its next dialogue boundary.
     -- Keep notices here until that stop has released the native speech queue.
-    if #pending_icons==0 or speech.has_owner() then return end
+    if #pending_icons==0 or speech.has_owner() or (world_draw_pending and world_draw_pending()) then return end
     for _,t in ipairs(pending_icons) do say(t,false);log("icon spoken="..t) end
     pending_icons={}
 end
@@ -805,7 +806,7 @@ end
 -- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
 local world_look_step
-world_look_step,scanner.request_world_look=require("descriptions.world_looks").new()
+world_look_step,scanner.request_world_look,world_draw_pending=require("descriptions.world_looks").new()
 local function main_step()
     -- Junkyard shooting: describe where Chloe's shot went, just after she
     -- fires (bottles 1 and 2). Every main step (four times a second): the

@@ -18,12 +18,18 @@ local function fixture()
             tick=function()local lines=state.lines;state.lines={};return lines end},
         in_menu=function()return state.menu end,
         speech={has_owner=function()return state.owned end},
+        world_draw_pending=function()return state.draw_pending end,
         say=function(text,interrupt)check(interrupt==false,'HUD delivery stays queued');state.spoken[#state.spoken+1]=text end,
         log=function()end,
     },{__index=_G})
     return state,assert(load(source:sub(first,last-1)..'\nreturn icons_step','HUD integration','t',env))()
 end
 local s,step=fixture()
+s.owned=false;s.draw_pending=true;s.lines={'Consequences.'};step()
+check(#s.spoken==0,'consequence waits while Draw is pending behind dialogue')
+s.draw_pending=false;step();step()
+check(#s.spoken==1 and s.spoken[1]=='Consequences.','consequence queues once after Draw')
+s,step=fixture()
 s.lines={'This action will have consequences.','New fact.','Saving.'};step()
 check(#s.spoken==0,'all notices wait during narration')
 s.menu=true;s.owned=false;step();step();check(#s.spoken==0,'pause never drains pending notices')

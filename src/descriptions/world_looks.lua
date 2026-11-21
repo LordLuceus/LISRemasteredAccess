@@ -3,11 +3,13 @@
 local availability=require("scanner.availability")
 local M={}
 local corridor="E1_3C_Corridor_"
-local draw=corridor.."KateSlate_Interact01_Triggered"
+-- This choice changes as the wiping animation begins. Interact01_Triggered
+-- changes at the end, alongside the consequences notification.
+local draw="E1_3C_MIN_KateSlate"
 local kate={
     facts={corridor.."KateSlate_Look01_Triggered",corridor.."KateSlate_Look02_Triggered",draw},
     description=function(read)
-        local drawn=read("E1_3C_MIN_KateSlate")
+        local drawn=read(draw)
         if drawn==true then return "A peace sign is drawn on Kate's slate." end
         if drawn==false then return 'Someone has written "Will bang 4 Jesus" on Kate\'s slate.' end
     end,
@@ -56,7 +58,8 @@ function M.new(is_quiet)
         for _,entry in ipairs(entries) do
             for _,fact in ipairs(entry.facts) do
                 local active=read(fact)
-                if enabled and active==true and previous[fact]==false and not (pending and pending.reread and pending.entry==entry) then
+                local requested=pending and pending.reread and pending.entry==entry
+                if enabled and active==true and previous[fact]==false and (fact==draw or not requested) then
                     pending={entry=entry,fact=fact,line=entry.description(read)}
                     if fact==draw then pending.action=require("lang.en").scene_e1_3c_corridor_kateslate_interact01_1 end
                 end
@@ -77,6 +80,7 @@ function M.new(is_quiet)
             end
         end
     end
-    return tick,request
+    local function draw_pending()return pending~=nil and pending.action~=nil end
+    return tick,request,draw_pending
 end
 return M
