@@ -157,6 +157,32 @@ bound['F1:none']();check(spoken[#spoken]=='scene keyboard help','classroom help 
 fake_require('core.controls').using_gamepad=function()return true end
 bound['F1:none']();check(spoken[#spoken]=='scene pad help','classroom help uses current controller')
 scenes.active=false
+current_page=nil
+local control=fake_require('core.control')
+control.has_control=function()return true end
+local scanner_reads=0
+fake_require('scanner.scanner').command=function(cmd)
+    if cmd=='describe' then scanner_reads=scanner_reads+1 end
+end
+scenes.active=true
+home()
+buttons=0;game_loop();buttons=1;game_loop()
+check(scanner_reads==2 and scene_reads==2,'Home and D-pad Up read the scanner during a playable scene')
+control.has_control=function()return false end
+scenes.active=false
+local icons=fake_require('hud.icons')
+local notices={'Saving.'}
+icons.tick=function()local result=notices;notices={};return result end
+speech.has_owner=function()return true end
+local saved=0
+speech.say=function(t,interrupt)
+    if t=='Saving.' then assert(interrupt==false);saved=saved+1 end
+end
+for _=1,20 do game_loop() end
+check(saved==0 and #notices==0,'a save during owned narration waits')
+speech.has_owner=function()return false end
+for _=1,30 do game_loop() end
+check(saved==1,'the pending save queues once after narration releases speech')
 current_menu={screen='notice',label='Current native notice',reread='Full native notice'}
 local interrupted=nil
 speech.say=function(t,interrupt)spoken[#spoken+1]=t;interrupted=interrupt end

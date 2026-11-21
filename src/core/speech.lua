@@ -53,6 +53,7 @@ function M.say(text,interrupt,owner)
     speech_owner=ok and queued==true and owner or nil
     return ok and queued==true
 end
+function M.has_owner()return speech_owner~=nil end
 function M.stop()
     speech_owner=nil
     if M.native then pcall(stop_fn) end

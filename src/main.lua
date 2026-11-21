@@ -134,7 +134,7 @@ local function run_keys()
 end
 bind_key(Key.HOME,on_game(function()
     if cutscenes and cutscenes:reread() then return end
-    if scene_descriptions and scene_descriptions:reread()then return end
+    if not playable() and scene_descriptions and scene_descriptions:reread()then return end
     padlock.check_presence()
     if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
     if journal_photo_reread and journal_photo_reread() then return end
@@ -221,7 +221,7 @@ local function face_selected()
     if c then face.start(c,scanner.selected()) end
 end
 local function show_help()
-    if scene_descriptions and scene_descriptions.active then
+    if scene_descriptions and scene_descriptions.active and not playable() then
         scene_descriptions:help(controls.using_gamepad());return
     end
     if cutscenes and cutscenes.active then
@@ -543,11 +543,17 @@ end
 -- New text messages, announced once when the HUD's notification appears.
 -- Consequence butterfly and new-fact icons: queued after current speech, so
 -- they never cut off the line or choice that caused them.
+local pending_icons={}
 local function icons_step()
-    if in_menu() then icons.reset();return end
+    if in_menu() then icons.reset();pending_icons={};return end
     local ok,lines=pcall(icons.tick)
     if not ok then return end
-    for _,t in ipairs(lines) do say(t,false);log("icon spoken="..t) end
+    for _,t in ipairs(lines) do pending_icons[#pending_icons+1]=t end
+    -- An owned description can be stopped at its next dialogue boundary.
+    -- Keep notices here until that stop has released the native speech queue.
+    if #pending_icons==0 or speech.has_owner() then return end
+    for _,t in ipairs(pending_icons) do say(t,false);log("icon spoken="..t) end
+    pending_icons={}
 end
 local function sms_step()
     local ok,text=pcall(sms.tick)
@@ -887,7 +893,7 @@ local function pad_step()
             -- While the journal is open the D-pad reads it; scanner commands
             -- (D-pad down = autowalk) must not fire behind it.
             local movie_open=cutscenes and cutscenes.active
-            local scene_open=scene_descriptions and scene_descriptions.active
+            local scene_open=scene_descriptions and scene_descriptions.active and not playable()
             local picture_open=not journal_open and not in_menu() and (movie_open or scene_open or picture.active())
             local active=buttons>=0 and can_scan() and not journal_open and not picture_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock(),picture_open)) do

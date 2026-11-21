@@ -285,7 +285,7 @@ return {
     scene_e1_2a_toilets_tap_interact01_3="She tears the photo apart. The pieces drop to the floor.",
     scene_e1_2a_toilets_toiletdoor_interact03_1="Max slips into the empty bathroom.",
     scene_e1_3a_campusa_evanphotobook_interact01_1="Evan's photo book opens.",
-    scene_e1_3c_corridor_reveal01_1="Door 219. A blank writing board.",
+    scene_e1_3c_corridor_reveal01_1="Inside the girls' dormitory.",
     scene_e1_3c_corridor_reveal01_2="Max faces a long hall lined with doors.",
     scene_e1_3c_maxroom_plant_interact01_1="Water trickles into the pot.",
     scene_e1_3c_maxroom_maxchloephoto_interact01_1="A childhood photo.",
