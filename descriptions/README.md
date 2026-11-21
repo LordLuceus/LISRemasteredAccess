@@ -1,5 +1,7 @@
 # Picture-description content
 
+For Look actions that keep the object in the game world, see the [world object authoring guide](world-objects.md).
+
 `episode1.en.json` is the editable source for the reviewed English captions.
 `src/descriptions/data.lua` is generated runtime data. Do not hand-edit it.
 The runtime catalogue accepts full texture object paths, not display names,
