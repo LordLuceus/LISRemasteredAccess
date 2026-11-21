@@ -398,7 +398,9 @@ Look and hear Max's thoughts.
 
 For supported objects that stay in the world when you choose **Look**, Home
 or D-pad up also reads what you can see. In the Episode 1 dorm hallway, the
-first Look at Kate's or Brooke's slate adds a description after Max's comment.
+first Look at Kate's or Brooke's slate adds a description once playing dialogue
+has finished. The same wait applies to Draw and to manual slate readouts,
+including Home, D-pad up, and repeat.
 To hear Kate's message before deciding whether to draw on it, select her slate
 in the scanner and press Home. Read it again after drawing or rewinding to
 hear what is there now.

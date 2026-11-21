@@ -424,9 +424,6 @@ return {
     E1_3B_CampusB_LD_Bucket_Interact01={length=6.434,windows={
         {0.6,4.9,"scene_e1_3b_campusb_bucket_interact01_1"},
     }},
-    E1_3C_Corridor_LD_KateSlate_Interact01={length=8.042,windows={
-        {0.4,4.2,"scene_e1_3c_corridor_kateslate_interact01_1"},
-    }},
     E1_3C_Corridor_LD_MaxSLate_Interact01={length=6.098,windows={
         {0.45,4.5,"scene_e1_3c_corridor_maxslate_interact01_1"},
     }},

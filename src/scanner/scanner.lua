@@ -42,17 +42,18 @@ function M.filter_hint(room,shown,total,filtered)
     hint_room=room
     return M.text("scanner_filter_hint",{total=total,key=M.filter_key()})
 end
-local function announce(entry,index,setting)
+local function announce(entry,index,setting,repeat_request)
     local c=controller();if not c then return end
     local player,yaw=viewpoint(c)
     local text=R.describe(entry,index,#list.entries,player,yaw)
     local hint=M.filter_hint(sources.room,#list.entries,sources.total,sources.filtered)
     if hint then text=text..". "..hint end
     if setting then text=text:gsub("%.$","")..". "..setting end
-    M.say(text)
+    M.say(text,repeat_request)
     M.log("scanner_readout spoken="..text)
 end
-function M.command(cmd)
+local function reread_world_object(id,repeat_request)M.command("describe",id,repeat_request)end
+function M.command(cmd,expected_id,repeat_request)
     local c=controller()
     if not c then return false end
     -- Position and camera, so a game-side reaction to the same key would show.
@@ -67,9 +68,11 @@ function M.command(cmd)
         announce(e,i)
     elseif cmd=="describe" then
         local e,i=list:current()
+        if expected_id and (not e or e.id~=expected_id) then return false end
         if not e then e,i=list:move(1) end
         local setting
         if M.language()=="en" then
+            if e and not expected_id and M.request_world_look and M.request_world_look(e,c,reread_world_object) then return true end
             local descriptions=require("descriptions.episode1_rooms")
             if sources.room and sources.room~=described_room then
                 setting=descriptions[sources.room]
@@ -87,7 +90,7 @@ function M.command(cmd)
             end
             if detail then setting=setting and (detail.." "..setting) or detail end
         end
-        if e then announce(e,i,setting)
+        if e then announce(e,i,setting,repeat_request)
         else M.say(setting or M.text("scanner_empty")) end
     end
     return true

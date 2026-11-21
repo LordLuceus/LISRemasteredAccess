@@ -13,11 +13,13 @@ log("loaded speech_module "..speech.status())
 
 local last_speech=""
 local last_speech_owner=nil
+local repeat_world_look=nil
 local menu_snapshot=nil
 local function say(text,interrupt,owner)
     if type(text)~="string" or text=="" then return end
     last_speech=text
     last_speech_owner=owner
+    repeat_world_look=nil
     return speech.say(text,interrupt~=false,owner)
 end
 
@@ -56,6 +58,7 @@ local cutscenes=nil
 local scene_descriptions=nil
 local choice_scene={}
 local function repeat_last()
+    if repeat_world_look then repeat_world_look();return end
     if last_speech_owner==choice_scene then
         if choice_scene.current() then speech.say(last_speech,true,choice_scene)
         else choice_scene.cancel() end
@@ -678,7 +681,11 @@ local function menu_step()
 end
 
 -- Scanner speech, wording and controller input (gameplay only).
-scanner.say=function(text)say(text,true)end
+local function say_world_look(text,interrupt,repeat_request)
+    say(text,interrupt)
+    repeat_world_look=repeat_request
+end
+scanner.say=function(text,repeat_request)say_world_look(text,true,repeat_request)end
 autowalk.say=function(text)say(text,true)end
 face.say=function(text)say(text,true)end
 actions.say=function(text)say(text,true)end
@@ -797,7 +804,8 @@ autowalk.stalled_guide=function(_,result)
 end
 -- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
-local world_look_step=require("descriptions.world_looks").new()
+local world_look_step
+world_look_step,scanner.request_world_look=require("descriptions.world_looks").new()
 local function main_step()
     -- Junkyard shooting: describe where Chloe's shot went, just after she
     -- fires (bottles 1 and 2). Every main step (four times a second): the
@@ -805,8 +813,8 @@ local function main_step()
     do
         local c0=scanner.controller()
         local look_ok,look_error=pcall(world_look_step,c0,game_language=="en" and speech.focused and speech.focused()
-            and not in_menu() and not choices.options() and not control.suppressed
-            and not scene_descriptions.active and not cutscenes.active,say)
+            and not in_menu() and not control.suppressed,say_world_look,
+            scene_descriptions.active or cutscenes.active or choices.options()~=nil)
         if not look_ok then log("world_look_error="..tostring(look_error)) end
         if c0 then
             local action_ok,action_error=pcall(require("cutscenes.episode1_actions").tick,c0,
