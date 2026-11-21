@@ -171,6 +171,10 @@ check(scanner_reads==2 and scene_reads==2,'Home and D-pad Up read the scanner du
 control.has_control=function()return false end
 scenes.active=false
 local icons=fake_require('hud.icons')
+fake_require('scanner.scanner').controller=function()return{GetWorld=function()return{
+    IsValid=function()return true end,GetAddress=function()return 42 end,
+    GetFName=function()return{ToString=function()return'E1_2A'end}end,
+}end}end
 local notices={'Saving.'}
 icons.tick=function()local result=notices;notices={};return result end
 speech.has_owner=function()return true end

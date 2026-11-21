@@ -543,9 +543,23 @@ end
 -- New text messages, announced once when the HUD's notification appears.
 -- Consequence butterfly and new-fact icons: queued after current speech, so
 -- they never cut off the line or choice that caused them.
-local pending_icons={}
+local pending_icons,icons_world={},nil
 local function icons_step()
-    if in_menu() then icons.reset();pending_icons={};return end
+    -- A pause menu is not the end of the gameplay session. Keep already observed
+    -- events until narration releases speech, but never replay them in another
+    -- loaded world (including a reload of the same map or the title screen).
+    local valid_world,world,name=pcall(function()
+        local c=scanner.controller();if not c then return end
+        local w=c:GetWorld();if not w or not w:IsValid()then return end
+        local n=w:GetFName():ToString()
+        return tostring(w:GetAddress())..':'..n,n
+    end)
+    if not valid_world or not world then icons.reset();return end
+    if name=='WhatIf_Menu'or(icons_world and icons_world~=world)then
+        pending_icons={};icons.reset()
+    end
+    icons_world=world
+    if in_menu()or name=='WhatIf_Menu'then icons.reset();return end
     local ok,lines=pcall(icons.tick)
     if not ok then return end
     for _,t in ipairs(lines) do pending_icons[#pending_icons+1]=t end

@@ -2,6 +2,12 @@
 
 Player-facing changes, newest first.
 
+## Fixes in development — 2026-11-21
+
+- Pausing no longer discards consequence, new-fact or saving notices that were
+  waiting for narration to finish. They resume once after returning; old notices
+  are cleared when leaving or reloading a scene.
+
 ## In development ? 2026-11-21
 
 - Added English scene descriptions throughout Episode 1, from the first

@@ -354,6 +354,11 @@ does not play missed descriptions in a rush. A description can finish across the
 intro's camera-sequence transition instead of being cut off just because that
 segment ends. Normal scanner controls resume afterwards.
 
+Consequence, new-fact and saving notices wait while narration owns speech.
+Pausing preserves notices already waiting; they are announced once after returning
+and after narration releases speech. They are not carried into another loaded
+scene or replayed after a save reload.
+
 The reader requires English in the game's language settings. On the return to class,
 Max's desk description fits between her English lines. A disposable-profile
 playthrough reached all three first-visit cue windows with the game in focus.

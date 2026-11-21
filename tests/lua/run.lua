@@ -2751,6 +2751,10 @@ do
     if ok then count=count+total else check('scene description regression suite',false,tostring(total))end
 end
 do
+    local ok,total=pcall(dofile,'tests/lua/hud_notice_queue.lua')
+    if ok then count=count+total else check('HUD notice queue regression suite',false,tostring(total))end
+end
+do
     local ok,total=pcall(dofile,'tests/lua/episode1_actions.lua')
     if ok then count=count+total else check('Episode 1 action descriptions',false,tostring(total))end
 end
