@@ -686,6 +686,12 @@ The smoke test checks Prism's backends and literal SAPI text without speaking.
 Deployment copies `src/` and both native DLLs into the game's UE4SS Mods folder.
 It requires the game to be closed, verifies every installed file's hash before
 replacing it, and removes installed modules whose source was renamed or deleted.
+All eight cue WAVs and the required bundled movie-description tracks must be
+present; missing or invalid inputs stop deployment before installed files or the
+test-session request are changed. Previously installed sounds and tracks are never
+silently treated as obsolete. In a worktree, pass `--inputs-root` with the primary
+checkout holding the built DLLs and audio; deployment still uses the primary
+checkout's installation manifest and operator lock.
 
 ### Packaging a tester build
 

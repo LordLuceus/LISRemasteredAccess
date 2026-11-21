@@ -16,7 +16,7 @@ LOADER_DLL_SHA='ce5e3c46a920cc00b2817ac61e438c9162830290379d0b5b9c4dfc2b29459290
 PRISM_SHA='c5d3f0be06bd34fea0478f1c38ce4de85cd3a21dbd2a1ed869b21c8a0a80ebaf'
 MOD='files/ue4ss/Mods/LISRemasteredAccess/Scripts/'
 HOOKS={'HookEngineTick','HookProcessInternal','HookProcessLocalScriptFunction','HookUObjectProcessEvent'}
-CUES=('control_lost','control_back','sneak_spotted','sneak_hidden','focus_tick_a','focus_tick_b','rewind_approach','rewind_crossed')
+from deployment_inventory import CUES
 
 def digest(data):return hashlib.sha256(data).hexdigest()
 def description_track(name):

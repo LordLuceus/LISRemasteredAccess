@@ -10,6 +10,8 @@ Player-facing changes, newest first.
 - Restored the first rewind's blood-reversal description. David's departure in
   the blame-Chloe branch is now described in a later dialogue gap, rather than
   speaking over Max immediately after the door slams.
+- Deployment now refuses incomplete cue-sound or bundled-description inputs
+  before changing the installation, rather than silently removing those features.
 
 ## In development ? 2026-11-21
 
