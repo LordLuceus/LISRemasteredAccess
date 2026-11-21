@@ -52,6 +52,14 @@ focused=true;time=4.5;runtime:tick();check(events[#events][1]=='stop','no backlo
 shown=false;runtime:tick();check(events[#events][1]=='stop','end/close clears description')
 shown=true;time=0;runtime:tick()
 check(runtime:reread() and events[#events][2]=='cutscene_not_yet','entry before first cue does not repeat stale world speech')
+track.dialogue={{2.5,3.5}}
+time=1;runtime:tick()
+time=2.51;runtime:tick()
+check(events[#events][1]=='stop' and events[#events][2]==owner,'dialogue stops a slow movie readout')
+n=#events
+check(runtime:reread() and #events==n,'manual reread waits through protected dialogue')
+time=3.55;runtime:tick()
+check(events[#events][2]=='First.' and events[#events][4]==owner,'reread resumes in the next gap')
 local main=assert(io.open('src/main.lua','rb')):read('*a')
 local start=assert(main:find('local beat=0',1,true))
 local finish=assert(main:find('-- Development test session',start,true))
@@ -60,7 +68,7 @@ local function noop()end
 local fake={tick=function()ticks=ticks+1 end,cancel=function()cancelled=cancelled+1 end}
 local env=setmetatable({LoopInGameThreadWithDelay=function(_,fn)callback=fn end,
     padlock={install=noop,check_presence=noop,due=noop},run_keys=noop,picture={poll=noop},run_delayed=noop,
-    rewind={tick=noop,cancel=noop},cutscenes=fake,pad_step=noop,lighthouse_fast_step=noop,
+    rewind={tick=noop,cancel=noop},cutscenes=fake,scene_descriptions={tick=noop,cancel=noop},pad_step=noop,lighthouse_fast_step=noop,
     polarewind={tick=noop},menu_step=noop,main_step=noop,face={tick=noop},log=function(e)errors[#errors+1]=e end},{__index=_G})
 assert(load(main:sub(start,finish-1),'registered cutscene callback','t',env))()
 for _=1,20 do callback()end

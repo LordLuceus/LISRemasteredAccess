@@ -30,17 +30,18 @@ function M.new(records)
         local languages=by_asset[id] or {};by_asset[id]=languages
         assert(not languages[language],"duplicate description: "..id.." ("..language..")")
         -- Copy values: callers cannot alter published text by mutating input tables.
-        languages[language]={text=r.text,status=r.status,image_sha256=r.image_sha256}
+        languages[language]={text=r.text,status=r.status,image_sha256=r.image_sha256,voice_delay=r.voice_delay}
     end
     local catalog={}
     function catalog.lookup(asset,language)
         local id=M.canonical(asset);local languages=id and by_asset[id]
         if not languages then return nil,"missing" end
-        language=locale(language) or "en"
-        local entry=languages[language]
+        language=locale(language)
+        local entry=languages[language or "en"]
         if not entry or entry.status~="reviewed" then entry=languages.en end
         if not entry or entry.status~="reviewed" then return nil,"unreviewed" end
-        return entry.text
+        local voice_delay=language and languages[language]==entry and entry.voice_delay or nil
+        return entry.text,nil,voice_delay
     end
     return catalog
 end

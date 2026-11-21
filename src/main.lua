@@ -12,15 +12,18 @@ l10n.set_logger(log)
 log("loaded speech_module "..speech.status())
 
 local last_speech=""
+local last_speech_owner=nil
 local menu_snapshot=nil
 local function say(text,interrupt,owner)
     if type(text)~="string" or text=="" then return end
     last_speech=text
+    last_speech_owner=owner
     return speech.say(text,interrupt~=false,owner)
 end
 
 -- Follow the game's language and input mode; both getters are side-effect free.
 local settings_logged=false
+local game_language
 local function refresh_settings()
     local controller
     for _,c in ipairs(FindAllOf("LiSPlayerController") or {}) do
@@ -28,7 +31,11 @@ local function refresh_settings()
     end
     if not controller then return end
     local ok,lang=pcall(function()return controller:GetCurrentLanguage()end)
-    if ok then lang=type(lang)=="string" and lang or lang:ToString();l10n.set_language(lang) end
+    if ok then
+        lang=type(lang)=="string" and lang or lang:ToString()
+        game_language=lang
+        l10n.set_language(lang)
+    end
     local changed=controls.refresh(controller)
     if not settings_logged then
         settings_logged=true
@@ -46,6 +53,18 @@ local reread=nil
 local picture_reread=nil
 local journal_photo_reread=nil
 local cutscenes=nil
+local scene_descriptions=nil
+local choice_scene={}
+local function repeat_last()
+    if last_speech_owner==choice_scene then
+        if choice_scene.current() then speech.say(last_speech,true,choice_scene)
+        else choice_scene.cancel() end
+        return
+    end
+    if scene_descriptions and scene_descriptions:repeat_owned(last_speech_owner)then return end
+    if cutscenes and last_speech_owner==cutscenes.owner then cutscenes:reread(true);return end
+    speech.say(last_speech,true)
+end
 local room_tick,room_last,room_pending,room_spoken,room_announced_once=0,nil,nil,nil,false
 local scanner=require("scanner.scanner")
 local function in_menu()return menu_snapshot and menu_snapshot()~=nil end
@@ -115,6 +134,7 @@ local function run_keys()
 end
 bind_key(Key.HOME,on_game(function()
     if cutscenes and cutscenes:reread() then return end
+    if scene_descriptions and scene_descriptions:reread()then return end
     padlock.check_presence()
     if padlock.active() then say(padlock.current(),true);log('padlock_home');return end
     if journal_photo_reread and journal_photo_reread() then return end
@@ -122,12 +142,12 @@ bind_key(Key.HOME,on_game(function()
     if not can_scan() then
         local text=nil
         if reread then local ok,t=pcall(reread);if ok then text=t end end
-        speech.say(text or last_speech,true)
+        if text then speech.say(text,true)else repeat_last()end
     else
         scanner.command("describe")
     end
 end))
-bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(function()speech.say(last_speech,true)end))
+bind_key(Key.HOME,{ModifierKey.CONTROL},on_game(repeat_last))
 bind_key(Key.PAGE_DOWN,on_game(function()if can_scan() then scanner.command("next") end end),{["repeat"]=true})
 bind_key(Key.PAGE_UP,on_game(function()if can_scan() then scanner.command("previous") end end),{["repeat"]=true})
 -- These letters retain their native behavior elsewhere and are suppressed,
@@ -172,10 +192,27 @@ local journal_cursor=journal.cursor()
 local journal_open=false
 local journal_move -- defined with the journal step below
 local choices=require("dialogue.choices")
+local dialogue_scene=require("cutscenes.dialogue")
+function choice_scene.cancel()
+    if not choice_scene.key then return end
+    choice_scene.key=nil
+    speech.stop_owned(choice_scene)
+    if last_speech_owner==choice_scene then last_speech_owner=nil;last_speech="" end
+end
+function choice_scene.current()
+    return choice_scene.key and speech.focused()==true and not in_menu() and
+        dialogue_scene.key(scanner.controller,choices.options())==choice_scene.key
+end
+choices.on_change=choice_scene.cancel
 cutscenes=require('cutscenes.runtime').new({
     root=debug.getinfo(1,'S').source:gsub('^@',''):gsub('[^/\\]+$','')..'cutscenes',
-    language=l10n.language,focused=function()return speech.focused and speech.focused()end,
+    language=function()return game_language end,focused=function()return speech.focused and speech.focused()end,
     allowed=function()return not in_menu() and not choices.options()end,
+    say=say,stop=speech.stop_owned,log=log,text=function(key)return l10n.text(key)end,
+})
+scene_descriptions=require('cutscenes.scene').new({
+    controller=scanner.controller,focused=function()return speech.focused and speech.focused()end,
+    allowed=function()return not in_menu()and not choices.options()and not cutscenes.active end,
     say=say,stop=speech.stop_owned,log=log,text=function(key)return l10n.text(key)end,
 })
 local function face_selected()
@@ -184,6 +221,9 @@ local function face_selected()
     if c then face.start(c,scanner.selected()) end
 end
 local function show_help()
+    if scene_descriptions and scene_descriptions.active then
+        scene_descriptions:help(controls.using_gamepad());return
+    end
     if cutscenes and cutscenes.active then
         say(l10n.text(controls.using_gamepad() and 'cutscene_help_pad' or 'cutscene_help_keys'),true);return
     end
@@ -326,11 +366,17 @@ local function choices_step()
     -- Every step until hooked (the class appears with the first conversation),
     -- then every two seconds in case the game loads a new copy.
     if not choices.hooked() or choice_install_tick%8==1 then choices.install() end
+    if choice_scene.key and not choice_scene.current() then choice_scene.cancel() end
     if in_menu() then return end
     choices.tick()
     local text,options=choices.due(controls.using_gamepad())
     if text then
-        say(text,true)
+        local shot=dialogue_scene.key(scanner.controller,options)
+        if shot and speech.focused()==true then
+            choice_scene.key=shot
+            text=text.." "..l10n.text(shot)
+            say(text,true,choice_scene)
+        else say(text,true) end
         local d={};for _,o in ipairs(options) do d[#d+1]=tostring(o.slot) end
         log("choice_announce slots="..table.concat(d,",").." spoken="..text)
     end
@@ -652,9 +698,10 @@ picture.text=function(key,p)return l10n.text(key,p)end
 picture.clean=require("core.text").clean
 picture.read_mode=viewer.reading
 picture.native_text=viewer.describe
-picture.language=function()return l10n.language()end
+picture.language=function()return game_language end
 picture.log=log
-picture.say=function(text)say(text,true);log("picture_description spoken="..text)end
+picture.stop=speech.stop_owned
+picture.say=function(text,owner)say(text,true,owner);log("picture_description spoken="..text)end
 journal.text=function(key,p)return l10n.text(key,p)end
 journal.language=function()return l10n.language()end
 journal.clean=require("core.text").clean
@@ -803,6 +850,7 @@ local function main_step()
         if not ok and walk_errors<5 then walk_errors=walk_errors+1;log("autowalk_error="..tostring(err)) end
 end
 scanner.log=log
+scanner.language=function()return game_language end
 do local ok,req=pcall(require,"LISNavRequest");scanner.trace=ok and type(req)=="table" and req.expected_saved_directory~=nil end
 scanner.text=function(key,p)return l10n.text(key,p)end
 require("scanner.readout").text=function(key,p)return l10n.text(key,p)end
@@ -828,12 +876,14 @@ local function pad_step()
             -- While the journal is open the D-pad reads it; scanner commands
             -- (D-pad down = autowalk) must not fire behind it.
             local movie_open=cutscenes and cutscenes.active
-            local picture_open=not journal_open and not in_menu() and (movie_open or picture.active())
+            local scene_open=scene_descriptions and scene_descriptions.active
+            local picture_open=not journal_open and not in_menu() and (movie_open or scene_open or picture.active())
             local active=buttons>=0 and can_scan() and not journal_open and not picture_open
             for _,cmd in ipairs(pad:update(buttons,active,os.clock(),picture_open)) do
-                if cmd=="repeat" then speech.say(last_speech,true)
+                if cmd=="repeat" then repeat_last()
                 elseif cmd=="picture_reread" then
-                    if movie_open then cutscenes:reread()else picture_reread()end
+                    if movie_open then cutscenes:reread()
+                    elseif scene_open then scene_descriptions:reread()else picture_reread()end
                 elseif cmd=="autowalk" then walk_toggle()
                 elseif cmd=="face" then face_selected()
                 elseif cmd=="help" then padlock.controller_help();show_help()
@@ -870,6 +920,8 @@ LoopInGameThreadWithDelay(50,function()
         if not rok then rewind:cancel();log('rewind_error='..tostring(rerr))end
         local cok,cerr=pcall(cutscenes.tick,cutscenes)
         if not cok then cutscenes:cancel();log('cutscene_error='..tostring(cerr))end
+        local sok,serr=pcall(scene_descriptions.tick,scene_descriptions)
+        if not sok then scene_descriptions:cancel();log('scene_description_error='..tostring(serr))end
         pad_step()
         -- Recognize help before emitting a queued native digit change from
         -- the same controller press.

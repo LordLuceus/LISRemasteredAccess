@@ -34,6 +34,11 @@ class Captions(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Draft'):
             compiler.render(self.rows)
 
+    def test_voice_delay_is_a_finite_positive_number(self):
+        for value in (0, -1, True, '7', float('inf'), float('nan')):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'Voice delay'):
+                compiler.render([dict(self.rows[0], voice_delay=value)])
+
     def test_private_evidence_and_transcriptions_rejected(self):
         for field in ('transcription', 'evidence', 'filename'):
             with self.subTest(field=field):

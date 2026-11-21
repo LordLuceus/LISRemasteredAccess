@@ -3,6 +3,18 @@
 -- tracks. English timing is not silently used over another language's dialogue.
 local Track=require('cutscenes.track')
 local M={};M.__index=M
+-- English dialogue spans from the two shipped movie subtitle tracks, padded
+-- for the game-thread poll. Merge short gaps where a line cannot fit.
+local dialogue={
+    ['en/episode01/bik_e1_7a_snowing.mp4']={{0,74.55},{80.5,97.2}},
+    ['en/episode01/bik_e1_6a_dialend.mp4']={{17.75,23.3},{28.9,36.45}},
+}
+function M.in_dialogue(track,time)
+    for _,span in ipairs(track.dialogue or {})do
+        if time>=span[1] and time<span[2] then return true end
+    end
+    return false
+end
 function M.movie_id(url)
     if type(url)~='string' or #url>4096 then return end
     local path=url:gsub('\\','/'):lower()
@@ -31,13 +43,15 @@ function M:load(url,language)
     local relative=key..'.ad.srt'
     local path=self.root..'/overrides/'..relative
     local text,why=self.read(path)
+    local protection
     if text==nil and why=='missing' then
         path=self.root..'/tracks/'..relative;text,why=self.read(path)
+        protection=dialogue[key]
     end
     local value
     if text~=nil then
         local cues; cues,why=Track.parse(text)
-        if cues then value={id=id,language=language,key=key,cues=cues,path=path}end
+        if cues then value={id=id,language=language,key=key,cues=cues,path=path,dialogue=protection}end
     end
     self.cache[key]={track=value,why=why}
     return value,why

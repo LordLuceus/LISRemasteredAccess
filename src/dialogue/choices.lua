@@ -66,6 +66,7 @@ function M.update(slot,text,is_major)
     if type(text)=="string" then text=text:gsub("^%s+",""):gsub("%s+$","") end
     if text=="" then text=nil end
     if answers[s]==text and major==(is_major==true) then return false end
+    if M.on_change then M.on_change() end
     answers[s]=text;major=is_major==true;changed_at=M.clock()
     return true
 end
@@ -76,6 +77,7 @@ local function key_of(list)
     return table.concat(t,"\31")
 end
 function M.clear(why)
+    if next(answers) and M.on_change then M.on_change() end
     candidate_snapshot,pending,candidate_announced=nil,nil,nil
     candidate_serial=candidate_serial+1
     if next(answers) then M.log("choice_cleared why="..tostring(why)) end

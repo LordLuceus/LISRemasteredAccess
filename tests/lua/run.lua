@@ -2746,5 +2746,9 @@ do
     local ok,total=pcall(dofile,'tests/lua/cutscene_adapter.lua')
     if ok then count=count+total else check('cutscene adapter regression suite',false,tostring(total))end
 end
+do
+    local ok,total=pcall(dofile,'tests/lua/scene_descriptions.lua')
+    if ok then count=count+total else check('scene description regression suite',false,tostring(total))end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

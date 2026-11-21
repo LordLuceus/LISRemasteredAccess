@@ -7,11 +7,14 @@ widget addresses or image basenames. Each translation has its own language and
 review status; missing translations fall back to reviewed English.
 
 These are visual descriptions, **not replacements for the game's text versions**.
-The source contains only approved prose, asset IDs, language, review status and
-the SHA-256 of the original authoring PNG. It deliberately excludes draft
+Each record includes the caption, asset ID, language, review status and
+the SHA-256 of the original authoring PNG. The optional `voice_delay` gives
+the number of seconds to wait before automatically describing that page in
+the matching game language. It includes any delay before the recorded line
+starts, the duration of the line and a margin before narration. The source excludes draft
 transcriptions, private filesystem paths and extracted game artwork. The first
-eleven captions have independent image review; the remaining Episode 1 images
-are not yet covered. Folder inventory is not proof of complete runtime coverage.
+eleven captions have independent image review. The English catalogue now covers
+110 extracted close-ups. In-game checks are ongoing.
 
 After reviewing a new caption against its actual exported image, add its record
 and run from the repository root:
@@ -42,7 +45,7 @@ The existing native reader remains responsible for text, coordinated by
 cannot be established, the previously working native text path remains available.
 `poll()` handles expiry
 without touching engine objects, and `install()` is retried after class loads.
-The mode-based interaction is playtest-accepted; wider coverage and multipage
-behavior remain unverified. F5 has been removed. Home and
+Disposable-profile playback verified that the description for each of the three
+pages on Max's laptop started after her subtitle cleared. F5 has been removed. Home and
 D-pad up follow the current mode; literal repeat remains separate, as do the
 scanner's ordinary readout and native left/right paging.

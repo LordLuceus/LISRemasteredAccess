@@ -15,6 +15,13 @@ end
 M.VIEW='/Game/Packages/Widgets/BP_LiSPictureWidget_View.BP_LiSPictureWidget_View_C'
 M.MAX_AGE=0.5
 local active,pending=nil,nil
+local auto_owner={}
+local speaking_auto=false
+local voice_until=0
+M.stop=function(_)end
+local function stop_auto()
+    if speaking_auto then M.stop(auto_owner);speaking_auto=false end
+end
 local generation=0
 local ticks,destructs,ready,errors={},{},{},{}
 local function valid(o)return o~=nil and o:IsValid() end
@@ -33,6 +40,8 @@ local function fail(detail,intent)
         or 'picture_description_unavailable'),intent))
 end
 local function clear()
+    stop_auto()
+    voice_until=0
     local old_id=active and active.id
     active=nil;generation=generation+1
     if pending then
@@ -53,6 +62,7 @@ local function queue(page,automatic)
     end
     if active and active.id~=id then clear() end
     if automatic and pending and not pending.automatic then return true end
+    stop_auto()
     pending={id=id,generation=generation,expires=M.clock()+M.MAX_AGE,
         automatic=automatic,index=page and page.index,count=page and page.count,
         reading=page and page.reading}
@@ -60,12 +70,17 @@ local function queue(page,automatic)
 end
 function M.request(page)return queue(page,false) end
 function M.automatic(page)return queue(page,true) end
-function M.cancel_auto()if pending and pending.automatic then pending=nil end end
-function M.cancel()pending=nil end
+function M.cancel_auto()
+    if pending and pending.automatic then pending=nil end
+    voice_until=0;stop_auto()
+end
+function M.cancel()pending=nil;stop_auto() end
 -- Called from the existing game-thread loop; no object reads here.
 function M.poll()
     if pending and M.clock()>pending.expires then
-        pending=nil;fail() -- no stale caption or assertion about native text
+        local delayed=pending.ready_at
+        pending=nil
+        if not delayed then fail() end
     end
     if active and not M.active() then clear() end
 end
@@ -85,6 +100,7 @@ local function capture(v)
     if active and active.id~=id then clear() end
     active={id=id,at=now}
     if not pending then return end
+    if pending.ready_at and now<pending.ready_at then return end
     local intent=pending;pending=nil -- consume before callbacks can reenter
     if intent.id~=id or intent.generation~=generation or now>intent.expires then
         if not intent.automatic then fail() end
@@ -107,14 +123,26 @@ local function capture(v)
         return
     end
     local asset=current_asset(v)
-    local description=asset and M.lookup(asset,M.language())
+    local description,_,delay=M.lookup(asset,M.language())
+    if intent.automatic and not intent.ready_at then
+        -- Max comments on these pictures as the page opens. Keep the intent
+        -- only while its original view, page, mode and texture still match.
+        if delay then voice_until=math.max(voice_until,now+delay) end
+        if now<voice_until then
+            intent.asset=asset;intent.ready_at=voice_until;intent.expires=voice_until+M.MAX_AGE
+            pending=intent
+            return
+        end
+    end
+    if intent.asset and intent.asset~=asset then return end
     intent.index=index;intent.count=count
     if not description then
         description=M.text(has_text and 'picture_description_unavailable' or 'viewer_no_description')
     end
     if has_text then description=description..' '..M.text('picture_has_text') end
     M.on_described(id,index,reading,has_text)
-    M.say(position(description,intent))
+    speaking_auto=intent.automatic==true
+    M.say(position(description,intent),speaking_auto and auto_owner or nil)
 end
 local function on_tick(self)
     local intent=pending
