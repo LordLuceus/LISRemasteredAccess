@@ -8,7 +8,7 @@ closed, and any owned file that changed since installation stops the deployment
 before anything is written.
 """
 from pathlib import Path
-import hashlib, json, os, shutil, subprocess, uuid
+import ctypes, hashlib, json, os, shutil, subprocess, uuid
 
 root = Path(__file__).resolve().parents[1]
 MOD = 'LISRemasteredAccess'
@@ -30,6 +30,20 @@ try:
         raise RuntimeError('Close the remaster before deployment')
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     game = Path(data['game']).resolve()
+    build = root / 'artifacts/build-native/Release'
+    bindings = {
+        'lisr_speech.dll': ('speak', 'stop', 'status', 'pad', 'move', 'keys', 'tick',
+                            'tick_load', 'play', 'focused'),
+        'lisr_reflection.dll': ('reflection_read', 'movie_time', 'rewind', 'rewind_view_read'),
+    }
+    for name, symbols in bindings.items():
+        # Inspect exports without resolving imports supplied by the game or running DllMain.
+        try:
+            library = ctypes.CDLL(str(build / name), winmode=0x1)  # DONT_RESOLVE_DLL_REFERENCES
+            for symbol in symbols:
+                getattr(library, 'lisr_' + symbol)
+        except (OSError, AttributeError) as error:
+            raise RuntimeError(f'Rebuild {name} before deployment: {error}') from error
     # A test run that was interrupted can leave its session request installed;
     # a normal launch would then start a test session. Put the neutral request
     # back (no claim is held here, so no run owns it) and say so.
@@ -46,14 +60,8 @@ try:
     # Bundled timed descriptions only. User overrides are never deploy-owned.
     for track in sorted((root / 'src/cutscenes/tracks').rglob('*.ad.srt')):
         sources.append((track, SCRIPTS / track.relative_to(root / 'src')))
-    native = root / 'artifacts/build-native/Release/lisr_speech.dll'
-    if not native.exists():
-        raise RuntimeError('Build the speech module first (see README)')
-    sources.append((native, SCRIPTS / 'lisr_speech.dll'))
-    reflection = root / 'artifacts/build-native/Release/lisr_reflection.dll'
-    if not reflection.exists():
-        raise RuntimeError('Build the dialogue property reader first (see README)')
-    sources.append((reflection, SCRIPTS / 'lisr_reflection.dll'))
+    for name in bindings:
+        sources.append((build / name, SCRIPTS / name))
     # Cue sounds (provider audio, git-ignored): installed when present locally.
     for wav in sorted((root / 'assets' / 'audio').glob('*.wav')):
         sources.append((wav, SCRIPTS / 'audio' / wav.name))
