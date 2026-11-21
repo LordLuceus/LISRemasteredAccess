@@ -2,6 +2,15 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-19
+
+- Added a candidate description track for the first classroom introduction:
+  the room, Stella retrieving her pen, and Taylor throwing a paper ball at Kate.
+  Descriptions may briefly overlap Jefferson but wait or stop for Max's scripted
+  lines. Home or D-pad up rereads them during the intro. This English-language
+  pilot does not cover the later return to class or Victoria's phone, and the
+  complete reader has not yet been playtested. Movie descriptions are unchanged.
+
 ## In development — 2026-11-18
 
 - Added a candidate automatic description track for each of Episode 1's two

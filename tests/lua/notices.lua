@@ -124,7 +124,7 @@ emit({screen='main-menu',index=0,label='Continue'})
 check(#queue==1 and queue[1]=='Continue','Normal menu navigation cancels queued notices')
 local f=assert(io.open('src/main.lua','r'));local main=f:read('*a');f:close()
 check(main:find('local text,fallback,interrupt=tracker:update(snap)',1,true) and main:find('say(text,interrupt~=false)',1,true),'Main speech dispatcher honors tracker queue policy')
-check(main:find('speech.say(text or last_speech,true)',1,true),'Deliberate Home reread still interrupts')
+check(main:find('if text then speech.say(text,true)else repeat_last()end',1,true),'Deliberate Home menu reread still interrupts; owned scene repeats use their guard')
 
 -- Unexpected native failures are logged once, not swallowed every poll.
 story.viewport=true;story.DisclaimerText.GetText=function()error('test text read failure')end

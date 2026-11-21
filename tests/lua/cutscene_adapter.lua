@@ -60,7 +60,7 @@ local function noop()end
 local fake={tick=function()ticks=ticks+1 end,cancel=function()cancelled=cancelled+1 end}
 local env=setmetatable({LoopInGameThreadWithDelay=function(_,fn)callback=fn end,
     padlock={install=noop,check_presence=noop,due=noop},run_keys=noop,picture={poll=noop},run_delayed=noop,
-    rewind={tick=noop,cancel=noop},cutscenes=fake,pad_step=noop,lighthouse_fast_step=noop,
+    rewind={tick=noop,cancel=noop},cutscenes=fake,scene_descriptions={tick=noop,cancel=noop},pad_step=noop,lighthouse_fast_step=noop,
     polarewind={tick=noop},menu_step=noop,main_step=noop,face={tick=noop},log=function(e)errors[#errors+1]=e end},{__index=_G})
 assert(load(main:sub(start,finish-1),'registered cutscene callback','t',env))()
 for _=1,20 do callback()end

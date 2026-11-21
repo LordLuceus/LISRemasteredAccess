@@ -302,8 +302,17 @@ replace narration, and a later timed description can replace an older readout.
 Description speech stops when the movie disappears, pauses, or the game loses
 focus. Returning does not play missed descriptions in a rush. This does not add
 pause or skip controls, or promise that the game itself pauses when unfocused.
-Ordinary in-engine cutscenes, other episodes, Japanese/platform movie variants,
-recaps and the short next-episode teaser are not currently described.
+
+On Max's first visit to the photography classroom, the English scene reader
+describes the room, Stella retrieving her pen and Taylor throwing a paper ball
+at Kate. Home or D-pad up repeats the latest cue when Max's speech allows it.
+
+During Episode 1 gameplay, the English room reader describes the setting when
+it identifies a location. Selected in-engine actions also have spoken cues,
+including Max photographing the butterfly and Juliet unlocking Dana's door.
+Coverage and in-game timing of these cues are still being verified.
+Movie tracks for other episodes, Japanese/platform variants, recaps and the
+short next-episode teaser are still outstanding.
 
 **Integration status:** the native playback clock, all three descriptions in the
 first movie and keyboard rereading have been exercised in-game. The first movie

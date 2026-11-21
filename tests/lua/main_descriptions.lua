@@ -41,6 +41,8 @@ picture.active=function()return current_page~=nil end
 fake_require('menus.main_menu').snapshot=function()return current_menu end
 fake_require('menus.keybindings').active=false
 fake_require('cutscenes.runtime').active=false
+fake_require('cutscenes.scene').active=false
+fake_require('cutscenes.scene').new=function(o)local s=fake_require('cutscenes.scene');s.o=o;return s end
 fake_require('hud.padlock').active=function()return false end
 fake_require('hud.icons').tick=function()return {} end
 fake_require('core.controls').using_gamepad=function()return false end
@@ -136,6 +138,24 @@ bound['F1:none']();check(spoken[#spoken]==real_require('lang.en').cutscene_help_
 fake_require('core.controls').using_gamepad=function()return true end
 bound['F1:none']();check(spoken[#spoken]==real_require('lang.en').cutscene_help_pad,'movie controller help')
 movies.active=false;home();check(movie_reads==2,'movie gate releases to the existing readers')
+local scenes=fake_require('cutscenes.scene');local scene_reads,scene_repeats=0,0;local scene_owner={}
+scenes.reread=function()if not scenes.active then return false end;scene_reads=scene_reads+1;return true end
+scenes.repeat_owned=function(_,owner)if owner~=scene_owner then return false end;scene_repeats=scene_repeats+1;return true end
+scenes.help=function(_,pad)scenes.o.say(pad and 'scene pad help'or'scene keyboard help',true,scene_owner)end
+scenes.active=true;home();check(scene_reads==1,'Home reaches the classroom reader')
+buttons=0;game_loop();buttons=1;game_loop();check(scene_reads==2,'D-pad Up reaches classroom without scanner')
+scenes.o.say('Owned classroom description',true,scene_owner)
+repeat_last();check(scene_repeats==1,'Ctrl Home cannot bypass classroom ownership guard')
+fake_require('core.controls').using_gamepad=function()return false end
+bound['F1:none']();check(spoken[#spoken]=='scene keyboard help','classroom help uses current keyboard')
+fake_require('core.controls').using_gamepad=function()return true end
+bound['F1:none']();check(spoken[#spoken]=='scene pad help','classroom help uses current controller')
+scenes.active=false
+current_menu={screen='notice',label='Current native notice',reread='Full native notice'}
+local interrupted=nil
+speech.say=function(t,interrupt)spoken[#spoken+1]=t;interrupted=interrupt end
+home();check(spoken[#spoken]=='Full native notice'and interrupted==true,'actual Home notice reread still interrupts')
+current_menu=nil
 for _,name in ipairs({'hud.viewer','core.help','core.text','core.localization','descriptions.reader'}) do package.loaded[name]=nil end
 print('Main description wiring: '..checks..' checks passed')
 return checks

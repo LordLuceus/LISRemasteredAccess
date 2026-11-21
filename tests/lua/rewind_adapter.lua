@@ -83,7 +83,7 @@ local noop=function()end
 local fake_rewind={tick=function()ticks=ticks+1 end,cancel=function()cancels=cancels+1 end}
 local env=setmetatable({LoopInGameThreadWithDelay=function(ms,fn)check(ms==50,'Existing 50ms loop retained');callback=fn end,
     padlock={install=noop,check_presence=noop,due=noop},run_keys=noop,picture={poll=noop},run_delayed=noop,
-    rewind=fake_rewind,cutscenes={tick=noop,cancel=noop},pad_step=noop,lighthouse_fast_step=noop,polarewind={tick=noop},menu_step=noop,
+    rewind=fake_rewind,cutscenes={tick=noop,cancel=noop},scene_descriptions={tick=noop,cancel=noop},pad_step=noop,lighthouse_fast_step=noop,polarewind={tick=noop},menu_step=noop,
     main_step=function()mains=mains+1;check(ticks>=mains*5,'Rewind tick precedes slow control processing')end,
     face={tick=noop},log=function(e)errors[#errors+1]=e end}, {__index=_G})
 assert(load(main:sub(start,finish-1),'registered rewind loop','t',env))()
