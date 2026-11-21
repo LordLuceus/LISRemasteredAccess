@@ -396,6 +396,13 @@ object and its direction come first. For close-ups such as the bathroom graffiti
 and Max's teddy bear, this command also describes the object before you choose
 Look and hear Max's thoughts.
 
+For supported objects that stay in the world when you choose **Look**, Home
+or D-pad up also reads what you can see. In the Episode 1 dorm hallway, the
+first Look at Kate's or Brooke's slate adds a description after Max's comment.
+To hear Kate's message before deciding whether to draw on it, select her slate
+in the scanner and press Home. Read it again after drawing or rewinding to
+hear what is there now.
+
 In some conversations, the camera holds while Max chooses an answer. The
 reader announces the answers first, then describes the shot. For example,
 it describes Daniel when he asks to sketch Max. Selecting an answer stops

@@ -370,7 +370,7 @@ return {
     scene_e1_3b_campusb_victoriahurt_1="Wet paint coats Victoria's hair and sweater.",
     scene_e1_3b_campusb_alyssamovesit02_1="Alyssa dodges the football. It hits the dormitory window behind her.",
     scene_e1_3b_campusb_bucket_interact01_1="Max tampers with the handle of the paint bucket.",
-    scene_e1_3c_corridor_kateslate_interact01_1="Max wipes the message off Kate's board.",
+    scene_e1_3c_corridor_kateslate_interact01_1="Max wipes away the insult and draws a peace sign.",
     scene_e1_3c_corridor_maxslate_interact01_1="Max writes on the board outside her door.",
     scene_e1_5a_chloeroom_davidhome_1="Max and Chloe dance in the bedroom.",
     scene_e1_5a_chloeroom_metalbox_interact01_1="Max pulls a metal box from under Chloe's bed.",

@@ -797,12 +797,17 @@ autowalk.stalled_guide=function(_,result)
 end
 -- Control tracking, autowalk, facing and focus announcements.
 local walk_errors=0
+local world_look_step=require("descriptions.world_looks").new()
 local function main_step()
     -- Junkyard shooting: describe where Chloe's shot went, just after she
     -- fires (bottles 1 and 2). Every main step (four times a second): the
     -- moment is read from the shot sequence's own position.
     do
         local c0=scanner.controller()
+        local look_ok,look_error=pcall(world_look_step,c0,game_language=="en" and speech.focused and speech.focused()
+            and not in_menu() and not choices.options() and not control.suppressed
+            and not scene_descriptions.active and not cutscenes.active,say)
+        if not look_ok then log("world_look_error="..tostring(look_error)) end
         if c0 then
             local action_ok,action_error=pcall(require("cutscenes.episode1_actions").tick,c0,
                 l10n.language()=="en" and speech.focused and speech.focused() and not in_menu()

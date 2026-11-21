@@ -2762,5 +2762,9 @@ do
     local ok,total=pcall(dofile,'tests/lua/episode1_actions.lua')
     if ok then count=count+total else check('Episode 1 action descriptions',false,tostring(total))end
 end
+do
+    local ok,total=pcall(dofile,'tests/lua/world_looks.lua')
+    if ok then count=count+total else check('world Look descriptions',false,tostring(total))end
+end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

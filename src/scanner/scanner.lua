@@ -77,6 +77,7 @@ function M.command(cmd)
             end
             local objects=e and descriptions.objects[e.sublevel]
             local detail=objects and objects[e.id:match("PersistentLevel%.([^%.]+)$")]
+            if not detail and e then detail=require("descriptions.world_looks").describe(e,c) end
             if type(detail)=="table" then
                 local variants=detail
                 detail=nil
