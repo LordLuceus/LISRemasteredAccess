@@ -7,6 +7,9 @@ Player-facing changes, newest first.
 - Pausing no longer discards consequence, new-fact or saving notices that were
   waiting for narration to finish. They resume once after returning; old notices
   are cleared when leaving or reloading a scene.
+- Restored the first rewind's blood-reversal description. David's departure in
+  the blame-Chloe branch is now described in a later dialogue gap, rather than
+  speaking over Max immediately after the door slams.
 
 ## In development ? 2026-11-21
 

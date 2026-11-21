@@ -27,6 +27,8 @@ return {
         {7,12,"scene_e1_2a_toilets_nathanandchloe_1"},
         {60.4,63.4,"scene_e1_2a_toilets_nathanandchloe_2"},
         {82.6,89,"scene_e1_2a_toilets_nathanandchloe_3"},
+        -- Native RewindBlood event: 92.022; stop before the 93.289 transition.
+        {92.03,93.2,"scene_e1_2a_toilets_nathanandchloe_4"},
     }},
     E1_2A_Toilets_LD_FireAlarm_Interact01={length=21.048,windows={
         {0.2,2.45,"scene_e1_2a_toilets_firealarm_interact01_1"},
@@ -325,6 +327,10 @@ return {
     }},
     E1_5A_ChloeRoom_LD_DavidFurious_BlameChloe={length=78.965,windows={
         {15.5,17.85,"scene_e1_5a_chloeroom_davidfurious_blamechloe_1"},
+        -- DoorSlam52.165 is immediately followed by Max52.704. Describe the
+        -- departure retrospectively, between Chloe_210 (ends61.373) and
+        -- Chloe_220 (starts63.608), preserving .38s dialogue margins.
+        {61.78,63.2,"scene_e1_5a_chloeroom_davidfurious_blamechloe_3"},
         {72,75.8,"scene_e1_5a_chloeroom_davidfurious_blamechloe_2"},
     }},
     E1_5A_ChloeRoom_LD_DavidFurious_ChloeSad={length=24.59,windows={
