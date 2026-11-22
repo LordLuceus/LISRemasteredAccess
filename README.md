@@ -397,13 +397,22 @@ and Max's teddy bear, this command also describes the object before you choose
 Look and hear Max's thoughts.
 
 For supported objects that stay in the world when you choose **Look**, Home
-or D-pad up also reads what you can see. In the Episode 1 dorm hallway, the
-first Look at Kate's or Brooke's slate adds a description once playing dialogue
-has finished. The same wait applies to Draw and to manual slate readouts,
-including Home, D-pad up, and repeat.
+or D-pad up also reads an English description. These cover Episode 1 objects
+and characters across the school, campus, dorms, parking lot, Chloe's house
+and lighthouse. The first use of each in-world Look branch adds its description
+once playing dialogue has finished. Loading a save with completed Looks does
+not announce them again; select an object and use Home or D-pad up to reread it.
+Manual readouts and repeat also wait for playing dialogue, even with subtitles off.
+
+Changing objects use their current story state: these include Kate's and Max's
+slates, the dusty RV window, Victoria's photographs and the garage tool case.
 To hear Kate's message before deciding whether to draw on it, select her slate
 in the scanner and press Home. Read it again after drawing or rewinding to
-hear what is there now.
+hear what is there now. If the state is unknown, the reader does not guess a
+description. Where a Look already has a timed scene description, that track
+remains in use.
+See the [world-object authoring guide](descriptions/world-objects.md) to add or
+customise captions.
 
 In some conversations, the camera holds while Max chooses an answer. The
 reader announces the answers first, then describes the shot. For example,

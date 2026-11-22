@@ -2,6 +2,17 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-22
+
+- Expanded English descriptions for Episode 1's in-world Look interactions
+  across 18 rooms and outdoor areas. Home or D-pad up can describe a selected
+  object before Look; automatic and manual readouts wait for dialogue to finish.
+- Descriptions now follow changes to Max's slate, the RV window, Victoria's
+  appearance and photographs, the garage tool case and other changing objects,
+  including after rewind. Completed Looks stay silent when loading a save.
+- Corrected the RV drawing to “I'm so dirty” and the parking-lot description
+  to place the dog beside the RV, rather than inside a vehicle.
+
 ## Fixes in development — 2026-11-21
 
 - Pausing no longer discards consequence, new-fact or saving notices that were

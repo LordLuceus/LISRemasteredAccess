@@ -11,7 +11,7 @@ return {
     E1_3C_MaxRoom_LD = "Instant photos cover Max's wall. A guitar, stereo and piles of art books share the small room with her bed and desk.",
     E1_3C_DanaRoom_LD = "A Bigfoot banner hangs in Dana's room. A cheerleading outfit and a laptop sit among her things.",
     E1_3C_VicRoom_LD = "Victoria displays photographs on her wall. Camera gear, a tablet and a large television furnish her room.",
-    E1_3D_CampusPark_LD = "Cars fill the campus parking lot. Missing-person flyers dot the lot, and a dog watches from a parked vehicle.",
+    E1_3D_CampusPark_LD = "Cars fill the campus parking lot. Missing-person flyers dot the lot, and a dog lies beside a parked RV.",
     E1_4A_ChloeCar_LD = "Max rides beside Chloe in the cab of her pickup truck.",
     E1_4A_CHouseFront_LD = "Chloe's truck has arrived at the two-story house where she grew up.",
     E1_5A_ChloeRoom_LD = "Posters cover Chloe's bedroom walls. Boxes and bags crowd the floor around her bed, desk and stereo.",
@@ -52,9 +52,6 @@ return {
         },
         E1_5B_LivingRoom_LD={
             LiSInteractionActor_BayWindow_87="Yellow curtains frame the sliding glass door. A fenced yard lies beyond it.",
-        },
-        E1_5B_Garage_LD={
-            LiSInteractionActor_ToolBox_6="A small green box balances high above the washing machine.",
         },
     },
 }

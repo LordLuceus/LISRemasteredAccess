@@ -1,4 +1,5 @@
 local looks=require("descriptions.world_looks")
+local catalogue_checks=0
 local old_fname=FName
 FName=function(name)return name end
 local ok,err=pcall(function()
@@ -75,6 +76,128 @@ local ok,err=pcall(function()
     assert(#heard==3,"the completion flag does not narrate Draw again")
     entry.sublevel="E2_3C_Corridor_LD"
     assert(looks.describe(entry,controller)==nil)
+    entry.sublevel="E1_3C_Corridor_LD"
+    for _,board in ipairs({
+        {"DanaSlate_23","Stomp 'em Bigfoots!"},{"JulietSlate_22","Blackwell Totem"},
+        {"StellaSlate_20","REDRUM"},{"TaylorSlate_19","Taylor is a slave"},
+        {"VictoriaSlate_1","Gandhi"},
+    }) do
+        entry.id="PersistentLevel.LiSInteractionActor_"..board[1]
+        local manual=assert(looks.describe(entry,controller))
+        assert(manual:find(board[2],1,true))
+        local fact="E1_3C_Corridor_"..board[1]:match("^(%a+)_").."_Look01_Triggered"
+        states[fact]=false;tick(true)
+        states[fact]=true;tick(true)
+        assert(heard[#heard]==manual)
+    end
+    entry.id="PersistentLevel.LiSInteractionActor_MaxSlate_13"
+    local written="E1_3C_Corridor_MaxSlate_Interact01_Triggered"
+    assert(looks.describe(entry,controller)==nil)
+    states[written]=true
+    assert(looks.describe(entry,controller):find("straight mouth",1,true))
+    states[written]=false
+    assert(looks.describe(entry,controller):find("blank",1,true))
+
+    states.E1_5B_Garage_Puzzle_PizzaBoxPullWithTools=false
+    for _,variant in ipairs({
+        {"E1_3D_CampusPark_LD","DirtyWindow_0","E1_3D_CampusPark_DirtyWindow_Interact01_Triggered","film of dust","I'm so dirty"},
+        {"E1_3B_CampusB_LD","CHVictoria_7","E1_3B_CampusB_LD_VictoriaStained","cropped short","Wet paint"},
+        {"E1_3C_VicRoom_LD","Photos_21","E1_3C_MIN_VicPhoto","neat grid","middle finger"},
+        {"E1_5B_Garage_LD","ToolBox_6","E1_5B_Garage_Puzzle_Tools_Fallen","balances high","beneath the cabinet"},
+        {"E1_5A_Bathroom_LD","MakeUpStuff_33","E1_5A_Bathroom_LightsON","bathroom is dark","beside the sink"},
+    }) do
+        local selected={sublevel=variant[1],id="PersistentLevel.LiSInteractionActor_"..variant[2]}
+        assert(looks.describe(selected,controller)==nil)
+        states[variant[3]]=true
+        assert(looks.describe(selected,controller):find(variant[5],1,true))
+        states[variant[3]]=false
+        assert(looks.describe(selected,controller):find(variant[4],1,true))
+        catalogue_checks=catalogue_checks+3
+    end
+    local bird={sublevel="E1_5A_ParentsRoom_LD",id="PersistentLevel.LiSInteractionActor_Bird_13"}
+    states.E1_5A_ParentsRoom_BirdCrashed=true
+    assert(looks.describe(bird,controller)==nil)
+    states.E1_5A_ParentsRoom_BirdLoopAlive=false
+    assert(looks.describe(bird,controller):find("motionless",1,true))
+    states.E1_5A_ParentsRoom_BirdLoopAlive=true
+    assert(looks.describe(bird,controller):find("wardrobe",1,true))
+    catalogue_checks=catalogue_checks+3
+
+    -- Native Drawer01 Look01 is ONLY_EVENT with LightsON=false, not the
+    -- separate lit-room Search cinematic. Captured frames leave it closed.
+    local drawer={sublevel="E1_5A_Bathroom_LD",id="PersistentLevel.LiSInteractionActor_Drawer01_29"}
+    local drawer_line="Below the sink, a pale round knob stands out against the dark drawer front."
+    world.GetFName=function()return {ToString=function()return "E1_5A" end} end
+    states.E1_5A_Bathroom_LightsON=false
+    states.E1_5A_Bathroom_Drawer01_Look01_Triggered=false
+    assert(looks.describe(drawer,controller)==drawer_line,"Home must not reveal closed drawer contents")
+    local drawer_lines={}
+    local drawer_poll=looks.new(function()return true end)
+    local function sample_drawer()
+        drawer_poll(controller,true,function(line)drawer_lines[#drawer_lines+1]=line end)
+    end
+    sample_drawer();assert(#drawer_lines==0)
+    states.E1_5A_Bathroom_Drawer01_Look01_Triggered=true;sample_drawer()
+    assert(#drawer_lines==1 and drawer_lines[1]==drawer_line,"dark Look describes the drawer exterior")
+    catalogue_checks=catalogue_checks+3
+
+    -- The camera owns the first Look at the pencil case. Only the later,
+    -- in-world branch should also produce an automatic scanner description.
+    world.GetFName=function()return {ToString=function()return "E1_2A" end} end
+    local case_prefix="E1_2A_ArtClass_PencilCase_"
+    local case_lines={}
+    local case_poll=looks.new(function()return true end)
+    local function sample_case()
+        case_poll(controller,true,function(line)case_lines[#case_lines+1]=line end)
+    end
+    states[case_prefix.."Look01_Triggered"]=false
+    states[case_prefix.."Look02_Triggered"]=false
+    sample_case()
+    states[case_prefix.."Look01_Triggered"]=true;sample_case()
+    assert(#case_lines==0)
+    states[case_prefix.."Look02_Triggered"]=true;sample_case()
+    assert(#case_lines==1 and case_lines[1]:find("skull patch",1,true))
+    catalogue_checks=catalogue_checks+2
+
+    -- Each exact scanner instance and each Look branch must reach the same
+    -- caption. Prime completed facts on entry to simulate a loaded save.
+    for room,entries in pairs(require("descriptions.episode1_world_objects")) do
+        local level=room:match("^(E1_%d%u)_")
+        world.GetFName=function()return {ToString=function()return level end} end
+        local seen={}
+        for _,row in ipairs(entries) do
+            local selected={sublevel=room,id="PersistentLevel."..row[1]}
+            assert(not seen[row[1]],"duplicate scanner instance "..selected.id)
+            seen[row[1]]=true
+            assert(looks.describe(selected,controller)==row[3],selected.id)
+            local poll_fixed,request_fixed=looks.new(function()return true end)
+            local spoken={}
+            local function sample()
+                poll_fixed(controller,true,function(line)spoken[#spoken+1]=line end)
+            end
+            for _,fact in ipairs(row[2]) do states[fact]=true end
+            sample()
+            assert(#spoken==0,"loading completed Looks in "..room)
+            for index,fact in ipairs(row[2]) do
+                states[fact]=false;sample()
+                states[fact]=true;sample()
+                assert(#spoken==index and spoken[index]==row[3],fact)
+            end
+            for _,alias in ipairs(row[4] or {}) do
+                assert(not seen[alias],"duplicate scanner instance "..alias)
+                seen[alias]=true
+                selected.id="PersistentLevel."..alias
+                assert(looks.describe(selected,controller)==row[3],selected.id)
+                states[row[2][1]]=false;sample()
+                local manual_id
+                request_fixed(selected,controller,function(id)manual_id=id end)
+                states[row[2][1]]=true;sample()
+                assert(manual_id==selected.id and #spoken==#row[2],"Home during Look on "..selected.id)
+                catalogue_checks=catalogue_checks+3
+            end
+            catalogue_checks=catalogue_checks+3+#row[2]
+        end
+    end
 end)
 FName=old_fname
 assert(ok,err)
@@ -104,4 +227,4 @@ local passed,reason=pcall(function()
 end)
 FindAllOf=original_find
 assert(passed,reason)
-return 27
+return 40+catalogue_checks

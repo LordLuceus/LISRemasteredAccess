@@ -290,7 +290,7 @@ return {
     scene_e1_3c_corridor_reveal01_2="Max faces a long hall lined with doors.",
     scene_e1_3c_maxroom_plant_interact01_1="Water trickles into the pot.",
     scene_e1_3c_maxroom_maxchloephoto_interact01_1="A childhood photo.",
-    scene_e1_3d_campuspark_dirtywindow_interact01_1="The words \"Clean me\" show through the grime.",
+    scene_e1_3d_campuspark_dirtywindow_interact01_1="The words \"I'm so dirty\" show through the grime.",
     scene_e1_5a_bathroom_makeupstuff_look_1="Makeup by the sink.",
     scene_e1_5a_chloeroom_friendagain_1="Chloe crouches down to look for something.",
     scene_e1_5a_chloeroom_friendagain_2="She holds out an instant camera for Max.",
