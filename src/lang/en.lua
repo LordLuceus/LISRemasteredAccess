@@ -203,6 +203,7 @@ return {
     padlock_code="Code: {digits}.",
     padlock_digit="{value}, digit {position} of {count}.",
     padlock_no_selection="No digit selected.",
+    padlock_unavailable="Combination lock: digits unavailable.",
     padlock_keyboard="A and D select a digit; W and S change it. Enter applies, Escape goes back. Home reads the full code.",
     padlock_controller="Use the D-pad or left stick: left and right select a digit; up and down change it. A applies; B goes back.",
     cutscene_not_yet="No cutscene description yet.",

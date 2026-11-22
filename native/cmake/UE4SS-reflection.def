@@ -12,6 +12,7 @@ EXPORTS
     ?discard_value@Lua@LuaMadeSimple@RC@@QEBAXH@Z
     ?prepare_function_call@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z
     ?call_function@Lua@LuaMadeSimple@RC@@QEBAXHH@Z
+    ?set_integer@Lua@LuaMadeSimple@RC@@QEBAX_J@Z
     ?set_nil@Lua@LuaMadeSimple@RC@@QEBAXXZ
     ?set_string@Lua@LuaMadeSimple@RC@@QEBAXV?$basic_string_view@DU?$char_traits@D@std@@@std@@@Z
     ?push_arrayproperty@LuaType@RC@@YAXAEBUPusherParams@12@@Z

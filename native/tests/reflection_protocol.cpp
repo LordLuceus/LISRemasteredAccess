@@ -23,7 +23,7 @@ struct Stack {
     std::vector<int64_t> integers;
     int duplicates=0, calls=0, discarded=0;
     bool violation=false, prepare_throw=false, resolver_throw=false, getter_throw=false;
-    bool rewind_view=false;
+    bool rewind_view=false, padlock=false;
     int index(int i) const {
         const int n=int(values.size()); const int x=i<0?n+i:i-1;
         if (x<0 || x>=n) throw std::runtime_error("fake stack index");
@@ -51,7 +51,7 @@ struct Stack {
         return v.number;
     }
     void prepare_function_call(std::string_view name) {
-        if (name!=(rewind_view ? lisr::reflection::rewind_resolver : lisr::reflection::resolver)) { violation=true; throw std::runtime_error("resolver name"); }
+        if (name!=(padlock ? lisr::reflection::padlock_resolver : rewind_view ? lisr::reflection::rewind_resolver : lisr::reflection::resolver)) { violation=true; throw std::runtime_error("resolver name"); }
         values.push_back({Value::Function,0,{}});
         if (prepare_throw) throw std::runtime_error("prepare after push");
     }
@@ -71,14 +71,15 @@ struct Stack {
 };
 void rejected(Stack s, const char* label, int push_mode=0, bool expected_push=false) {
     const auto original=s.values; int pushes=0;
-    const int result=lisr::reflection::read(s,[&](bool,uintptr_t,uintptr_t,uintptr_t){
+    auto push=[&](int,uintptr_t,uintptr_t,uintptr_t){
         ++pushes;
         if (push_mode==1) throw std::runtime_error("pusher before push");
         if (push_mode!=4) s.values.push_back({Value::Userdata,77,{}});
         if (push_mode==2) throw 789;
         if (push_mode==3) { s.values.push_back(Value::num(1)); throw std::runtime_error("two partial pushes"); }
         if (push_mode==5) s.values.push_back(Value::num(2));
-    });
+    };
+    const int result=s.padlock ? lisr::reflection::read_padlock(s,push) : lisr::reflection::read(s,push);
     check(result==2,label);
     check(s.values.size()==original.size()+2,"failure stack shape");
     bool preserved=s.values.size()>=original.size();
@@ -135,6 +136,52 @@ int main(int argc,char** argv) {
             Stack s;s.results[i]=Value::num(value);rejected(s,"provenance rejection");
         }
         for (int mode=1;mode<=5;++mode) rejected(Stack{},"pusher failure/shape cleanup",mode,true);
+        // Every padlock kind exercises success and the complete rejection/cleanup
+        // matrix, including a descriptor changing on the very next live call.
+        int kind=0;
+        for (auto name : {"DigitWidgets_Array","TextBlock_Digit","Digit"}) {
+            ++kind;
+            Stack base; base.padlock=true; base.values[1]=Value::str(name);base.results[3]=Value::num(kind);
+            for (int64_t descriptor : {131072,196608}) {
+                Stack s=base;s.results[1]=Value::num(descriptor);int pushes=0;
+                auto r=lisr::reflection::read_padlock(s,[&](int actual,uintptr_t owner,uintptr_t property,uintptr_t offset){
+                    ++pushes;
+                    check(actual==kind && owner==65536 && property==static_cast<uintptr_t>(descriptor) && offset==48,"padlock current descriptor and typed dispatch");
+                    check(s.values.size()==2,"padlock pusher sees original arguments only");
+                    if (actual==3) s.values.push_back(Value::num(-7));
+                    else s.values.push_back({Value::Userdata,77,{}});
+                });
+                check(r==1 && pushes==1 && s.values.size()==3 && !s.violation,"padlock success shape");
+                check(s.values.back().type==(kind==3?Value::Integer:Value::Userdata),"padlock scalar versus wrapper result");
+                if (kind==3) check(s.values.back().number==-7,"signed scalar result");
+                check(s.duplicates==3 && s.calls==1,"padlock fresh resolver call");
+                check(s.integers==std::vector<int64_t>{kind,48,descriptor,65536},"padlock resolver result order");
+            }
+            {auto s=base;s.values.clear();rejected(s,"padlock zero arguments");}
+            {auto s=base;s.values.pop_back();rejected(s,"padlock short arguments");}
+            {auto s=base;s.values.push_back(Value::num(1));rejected(s,"padlock extra arguments");}
+            for (int i=0;i<2;++i) {auto s=base;s.values[i]=Value::num(1);rejected(s,"padlock argument types");}
+            {auto s=base;s.prepare_throw=true;rejected(s,"padlock missing resolver/prepare cleanup");}
+            {auto s=base;s.resolver_throw=true;rejected(s,"padlock resolver error cleanup");}
+            {auto s=base;s.getter_throw=true;rejected(s,"padlock destructive getter error cleanup");}
+            {auto s=base;s.results.pop_back();rejected(s,"padlock short results");}
+            {auto s=base;s.results.push_back(Value::num(1));rejected(s,"padlock extra results");}
+            for (int i=0;i<4;++i) {auto s=base;s.results[i]=Value::str("bad");rejected(s,"padlock malformed result");}
+            for (auto [i,value] : std::vector<std::pair<int,int64_t>>{{0,0},{0,-1},{1,0},{1,-1},{2,0},{2,-1},{2,int64_t(INT32_MAX)+1},{2,INT64_MAX}}) {
+                auto s=base;s.results[i]=Value::num(value);rejected(s,"padlock invalid address/zero or overflowing offset");
+            }
+            for (int wrong : {0,1,2,3,4}) if (wrong!=kind) {
+                auto s=base;s.results[3]=Value::num(wrong);rejected(s,"padlock wrong kind");
+            }
+            for (int mode=1;mode<=5;++mode) rejected(base,"padlock partial pusher/shape cleanup",mode,true);
+            for (auto forbidden : {"DialogButtons_Array","DialogText","RewindBarMaterialInstance","Overlay_Rewind","CanvasPanel_Rewind","Button_RewindIndicator","Image_RewindButtonIndicator","OtherProperty"}) {
+                auto s=base;s.values[1]=Value::str(forbidden);rejected(s,"padlock cross-allowlist rejection");
+            }
+            {Stack s;s.values[1]=Value::str(name);rejected(s,"dialogue rejects padlock fields");}
+            {Stack s;s.rewind_view=true;s.values[1]=Value::str(name);int pushes=0;
+                auto r=lisr::reflection::read(s,[&](bool,uintptr_t,uintptr_t,uintptr_t){++pushes;},true);
+                check(r==2 && !pushes && !s.calls,"rewind rejects padlock fields");}
+        }
         if (argc==2 && std::string_view(argv[1])=="--force-failure") check(false,"injected failure");
     } catch (...) { check(false,"uncaught protocol test exception"); }
     std::printf("reflection protocol: %d executed checks, %d failures\n",checks,failures);

@@ -2,6 +2,13 @@
 
 Player-facing changes, newest first.
 
+## Fixes in development — 2026-11-22
+
+- The garage combination reader no longer reuses old screen data when code entry
+  is recreated. If digits cannot be read safely, it says they are unavailable;
+  Home repeats that message instead of a guessed code. Native dial controls,
+  applying the code and cancelling are unchanged.
+
 ## In development — 2026-11-22
 
 - Expanded English descriptions for Episode 1's in-world Look interactions

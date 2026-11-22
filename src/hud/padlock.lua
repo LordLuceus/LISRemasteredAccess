@@ -2,12 +2,14 @@
 -- Blueprint fields are read ONLY in the live view's own callbacks. Between
 -- callbacks we retain Lua strings/numbers, never engine objects.
 local M={}
+local reader=require('hud.padlock_view')
 local VIEW='/Game/Packages/Widgets/TimeTravel/BP_LiSPickLockWidget_View.BP_LiSPickLockWidget_View_C'
 local CLASS='BP_LiSPickLockWidget_View_C'
 M.text=function(key,p)return key end
 M.log=function(_)end
 M.clock=os.clock
 local state,pending,changed_at=nil,nil,nil
+local unavailable=nil
 local help_up=false
 local installed,reported={},{}
 local notified=false
@@ -16,9 +18,10 @@ local function unwrap(p)local ok,v=pcall(function()return p:get()end);return ok 
 function M.clear(reason)
     if state then M.log('padlock_closed reason='..tostring(reason)) end
     state,pending,changed_at=nil,nil,nil
+    unavailable=nil
     help_up=false
 end
-function M.active()return state~=nil end
+function M.active()return state~=nil or unavailable~=nil end
 local function selected_text()
     if not state then return nil end
     local n=state.selected
@@ -26,6 +29,7 @@ local function selected_text()
     return M.text('padlock_digit',{value=state.digits[n+1],position=n+1,count=#state.digits})
 end
 function M.current()
+    if unavailable then return M.text('padlock_unavailable') end
     if not state then return nil end
     return M.text('padlock_code',{digits=table.concat(state.digits,', ')})..' '..selected_text()
 end
@@ -42,9 +46,10 @@ function M.observe_buttons(buttons)
     end
 end
 function M.controller_help()
-    if not state then return end
+    if not M.active() then return end
     help_up=true
     pending=nil
+    if unavailable then unavailable.pending=false end
     M.log('padlock_help_chord start')
 end
 -- Pure state reducer. Digit is zero-based; -1 means no wheel selected, as
@@ -61,6 +66,7 @@ function M.update(id,digits,selected,event)
     local fresh=not state or state.id~=id
     local different=fresh or state.selected~=selected or table.concat(state.digits)~=table.concat(copy)
     state={id=id,digits=copy,selected=selected}
+    unavailable=nil
     if different then
         if help_up and event=='Up Pressed' then
             pending=nil
@@ -73,30 +79,36 @@ function M.update(id,digits,selected,event)
     return different
 end
 function M.help(gamepad)
-    if not state then return nil end
+    if not M.active() then return nil end
     -- A deliberate help request supersedes speech already queued by its key.
     pending=nil
+    if unavailable then unavailable.pending=false end
     return M.text(gamepad and 'padlock_controller' or 'padlock_keyboard')
 end
 function M.due()
+    if unavailable then
+        if unavailable.pending then unavailable.pending=false;return M.text('padlock_unavailable') end
+        return nil
+    end
     if not pending or M.clock()-changed_at<0.10 then return nil end
     local opening=pending=='open';pending=nil
     if not opening then return selected_text() end
     return M.text('padlock_open',{count=#state.digits})..' '..M.current()
 end
 local function capture(self,event)
-    local ok,err=pcall(function()
-        local v=unwrap(self)
-        local digits={}
-        v.DigitWidgets_Array:ForEach(function(i,p)
-            if i>16 then return end
-            local d=unwrap(p)
-            digits[i]=d.TextBlock_Digit:GetText():ToString()
-        end)
-        M.update(v:GetAddress(),digits,v.Digit,event)
-    end)
-    if not ok then M.clear('read_error');M.log('padlock_read_error='..tostring(err)) end
+    local ok,snapshot,id=reader.snapshot(unwrap(self))
+    if ok then
+        M.update(snapshot.id,snapshot.digits,snapshot.selected,event)
+    else
+        local previous=unavailable
+        M.clear('read_error')
+        if id then
+            unavailable={id=id,pending=not previous or previous.id~=id or previous.pending}
+        end
+        if not previous or previous.id~=id then M.log('padlock_read_error='..tostring(snapshot)) end
+    end
 end
+function M.configure_reader(provider)return reader.configure(provider)end
 local function hook_failure(path,address,err)
     -- Construction notifications also occur while class defaults are loading,
     -- before UFunction::Func is bound. Keep retrying, but don't dump a stack on
@@ -135,6 +147,7 @@ end
 -- Blueprint hooks before the first OpenMenuImplementable, even when the asset
 -- was just loaded. No widget fields are touched in this notification.
 function M.start()
+    if not reader.configured() then reader.configure() end
     if notified or not NotifyOnNewObject then return end
     local ok,err=pcall(NotifyOnNewObject,'/Script/LiS.LiSPickLockWidget',function()
         local good,why=pcall(M.install)
@@ -147,11 +160,12 @@ end
 -- This also clears on successful native submission, map changes and removal
 -- by routes other than Escape; Apply itself says nothing about the result.
 function M.check_presence()
-    if not state then return end
+    local current=state or unavailable
+    if not current then return end
     local found=false
     local ok=pcall(function()
         for _,v in ipairs(FindAllOf(CLASS) or {}) do
-            if v:IsValid() and v:GetAddress()==state.id and v:IsInViewport() and v:IsVisible() then found=true;break end
+            if v:IsValid() and v:GetAddress()==current.id and v:IsInViewport() and v:IsVisible() then found=true;break end
         end
     end)
     if not ok or not found then M.clear(ok and 'hidden' or 'presence_error') end

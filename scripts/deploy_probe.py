@@ -25,7 +25,7 @@ NEUTRAL = b"return {scene='inspect'}"
 BINDINGS = {
     'lisr_speech.dll': ('speak', 'stop', 'status', 'pad', 'move', 'keys', 'tick',
                         'tick_load', 'play', 'focused'),
-    'lisr_reflection.dll': ('reflection_read', 'movie_time', 'rewind', 'rewind_view_read'),
+    'lisr_reflection.dll': ('reflection_read', 'movie_time', 'rewind', 'rewind_view_read', 'padlock_read'),
 }
 REQUIRED_TRACKS = {
     'src/cutscenes/tracks/en/episode01/bik_e1_6a_dialend.mp4.ad.srt',

@@ -1,4 +1,16 @@
 package.path='src/?.lua;'..package.path
+local old_view,old_padlock=package.loaded['hud.padlock_view'],package.loaded['hud.padlock']
+-- Reducer/help tests use copied snapshots. Real fresh-property userdata and
+-- registered callback coverage lives in padlock_uncached.lua.
+package.loaded['hud.padlock_view']={configured=function()return true end,configure=function()return true end,
+    snapshot=function(view)
+        local digits={}
+        view.DigitWidgets_Array:ForEach(function(i,p)
+            digits[i]=p:get().TextBlock_Digit:GetText():ToString()
+        end)
+        return true,{id=view:GetAddress(),digits=digits,selected=view.Digit}
+    end}
+package.loaded['hud.padlock']=nil
 local p=require('hud.padlock')
 local l=require('core.localization')
 p.text=l.text
@@ -100,6 +112,7 @@ local gamepad,closed,heard,checks=false,false,nil,0
 local show=assert(load('return function() '..body..' end','@show_help_test','t',{
     padlock={check_presence=function()checks=checks+1;if closed then p.clear('hidden') end end,help=p.help},
     controls={using_gamepad=function()return gamepad end},
+    keybindings={active=false},picture={active=function()return false end},
     help={speech=function(g)return g and 'general controller help' or 'general keyboard help' end},
     say=function(t,interrupt)eq(interrupt,true);heard=t end,
 }))()
@@ -158,3 +171,4 @@ local loop=assert(source:match('LoopInGameThreadWithDelay%(50,function%(%)\n(.*)
 eq(assert(loop:find('pad_step()',1,true))<assert(loop:find('padlock.due()',1,true)),true)
 eq(source:find('elseif cmd=="help" then padlock.controller_help();show_help()',1,true)~=nil,true)
 print('padlock reader: '..n..' checks passed')
+package.loaded['hud.padlock_view'],package.loaded['hud.padlock']=old_view,old_padlock

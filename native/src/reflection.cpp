@@ -115,6 +115,29 @@ extern "C" __declspec(dllexport) int lisr_rewind_view_read(lua_State* state) noe
     } catch (...) { return 0; }
 }
 
+// Hook-local only: resolver validates current class metadata, inner type and
+// owner scope. No owner, descriptor or reflected offset survives this call.
+extern "C" __declspec(dllexport) int lisr_padlock_read(lua_State* state) noexcept {
+    static const bool compatible = exact_loader();
+    if (!compatible) return 0; // Do not construct a mismatched Lua ABI wrapper.
+    try {
+        Lua lua(state);
+        return lisr::reflection::read_padlock(lua, [&](int kind, uintptr_t address, uintptr_t property, uintptr_t offset) {
+            if (kind == 3) {
+                int32_t digit{};
+                if (!guarded_copy(address + offset, &digit, sizeof(digit)))
+                    throw std::runtime_error("padlock scalar unreadable");
+                lua.set_integer(static_cast<int64_t>(digit));
+                return;
+            }
+            RC::LuaType::PusherParams params{RC::LuaMadeSimple::Type::Operation::Get, lua,
+                reinterpret_cast<RC::Unreal::UObject*>(address),
+                reinterpret_cast<void*>(address + offset), reinterpret_cast<RC::Unreal::FProperty*>(property)};
+            if (kind == 1) RC::LuaType::push_arrayproperty(params); else RC::LuaType::push_objectproperty(params);
+        });
+    } catch (...) { return 0; }
+}
+
 // ABI: ASCII whitespace-delimited, classic locale, floats round-trip at precision 9.
 // r2 status index serial state reference range marker_known marker_present marker_time
 //    visibility_known visible writer_gate_known writer_gate writer_widget writer_material

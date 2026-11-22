@@ -440,6 +440,8 @@ after you look at the photo.
 
 The garage padlock announces its displayed code when you open code entry.
 Initially no wheel is selected; the mod says so rather than assuming the first.
+If a screen cannot be read safely, it announces “Combination lock: digits
+unavailable.” Home repeats that message; the game's normal controls still work.
 After you select a wheel, its current value is followed by its position, for
 example "0, digit 1 of 4." Changes are announced as you edit. Opening the lock
 does not read instructions; press **F1** for lock help, using the active device.
