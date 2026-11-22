@@ -39,6 +39,15 @@ class CutsceneTracks(unittest.TestCase):
                     self.assertGreaterEqual(start,previous);self.assertGreater(end,start);self.assertLessEqual(end,duration)
                     self.assertTrue(' '.join(lines[2:]).strip());previous=end
 
+    def test_ending_montage_preserves_unintroduced_identities(self):
+        track=ROOT/'src/cutscenes/tracks/en/episode01/bik_e1_7a_snowing.mp4.ad.srt'
+        text=track.read_text(encoding='utf-8')
+        cue=text.strip().split('\n\n')[6].splitlines()
+        self.assertEqual(cue[1],'00:02:18,000 --> 00:02:19,000')
+        self.assertEqual(' '.join(cue[2:]),
+            'A man holding a bong opens the RV door and hushes the barking dog.')
+        self.assertNotRegex(text,r'(?i)\b(?:Frank|Pompidou)\b')
+
     def test_strict_packaged_track_paths(self):
         good='cutscenes/tracks/en/episode01/bik_e1_7a_snowing.mp4.ad.srt'
         self.assertTrue(package.description_track(good))

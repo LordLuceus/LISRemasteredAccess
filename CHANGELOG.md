@@ -4,6 +4,8 @@ Player-facing changes, newest first.
 
 ## Fixes in development — 2026-11-22
 
+- Restored the anonymous description of the man and dog in Episode 1's ending
+  montage, so their names are not revealed before they are introduced.
 - Removed the background padlock checks that disrupted skipped replayed
   conversations before major choices, delaying their outcomes and blocking rewind.
 - The garage combination reader no longer reuses old screen data when code entry
