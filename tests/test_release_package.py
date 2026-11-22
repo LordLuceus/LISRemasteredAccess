@@ -71,4 +71,12 @@ class PackageTests(unittest.TestCase):
                     good.replace('href="#main"','href="#missing"'),good.replace('<h1>','<h3>').replace('</h1>','</h3>')):
             with self.assertRaises(ValueError):validate_html(bad,md,set())
 
+    def test_packaged_relative_links(self):
+        good='<html lang="en"><a href="#main">Skip</a><nav>Contents</nav><main id="main"><h1>Guide</h1>{}</main></html>'
+        for target in ('descriptions/world-objects.md','missing.html#section','../README.md'):
+            with self.subTest(target=target),self.assertRaisesRegex(ValueError,'missing document'):
+                validate_html(good.format('<a href="'+target+'">Guide</a>'),'# Guide',{'README.html'})
+        for target in ('README.html','README.html#main','https://example.com/guide'):
+            validate_html(good.format('<a href="'+target+'">Guide</a>'),'# Guide',{'README.html'})
+
 if __name__=='__main__':unittest.main()

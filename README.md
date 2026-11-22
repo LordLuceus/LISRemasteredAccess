@@ -411,8 +411,9 @@ in the scanner and press Home. Read it again after drawing or rewinding to
 hear what is there now. If the state is unknown, the reader does not guess a
 description. Where a Look already has a timed scene description, that track
 remains in use.
-See the [world-object authoring guide](descriptions/world-objects.md) to add or
-customise captions.
+To add or customise captions in a source checkout, see
+`descriptions/world-objects.md` there. That developer guide is not bundled in
+the tester package.
 
 In some conversations, the camera holds while Max chooses an answer. The
 reader announces the answers first, then describes the shot. For example,

@@ -1,7 +1,7 @@
 """Render existing Markdown, checking structure rather than visual appearance."""
 from pathlib import Path
 from html.parser import HTMLParser
-from urllib.parse import unquote
+from urllib.parse import unquote,urlsplit
 import argparse,os,re,shutil,subprocess
 
 DOCUMENTS=('README.md','CHANGELOG.md','THIRD-PARTY-LICENSES.md')
@@ -35,7 +35,9 @@ def validate_html(text,markdown,files):
     if not(p.language and p.main==1 and p.nav and '#main' in p.hrefs):p.errors.append('missing language/main/contents/skip link')
     for href in p.hrefs:
         if href.startswith('#') and unquote(href[1:]) not in p.ids:p.errors.append('broken anchor '+href)
-        if re.fullmatch(r'[A-Z-]+\.html',href) and href not in files:p.errors.append('missing document '+href)
+        target=urlsplit(href)
+        if not target.scheme and not target.netloc and target.path:
+            if unquote(target.path) not in files:p.errors.append('missing document '+href)
     fenced=False;expected=0
     for line in markdown.splitlines():
         if line.strip().startswith('```'):fenced=not fenced
