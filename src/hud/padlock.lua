@@ -112,7 +112,7 @@ function M.configure_reader(provider)return reader.configure(provider)end
 local function hook_failure(path,address,err)
     -- Construction notifications also occur while class defaults are loading,
     -- before UFunction::Func is bound. Keep retrying, but don't dump a stack on
-    -- every notification/poll. The real instance notification succeeds before
+    -- every construction notification. The real instance notification succeeds before
     -- SpawnDigits (native first-open test, 9 Nov).
     if reported[path]==address then return end
     reported[path]=address
@@ -146,6 +146,9 @@ end
 -- The native base exists at startup. Its construction notification installs
 -- Blueprint hooks before the first OpenMenuImplementable, even when the asset
 -- was just loaded. No widget fields are touched in this notification.
+-- Retry on subsequent notifications when early class-loading functions are not
+-- ready. Do not scan from the gameplay loop: missing-function searches stall
+-- unrelated scenes during native fast-forward.
 function M.start()
     if not reader.configured() then reader.configure() end
     if notified or not NotifyOnNewObject then return end

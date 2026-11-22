@@ -2763,6 +2763,10 @@ do
     if ok then count=count+total else check('padlock uncached reader regression suite',false,tostring(total))end
 end
 do
+    local ok,total=pcall(dofile,'tests/lua/padlock_hooks.lua')
+    if ok then count=count+total else check('padlock construction hook regression suite',false,tostring(total))end
+end
+do
     local ok,total=pcall(dofile,'tests/lua/episode1_actions.lua')
     if ok then count=count+total else check('Episode 1 action descriptions',false,tostring(total))end
 end

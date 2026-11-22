@@ -44,6 +44,10 @@ fake_require('cutscenes.runtime').active=false
 fake_require('cutscenes.scene').active=false
 fake_require('cutscenes.scene').new=function(o)local s=fake_require('cutscenes.scene');s.o=o;return s end
 fake_require('hud.padlock').active=function()return false end
+local padlock_starts,padlock_installs,padlock_presence=0,0,0
+fake_require('hud.padlock').start=function()padlock_starts=padlock_starts+1 end
+fake_require('hud.padlock').install=function()padlock_installs=padlock_installs+1 end
+fake_require('hud.padlock').check_presence=function()padlock_presence=padlock_presence+1 end
 fake_require('hud.icons').tick=function()return {} end
 fake_require('core.controls').using_gamepad=function()return false end
 local Key=setmetatable({F5=0x74},{__index=function(t,k)rawset(t,k,k);return k end})
@@ -57,6 +61,7 @@ local env=setmetatable({require=fake_require,Key=Key,ModifierKey={CONTROL=1,SHIF
     {__index=_G})
 env._G=env
 assert(loadfile('src/main.lua','t',env))()
+check(padlock_starts==1 and padlock_installs==0,'padlock hooks start through construction notifications only')
 check(bound['116:none']==nil,'extra F5 binding removed')
 check(bound['ENTER:none']==nil and bound['RETURN:none']==nil,'native Enter is not intercepted or reimplemented')
 local home,repeat_last=bound['HOME:none'],bound['HOME:ctrl']
@@ -193,5 +198,8 @@ speech.say=function(t,interrupt)spoken[#spoken+1]=t;interrupted=interrupt end
 home();check(spoken[#spoken]=='Full native notice'and interrupted==true,'actual Home notice reread still interrupts')
 current_menu=nil
 for _,name in ipairs({'hud.viewer','core.help','core.text','core.localization','descriptions.reader'}) do package.loaded[name]=nil end
+for _=1,100 do game_loop() end
+check(padlock_presence>=20,'actual gameplay loop retains padlock presence checks')
+check(padlock_installs==0,'actual gameplay loop never polls padlock hook installation')
 print('Main description wiring: '..checks..' checks passed')
 return checks

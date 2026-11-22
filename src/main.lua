@@ -953,7 +953,6 @@ LoopInGameThreadWithDelay(50,function()
     beat=beat+1
     local ok,err=pcall(function()
         if beat%5==0 then
-            padlock.install()
             padlock.check_presence()
         end
         run_keys()
