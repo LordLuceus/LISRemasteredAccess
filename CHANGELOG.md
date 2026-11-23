@@ -6,6 +6,8 @@ Player-facing changes, newest first.
 
 - Added English descriptions for Episode 2 close-ups, including Kate's two
   marked Bible passages and the items Chloe asks Max to remember at the diner.
+- The dorm bathroom entrance, labelled "Showers", now stays in the scanner
+  from the corridor with the room filter enabled, as well as from inside.
 
 ## Fixes in development — 2026-11-22
 

@@ -203,7 +203,7 @@ local function interactions(controller,out)
             -- diner truck: 23.5 m; the Photo action appeared at about 23 m).
             local zone=nil;pcall(function()local z=a.OverrideInnerZoneRadius;if type(z)=="number" and z>0 then zone=z end end)
                 return {id=id,label=label,pos=point(a:K2_GetActorLocation()),stand=stand,actor=a,kind="interaction",zone=zone,
-                    sublevel=rooms.sublevel(id),is_door=door~=nil or key=="$GT_Sensen_Int_Door01",
+                    sublevel=rooms.sublevel(id),is_door=door~=nil or rooms.is_door_key(key),
                     door_like=door~=nil or rooms.door_like(id,key,label)~=false}
             end)
             if ok and entry then out[#out+1]=entry;seen[entry.id]=true;if registered then remembered[entry.id]=a end

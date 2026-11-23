@@ -65,10 +65,17 @@ function M.room_of(fullname)
     if not base then return nil end
     return base.."_LD"
 end
+-- Native entrance names that need no replacement label. Room14 is the dorm
+-- entrance "Showers" (E2_1A Bathroom_2), not the Shower01 stall object.
+-- Its actor, key and translated label need not contain the word "door".
+function M.is_door_key(key)
+    return key=="$GT_Sensen_Int_Door01" or key=="$GT_Sensen_Int_Room14"
+end
 -- Pure: could this interaction be a way between rooms? Doors, and what the
 -- game names a door in another word (3 Nov: the living room's "Sliding Door"
 -- is BayWindow_87, key $GT_Sensen_Int_Window02). The floor test decides.
 function M.door_like(fullname,key,label)
+    if M.is_door_key(key) then return true end
     local s=(tostring(fullname)..":"..tostring(key)..":"..tostring(label)):lower()
     return s:find("door",1,true) or s:find("window",1,true) or s:find("gate",1,true) or false
 end
