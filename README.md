@@ -515,9 +515,10 @@ last. F1 gives the controls without adding instructions to each opening readout.
 
 **Picture descriptions are still in development.** English descriptions cover
 photos, postcards, posters, documents, computer screens and maps from Episode 1's
-school, campus, dormitories, Chloe's house and cliff. The catalogue covers the
-extracted Episode 1 close-up artwork, but not every picture has been checked in
-play; some in-game views may still be missing. A
+school, campus, dormitories, Chloe's house and cliff. Episode 2 adds the pictures
+in Kate's room, Max's research, Chloe's pocket contents at the diner, and the
+photos and flyers in the junkyard and at Blackwell. The catalogue covers the
+extracted close-up artwork for both episodes. In-game checks are ongoing. A
 picture with neither text nor a description says so. Automatic and on-demand
 descriptions work with either input device. D-pad left/right retain the game's
 page controls; outside the viewer, D-pad up still reads the scanner selection.
@@ -649,10 +650,9 @@ can occur between samples: silence is not confirmation that an action is safe.
   The room filter can miss connections; F4 exposes the full nearby scanner list.
 - Places in the journal are not narrated. Character selection can
   skip grid entries; open a profile and use Left and Right as described above.
-- Visual descriptions cover extracted Episode 1 close-up artwork in English,
-  not all in-game views verified through play. The journal's collectible photos
-  have separate descriptions for all five episodes. Other later-episode close-ups
-  and cutscenes are not described.
+- English visual descriptions cover extracted close-up artwork for Episodes 1
+  and 2. Some in-game views may still be missing. The journal's collectible
+  photos have separate descriptions for all five episodes.
   There is no full rewind-history reader; ordinary rewind controls still work.
 - Controller names use Xbox/XInput button labels. Other controller layouts have
   not been verified.

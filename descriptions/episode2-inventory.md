@@ -26,10 +26,16 @@ The 95 picture assets divide into 49 dorm-interior, 2 outside-dorm, 16 diner,
 7 junkyard and 21 later-school candidates. Eight additional Switch movie files
 were excluded as platform counterparts; identical frames were not established.
 
-Existing separate Episode 2 descriptions are the journal's 10 paired photos
-(20 captions) and two junkyard shooting-miss beats. There are no general Episode 2
-close-up/world/movie catalogues yet. Reused earlier-episode textures may resolve
-through their existing captions; this census does not establish their use.
+The English close-up catalogue now covers all 95 exported texture paths
+(94 distinct PNGs). The five native picture layers reference 94 of the paths.
+The diner parking lot newspaper has the same artwork as the referenced diner
+newspaper. Max's laptop has a conditional profile page tied to the Episode 1
+Victoria picture choice. English voice delays use the picture actions' cue
+timers and English audio-event durations. In-game page transitions, conditional
+playback and narration timing still need live checks.
+
+Separate Episode 2 descriptions include the journal's 10 paired photos
+(20 captions) and two junkyard shooting-miss beats.
 
 ## How the numbers were obtained
 

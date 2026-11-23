@@ -4,8 +4,8 @@
 
 For Look actions that keep the object in the game world, see the [world object authoring guide](world-objects.md).
 
-`episode1.en.json` is the current editable source for reviewed English captions.
-Use `episode2.en.json`, and so on, for later episodes; use the actual language
+`episode1.en.json` and `episode2.en.json` hold the reviewed English captions.
+Follow the same naming pattern for later episodes and use the actual language
 code for translations. The default compiler combines all
 `descriptions/episode[1-5].*.json` sources and rejects duplicate asset/language
 identities across files. Journal captions are separate and excluded from that
@@ -22,8 +22,8 @@ the number of seconds to wait before automatically describing that page in
 the matching game language. It includes any delay before the recorded line
 starts, the duration of the line and a margin before narration. The source excludes draft
 transcriptions, private filesystem paths and extracted game artwork. The first
-eleven captions have independent image review. The English catalogue now covers
-110 extracted close-ups. In-game checks are ongoing.
+eleven captions have independent image review. The English catalogue covers
+110 Episode 1 texture paths and 95 Episode 2 paths. In-game checks are ongoing.
 
 After reviewing a new caption against its actual exported image, add its record
 and run from the repository root:

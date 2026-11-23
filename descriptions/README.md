@@ -36,8 +36,9 @@ the same object, rather than inventing conflicting versions.
 | Journal photos | `descriptions/journal_photos.en.json`; slot identities in `journal_photo_slots.json` | Separate generated catalogues and `src/hud/journal_photos.lua` |
 
 `N`, `NN` and `language` are naming conventions, not literal filenames. Current
-general authored content is Episode 1. The [Episode 2 inventory](episode2-inventory.md)
-records the measured next workload and its limitations, not completed coverage.
+general authored content is Episode 1, with close-ups also available for
+Episode 2. The [Episode 2 inventory](episode2-inventory.md) records the measured
+workload and the scope of offline close-up verification.
 Registration instructions are in each category guide; creating a file does not
 necessarily register it.
 

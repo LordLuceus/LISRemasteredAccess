@@ -2,6 +2,11 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-23
+
+- Added English descriptions for Episode 2 close-ups, including Kate's two
+  marked Bible passages and the items Chloe asks Max to remember at the diner.
+
 ## Fixes in development — 2026-11-22
 
 - Restored the anonymous description of the man and dog in Episode 1's ending
