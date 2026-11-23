@@ -17,8 +17,41 @@ class Captions(unittest.TestCase):
         self.rows = json.loads((ROOT / 'descriptions/episode1.en.json').read_text(encoding='utf-8'))
 
     def test_shipping_catalog_is_current(self):
-        self.assertEqual(compiler.render(self.rows).encode('utf-8'),
+        rows, source = compiler.load_sources(list((ROOT / 'descriptions').glob('episode[1-5].*.json')))
+        self.assertEqual(compiler.render(rows, source).encode('utf-8'),
                          (ROOT / 'src/descriptions/data.lua').read_bytes())
+
+    def test_merge_sources_preserves_existing_episode(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            one, two = root/'episode1.en.json', root/'episode2.en.json'
+            one.write_text(json.dumps([self.rows[0]]), encoding='utf-8')
+            two.write_text(json.dumps([self.rows[1]]), encoding='utf-8')
+            rows, label = compiler.load_sources([two, one])
+            self.assertEqual({r['asset'] for r in rows}, {r['asset'] for r in self.rows[:2]})
+            self.assertEqual(label, 'episode1.en.json + episode2.en.json')
+            # Duplicate captions across files fail rather than silently overriding E1.
+            two.write_text(json.dumps([self.rows[0]]), encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'Duplicate'):
+                compiler.load_sources([one, two])
+
+    def test_default_cli_merges_episodes_but_excludes_journal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); sources = root/'descriptions'; sources.mkdir()
+            for name, row in zip(('episode1.en.json','episode2.en.json'), self.rows[:2]):
+                (sources/name).write_text(json.dumps([row]), encoding='utf-8')
+            (sources/'journal_photos.en.json').write_text('not a closeup source', encoding='utf-8')
+            output = root/'data.lua'
+            command = [sys.executable, str(ROOT/'scripts/compile_descriptions.py'), '--output', str(output)]
+            run = subprocess.run(command, cwd=root, capture_output=True, text=True)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            for row in self.rows[:2]:self.assertIn(row['asset'], output.read_text(encoding='utf-8'))
+            check = subprocess.run(command+['--check'], cwd=root, capture_output=True, text=True)
+            self.assertEqual(check.returncode, 0, check.stderr)
+
+    def test_no_sources_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'No episode'):
+            compiler.load_sources([])
 
     def test_journal_catalogue_matches_every_native_variant(self):
         rows = json.loads((ROOT / 'descriptions/journal_photos.en.json').read_text(encoding='utf-8'))

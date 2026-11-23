@@ -95,21 +95,32 @@ def coverage(records, inventory):
             'missing_assets': sorted(a['object_path'] for k, a in assets.items() if k not in verified)}
 
 
+def load_sources(paths):
+    """Merge episode/language sources, rejecting duplicate identities across files."""
+    if not paths:
+        raise ValueError('No episode caption sources found')
+    records, labels = [], []
+    root = Path(__file__).resolve().parents[1]
+    for path in sorted(paths):
+        records.extend(validate(json.loads(path.read_text(encoding='utf-8'))))
+        try:
+            labels.append(path.resolve().relative_to(root).as_posix())
+        except ValueError:
+            labels.append(path.name)
+    return validate(records), ' + '.join(labels)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--records', type=Path, default=Path('descriptions/episode1.en.json'))
+    parser.add_argument('--records', type=Path, nargs='+',
+                        help='Explicit sources; default: descriptions/episode[1-5].*.json')
     parser.add_argument('--output', type=Path, default=Path('src/descriptions/data.lua'))
     parser.add_argument('--inventory', type=Path)
     parser.add_argument('--coverage', type=Path)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    records = json.loads(args.records.read_text(encoding='utf-8'))
-    # Keep repository-relative provenance for alternate catalogues too, without
-    # leaking machine-specific paths into generated runtime files.
-    try:
-        source = args.records.resolve().relative_to(Path(__file__).resolve().parents[1]).as_posix()
-    except ValueError:
-        source = args.records.name
+    paths = args.records if args.records is not None else list(Path('descriptions').glob('episode[1-5].*.json'))
+    records, source = load_sources(paths)
     output = render(records, source)
     report = coverage(records, args.inventory) if args.inventory else None
     if args.coverage and report is None:

@@ -161,7 +161,7 @@ local ok,err=pcall(function()
 
     -- Each exact scanner instance and each Look branch must reach the same
     -- caption. Prime completed facts on entry to simulate a loaded save.
-    for room,entries in pairs(require("descriptions.episode1_world_objects")) do
+    for room,entries in pairs(require("descriptions.episode1_world_objects").fixed) do
         local level=room:match("^(E1_%d%u)_")
         world.GetFName=function()return {ToString=function()return level end} end
         local seen={}
@@ -227,4 +227,4 @@ local passed,reason=pcall(function()
 end)
 FindAllOf=original_find
 assert(passed,reason)
-return 40+catalogue_checks
+return 40+catalogue_checks+dofile("tests/lua/world_preservation.lua")

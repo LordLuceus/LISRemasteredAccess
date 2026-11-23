@@ -1,16 +1,43 @@
-# Episode 1 world object descriptions
+# World object descriptions
 
-Use this guide for **Look** interactions that leave the object in the world while Max comments. Brooke’s dorm slate is an example of a fixed inscription. Kate’s and Max’s slates and the dusty RV window change when Max draws on them or rewinds. [Fixed descriptions](../src/descriptions/episode1_world_objects.lua) · [Runtime catalogue and changing objects](../src/descriptions/world_looks.lua)
+[Authoring index](README.md) · [In-engine scenes](scenes.md)
+
+Use this guide for **Look** interactions that leave the object in the world while Max comments. Brooke’s dorm slate is an example of a fixed inscription. Kate’s and Max’s slates and the dusty RV window change when Max draws on them or rewinds. [Authored catalogue](../src/descriptions/episode1_world_objects.lua) · [Shared reader](../src/descriptions/world_looks.lua)
 
 ## Find and describe an object
 
 1. Work one room at a time in a disposable profile. Select the object in the scanner, face it, and use the game’s Look action. Record the controller’s world, the actor’s streamed sublevel, its full instance name, and the Look fact that changes in that branch. Several dorm boards appear simply as “Slate,” and scanner letters and positions can change.
 2. Capture what the player actually sees before interacting and after any change. Transcribe legible writing and describe the visual detail that gives the action meaning. For example, reading the insult on Kate’s board explains why Max would erase it. Cross-reference the scene and dialogue with the wiki, and use the remaster capture for exact wording, appearance and timing. [Episode 1 transcript](https://life-is-strange.fandom.com/wiki/Episode_1:_Chrysalis_-_Script)
-3. Check existing coverage. Picture pages use the texture catalogue, timed camera shots use the scene catalogue, and some scanner entries already have a Home description. The scanner gives existing room-object text precedence on reread, so check for duplicate or conflicting captions before adding an entry. [Picture authoring](README.md) · [Timed scenes](../src/cutscenes/episode1.lua) · [Room and scanner details](../src/descriptions/episode1_rooms.lua)
+3. Check existing coverage. Picture pages use the texture catalogue, timed camera shots use the scene catalogue, and some scanner entries already have a Home description. The scanner gives existing room-object text precedence on reread, so check for duplicate or conflicting captions before adding an entry. [Picture authoring](closeups.md) · [Timed scenes](scenes.md) · [Room and scanner details](../src/descriptions/episode1_rooms.lua)
 
 ## Register both ways to hear it
 
-For a fixed object, add its full scanner instance name, Look facts and spoken text under its streamed room in `episode1_world_objects.lua`. If several instances share the same facts and caption, list the additional full actor names as the fourth field on that row. For a changing object, use `register` in `world_looks.lua` with its observed `facts` and a `description(read)` function. Read the current story fact each time and return no caption when the state is unknown. Registration connects both ways to hear the same entry.
+All Episode 1 world-Look authoring is in `episode1_world_objects.lua`, including
+changing objects. The shared `world_looks.lua` reader contains no Episode1 prose
+or fact constants.
+
+For a fixed object, add its full scanner instance name, Look facts and spoken
+text under its streamed room in the catalogue's `fixed` table. If instances share
+facts and text, list their additional full actor names as the fourth row field.
+For a changing object, use the catalogue's `register(register, fixed)` function:
+call `register(room, actor, entry)` with observed `facts` and a
+`description(read)` function. Read current facts each time; return no caption
+when state is unknown. The injected `fixed(room, actor, facts, text, aliases)`
+helper lets a catalogue reuse existing scanner captions. Never query game
+objects while loading a catalogue.
+
+State-change announcements use optional entry metadata:
+`actions[fact]={key=<English text key>, supersedes_reread=true}`. Kate's board is
+the existing example: its early wiping fact can replace a pending reread and
+temporarily hold the HUD notice. Preserve that priority and its rewind behavior;
+do not substitute the later completed-action fact. Ordinary entries do not need
+action metadata.
+
+For Episode 2, create a catalogue with `fixed` and `register` and explicitly add
+it to [world_catalogues.lua](../src/descriptions/world_catalogues.lua). An empty
+registration function is sufficient for fixed-only content. Registration runs
+before the fixed rows, preserving the existing order. Do not add episode prose
+back into the shared reader. Registration connects both ways to hear an entry.
 
 | Table | Working example | What it enables |
 | --- | --- | --- |

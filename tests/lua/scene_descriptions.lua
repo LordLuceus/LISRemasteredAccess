@@ -1,5 +1,5 @@
 package.path='src/?.lua;'..package.path
-local Data=require('cutscenes.classroom')
+local Data=require('cutscenes.episode1').groups.classroom
 local Policy=require('cutscenes.scene_policy')
 local Runtime=require('cutscenes.scene')
 local count=0
@@ -118,7 +118,7 @@ end
 -- In normal gameplay these starts can coincide with earlier free-roam
 -- thoughts. The tree's later shot and the door's scanner readout carry them.
 do
-    local tracks=require('cutscenes.episode1')
+    local tracks=require('cutscenes.episode1').timelines
     check(not tracks.E1_3A_CampusA_LD_Tree_ZenStart and tracks.E1_3A_CampusA_LD_Tree_ZenLoop,
         'Warren reminder stays clear when Max sits at the tree')
     check(not tracks.E1_5B_LivingRoom_LD_BayWindow_Interact01 and
@@ -128,7 +128,7 @@ end
 -- Named story beats survive catalogue edits. Iterating the remaining tracks
 -- alone would still pass if an entire chapter or a choice outcome disappeared.
 do
-    local tracks=require('cutscenes.episode1')
+    local tracks=require('cutscenes.episode1').timelines
     local beats={
         E1_1A_CliffFuture={'IntroStorm','LighthouseBreak'},
         E1_2A_ArtClass={'BellRing','MaxAnswers'},
@@ -153,7 +153,7 @@ do
     end
 end
 -- Sample every authored Episode 1 actor through the runtime entry point.
-for actor,definition in pairs(require('cutscenes.episode1'))do
+for actor,definition in pairs(require('cutscenes.episode1').timelines)do
     local level=actor:match('^(E1_%d%u)_')
     local location=obj({GetAddress=function()return 123 end,
         GetFName=function()return{ToString=function()return level end}end})
@@ -193,7 +193,7 @@ local principal_lines={
     ProtectNathan={{.108,3.596},{9.313,3.769},{15.524,4.880}},
 }
 for branch,lines in pairs(principal_lines)do
-    local track=require('cutscenes.episode1')['E1_2A_Corridor_LD_'..branch]
+    local track=require('cutscenes.episode1').timelines['E1_2A_Corridor_LD_'..branch]
     for _,window in ipairs(track.windows)do
         for _,line in ipairs(lines)do
             check(window[2]<=line[1]-.55 or window[1]>=line[1]+line[2]+.5,

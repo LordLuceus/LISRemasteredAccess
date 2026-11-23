@@ -1,5 +1,5 @@
 package.path = "./src/?.lua;" .. package.path
-local actions = require("cutscenes.episode1_actions")
+local actions = require("cutscenes.actions")
 local function fname(name)
     return {ToString=function() return name end}
 end

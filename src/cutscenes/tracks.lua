@@ -3,12 +3,7 @@
 -- tracks. English timing is not silently used over another language's dialogue.
 local Track=require('cutscenes.track')
 local M={};M.__index=M
--- English dialogue spans from the two shipped movie subtitle tracks, padded
--- for the game-thread poll. Merge short gaps where a line cannot fit.
-local dialogue={
-    ['en/episode01/bik_e1_7a_snowing.mp4']={{0,74.55},{80.5,97.2}},
-    ['en/episode01/bik_e1_6a_dialend.mp4']={{17.75,23.3},{28.9,36.45}},
-}
+local dialogue=require('cutscenes.tracks.dialogue')
 function M.in_dialogue(track,time)
     for _,span in ipairs(track.dialogue or {})do
         if time>=span[1] and time<span[2] then return true end

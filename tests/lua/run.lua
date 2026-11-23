@@ -2119,7 +2119,7 @@ do
     for w in ("_G _ENV assert error ipairs pairs next pcall print rawget rawset require select setmetatable getmetatable tonumber tostring type unpack xpcall math os string table io utf8 coroutine package debug "..
         "FindAllOf FindFirstOf StaticFindObject FName FText RegisterHook RegisterKeyBind RegisterConsoleCommandHandler ExecuteInGameThread ExecuteWithDelay LoopAsync NotifyOnNewObject "..
         "LoopInGameThreadWithDelay CancelDelayedAction ExecuteAsync RegisterCustomEvent UEHelpers Key ModifierKey IsKeyBindRegistered print_lua CreateInvalidObject EObjectFlags StaticConstructObject FindObject FindObjects RegisterProcessConsoleExecPreHook RegisterProcessConsoleExecPostHook RegisterLoadMapPreHook RegisterLoadMapPostHook RegisterInitGameStatePreHook RegisterInitGameStatePostHook RegisterBeginPlayPreHook RegisterBeginPlayPostHook UnregisterHook"):gmatch("%S+") do allowed[w]=true end
-    local luac="artifacts\\lua-5.4.7\\luac54.exe"
+    local luac=os.getenv("LIS_LUAC") or "artifacts\\lua-5.4.7\\luac54.exe"
     local list=io.popen('cmd /c dir /b /s src\\scenes\\*.lua src\\scanner\\*.lua src\\autowalk\\*.lua src\\nav\\*.lua src\\hud\\*.lua src\\descriptions\\*.lua src\\dialogue\\*.lua src\\menus\\*.lua src\\rewind\\*.lua src\\cutscenes\\*.lua src\\main.lua')
     local bad={}
     local listed=0
@@ -2773,6 +2773,10 @@ end
 do
     local ok,total=pcall(dofile,'tests/lua/world_looks.lua')
     if ok then count=count+total else check('world Look descriptions',false,tostring(total))end
+end
+do
+    local ok,total=pcall(dofile,'tests/lua/scene_registry.lua')
+    if ok then count=count+total else check('scene registry content and callbacks',false,tostring(total))end
 end
 print(string.format("%d checks, %d failures",count,failures))
 os.exit(failures==0 and 0 or 1)

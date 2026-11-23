@@ -818,7 +818,7 @@ local function main_step()
             scene_descriptions.active or cutscenes.active or choices.options()~=nil)
         if not look_ok then log("world_look_error="..tostring(look_error)) end
         if c0 then
-            local action_ok,action_error=pcall(require("cutscenes.episode1_actions").tick,c0,
+            local action_ok,action_error=pcall(require("cutscenes.actions").tick,c0,
                 l10n.language()=="en" and speech.focused and speech.focused() and not in_menu()
                     and not choices.options() and not scene_descriptions.active and not cutscenes.active,say)
             if not action_ok then log("episode1_action_error="..tostring(action_error)) end

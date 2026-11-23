@@ -798,6 +798,10 @@ never restores old saves. Tester-package removal is described at the top of this
 
 ## Layout
 
+In a source checkout, developer instructions start at `descriptions/README.md`.
+That source-only guide covers authoring and verification for all description
+categories; it is not included in the tester package.
+
 - `src/`: the Lua side, installed as the UE4SS mod `LISRemasteredAccess`.
   - `main.lua`: entry point. `core/`: speech, localisation, key names.
   - `lang/`: announcement catalogs. `nav/`: autowalk and door-aware routing.

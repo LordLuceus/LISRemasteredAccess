@@ -1,7 +1,8 @@
--- Fixed English captions for Look actions that leave the object in the world.
+-- Episode 1 captions for Look actions that leave the object in the world.
 -- Each row lists the actor, Look facts, caption and optional actor names sharing those facts.
 local missing="Under the heading \"Missing,\" a black-and-white portrait shows Rachel Amber. Her name and age, 19, are printed below."
-return {
+local M={}
+M.fixed={
     E1_2A_ArtClass_LD={
         {"LiSInteractionActor_ArcadiaPicture01_8", {"E1_2A_ArtClass_ArcadiaPicture01_Look02_Triggered"},
             "A path winds past a stump into the woods. Dark trunks in the foreground give way to pale trees in the mist."},
@@ -479,3 +480,109 @@ return {
             "Carved into the wood are the words \"Max + Chloe,\" then \"BFF Pirates\" and the year 2008."},
     },
 }
+
+-- register(room, actor, entry): entry.facts is ordered; description(read) returns
+-- a caption or nil for unknown state. Optional actions[fact]={key=lang_key,
+-- supersedes_reread=true} overrides automatic speech and owns pending-action/HUD
+-- priority; supersedes_reread also replaces a pending manual request on that fact.
+-- fixed(room, actor, facts, caption, aliases) registers scanner-derived fixed
+-- captions without duplicating room wording. This hook runs before M.fixed rows.
+function M.register(register,fixed)
+    local corridor="E1_3C_Corridor_"
+    local function state_caption(fact,before,after)
+        return function(read)
+            local active=read(fact)
+            if active==false then return before end
+            if active==true then return after end
+        end
+    end
+    -- This choice changes as the wiping animation begins. Interact01_Triggered
+    -- changes at the end, alongside the consequences notification.
+    local draw="E1_3C_MIN_KateSlate"
+    local kate={
+        facts={corridor.."KateSlate_Look01_Triggered",corridor.."KateSlate_Look02_Triggered",draw},
+        actions={[draw]={key="scene_e1_3c_corridor_kateslate_interact01_1",supersedes_reread=true}},
+        description=state_caption(draw,
+            [[Someone has written "Will bang 4 Jesus" on Kate's slate.]],
+            "A peace sign is drawn on Kate's slate."),
+    }
+    local dorm="E1_3C_Corridor_LD"
+    register(dorm,"LiSInteractionActor_KateSlate_3",kate)
+
+    -- The two Look branches on Max's board are gated by completion of Draw.
+    local max_draw=corridor.."MaxSlate_Interact01_Triggered"
+    register(dorm,"LiSInteractionActor_MaxSlate_13",{
+        facts={corridor.."MaxSlate_Look01_Triggered",corridor.."MaxSlate_Look02_Triggered"},
+        description=state_caption(max_draw,
+            "The green-framed board beside room 219 is blank.",
+            "Max has underlined her name above a round face with a straight mouth and two little legs."),
+    })
+
+    local courtyard="E1_3B_CampusB_"
+    local victoria_facts={}
+    for i=1,7 do
+        victoria_facts[i]=courtyard.."CHVictoria_Look0"..i.."_Triggered"
+    end
+    register("E1_3B_CampusB_LD","LiSInteractionActor_CHVictoria_7",{
+        facts=victoria_facts,
+        description=state_caption(courtyard.."LD_VictoriaStained",
+            "Victoria and her friends cluster by the dormitory steps. Her blonde hair is cropped short.",
+            "Wet paint streaks Victoria's short blonde hair and her sweater."),
+    })
+
+    local rv="E1_3D_CampusPark_DirtyWindow_"
+    register("E1_3D_CampusPark_LD","LiSInteractionActor_DirtyWindow_0",{
+        facts={rv.."Look01_Triggered",rv.."Look02_Triggered"},
+        description=state_caption(rv.."Interact01_Triggered",
+            "A thick brown film of dust covers the RV's side window.",
+            [[The words "I'm so dirty" and a round face with a straight mouth are traced in the dust.]]),
+    })
+
+    -- These actors already have scanner wording. Only their in-world branches
+    -- need a fact listener; the first classroom Look uses a camera sequence.
+    local room_objects=require("descriptions.episode1_rooms").objects
+    local classroom="E1_2A_ArtClass_LD"
+    for _,item in ipairs({{"MaxBag","3"},{"PencilCase","8"}}) do
+        local actor="LiSInteractionActor_"..item[1].."_"..item[2]
+        fixed(classroom,actor,{"E1_2A_ArtClass_"..item[1].."_Look02_Triggered"},room_objects[classroom][actor])
+    end
+    local toilets="E1_2A_Toilets_LD"
+    local graffiti="LiSInteractionActor_Graffiti_3"
+    fixed(toilets,graffiti,{"E1_2A_Toilets_Graffiti_Look01_Triggered"},room_objects[toilets][graffiti])
+
+    local photos="LiSInteractionActor_Photos_21"
+    local vic_room="E1_3C_VicRoom_LD"
+    register(vic_room,photos,{
+        facts={"E1_3C_VicRoom_Photos_Look01_Triggered","E1_3C_VicRoom_Photos_Look02_Triggered"},
+        description=state_caption("E1_3C_MIN_VicPhoto",room_objects[vic_room][photos].Look01,
+            room_objects[vic_room][photos].Look02),
+    })
+    register("E1_5B_Garage_LD","LiSInteractionActor_ToolBox_6",{
+        facts={"E1_5B_Garage_ToolBox_Look02_Triggered"},
+        description=function(read)
+            local fallen=read("E1_5B_Garage_Puzzle_Tools_Fallen")
+            if fallen==false then return "A small green box balances high above the washing machine." end
+            if fallen==true and read("E1_5B_Garage_Puzzle_PizzaBoxPullWithTools")==false then
+                return "The green tool case has fallen into the gap beneath the cabinet."
+            end
+        end,
+    })
+    register("E1_5A_ParentsRoom_LD","LiSInteractionActor_Bird_13",{
+        facts={"E1_5A_ParentsRoom_Bird_Look03_Triggered"},
+        description=function(read)
+            local alive=read("E1_5A_ParentsRoom_BirdLoopAlive")
+            if alive==true then return "A blue jay perches on top of the wardrobe." end
+            if alive==false and read("E1_5A_ParentsRoom_BirdCrashed")==true then
+                return "A blue jay lies motionless at the window, its wings spread."
+            end
+        end,
+    })
+    register("E1_5A_Bathroom_LD","LiSInteractionActor_MakeUpStuff_33",{
+        facts={"E1_5A_Bathroom_MakeUpStuff_Look02_Triggered"},
+        description=state_caption("E1_5A_Bathroom_LightsON",
+            "The bathroom is dark. Only the outlines of the containers by the sink are visible.",
+            "Makeup and small bottles are clustered together beside the sink."),
+    })
+
+end
+return M

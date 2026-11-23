@@ -1,5 +1,5 @@
 package.path = "./src/?.lua;" .. package.path
-local scenes = require("cutscenes.episode1")
+local scenes = require("cutscenes.episode1").timelines
 local english = require("lang.en")
 local checks = 0
 local function check(value)

@@ -2,6 +2,12 @@
 
 ## Project structure
 
+For any description work, read [Description authoring](descriptions/README.md)
+first. It maps close-ups, world Looks, movies, in-engine scenes and journal photos
+to their sources, registries, timing rules and checks. Do not infer a workflow
+from an episode filename or rely on private agent memory. The classroom is a
+linked group in the Episode 1 scene catalogue, not a separate content system.
+
 UE4SS loads the mod through `src/main.lua`. Keep feature logic in the corresponding Lua directory, such as `src/scanner/`, `src/rewind/`, or `src/cutscenes/`. Put shared speech and input handling in `src/core/` and localized interface strings in `src/lang/`.
 
 The Windows speech and reflection DLLs live in `native/src/`. Author close-up and journal photo descriptions in `descriptions/` and follow its README to regenerate the Lua data. Bundled movie descriptions live in `src/cutscenes/tracks/`. Cue audio lives in `assets/audio/`. Use `artifacts/` for local builds and playback captures.
@@ -15,7 +21,17 @@ cmake -S native -B artifacts/build-native -G "Visual Studio 17 2022" -A x64
 cmake --build artifacts/build-native --config Release
 ```
 
-Generate the rewind sounds with `python scripts/generate_rewind_cues.py`. Close the game, then run `python scripts/deploy_probe.py` against the configured UE4SS installation. Deployment checks the required DLL exports, tracks, and eight cue WAVs. Launch the remaster normally to exercise the installed mod.
+Generate the rewind sounds with `python scripts/generate_rewind_cues.py` only
+when that work needs them. Deployment uses `python scripts/deploy_probe.py`
+against the configured UE4SS installation and requires the game closed. It
+checks DLL exports, tracks and all eight cue WAVs; a source edit is not proof
+that its installed build has changed.
+
+Ask the user before launching the game, including isolated-profile tests. Never
+terminate their running game or alter real saves for a test. Recover the proven
+profile/entry/shutdown procedure first; return to the native main-menu world
+before closing a loaded scene. Keep console helpers hidden. Offline tests do
+not require a game launch. Do not commit or publish without user authorization.
 
 ## Coding style and tests
 
