@@ -30,15 +30,15 @@ the same object, rather than inventing conflicting versions.
 | Category | Edit | Runtime integration |
 | --- | --- | --- |
 | Close-ups | `descriptions/episodeN.language.json` | `scripts/compile_descriptions.py` builds `src/descriptions/data.lua` |
-| World Looks | `src/descriptions/episode1_world_objects.lua`: fixed and changing-state definitions | `src/descriptions/world_catalogues.lua` registers catalogues; `world_looks.lua` handles state and speech |
+| World Looks | `src/descriptions/episodeN_world_objects.lua` for fixed and changing-state definitions | `src/descriptions/world_catalogues.lua` registers catalogues; `world_looks.lua` handles state and speech |
 | Movies | `src/cutscenes/tracks/language/episodeNN/movie.mp4.ad.srt`; dialogue intervals in `src/cutscenes/tracks/dialogue.lua` | `src/cutscenes/tracks.lua` loads content; `runtime.lua` owns playback |
 | In-engine scenes | `src/cutscenes/episode1.lua`: `timelines`, `groups`, `actions`; timed text in `src/lang/en.lua` | `src/cutscenes/registry.lua`, `scene.lua`, `scene_policy.lua`, `actions.lua` |
 | Journal photos | `descriptions/journal_photos.en.json`; slot identities in `journal_photo_slots.json` | Separate generated catalogues and `src/hud/journal_photos.lua` |
 
 `N`, `NN` and `language` are naming conventions, not literal filenames. Current
-general authored content is Episode 1, with close-ups also available for
+general authored content is Episode 1, with close-ups and world Looks also available for
 Episode 2. The [Episode 2 inventory](episode2-inventory.md) records the measured
-workload and the scope of offline close-up verification.
+workload and verification coverage for close-ups and world Looks.
 Registration instructions are in each category guide; creating a file does not
 necessarily register it.
 

@@ -33,7 +33,8 @@ temporarily hold the HUD notice. Preserve that priority and its rewind behavior;
 do not substitute the later completed-action fact. Ordinary entries do not need
 action metadata.
 
-For Episode 2, create a catalogue with `fixed` and `register` and explicitly add
+Episode 2 entries are in [its world object catalogue](../src/descriptions/episode2_world_objects.lua).
+For a new episode, create a catalogue with `fixed` and `register` and explicitly add
 it to [world_catalogues.lua](../src/descriptions/world_catalogues.lua). An empty
 registration function is sufficient for fixed-only content. Registration runs
 before the fixed rows, preserving the existing order. Do not add episode prose
@@ -77,3 +78,29 @@ Times below are local timestamps in the corresponding disposable profile’s `UE
 | Room 219 Draw and rewind, `profile-probe-state-e1-3c-corridor-ld-20261121-210943` | Home is requested during “Hurry Courtney!” at 21:10:13. The first blank-board readout is heard at 21:10:34, after the students and Max finish speaking. Draw is used at 21:10:38. The signed board resolves at 21:10:49, and after rewind it resolves to the blank board at 21:11:20. |
 
 The RV run at 21:07 verified the changed and rewound captions and reached the title screen. The game then exited with code `0xC0000005`. A repeat in `profile-probe-state-e1-3d-campuspark-ld-20261121-214107` exited cleanly after Draw. That probe ended before observing the changed fact or repeating the rewind. Both profiles left the player's saves intact.
+
+## Episode 2 captures
+
+The following disposable profiles are under `artifacts/`. Timestamps are local
+on 2026-11-23. The filtered map inventory and catalogue agree on all 172
+room, actor and Look-fact combinations. Across the sampled checkpoints, the
+game reported an active Look fact after interaction for 113 distinct targets.
+Some recorded Looks played while the opening scene still controlled the camera.
+Visual checks remain open for several bottle locations, the doe and crate,
+Chloe's later pose on the couch, railroad objects after interaction, alternate
+school poses, Kate's alternate slate inscription and Max's slate before and
+after drawing. The roof scene stays in dialogue with scanner controls unavailable;
+its authored Kate entry is not a player-selectable world description.
+
+| Room and profile | Observation |
+| --- | --- |
+| Dorm hall, `profile-probe-world-e2-1a-corridor-ld-20261123-182340` | Home described the Blackwell map before Look at 18:24:18. A second Home request at 18:24:21 waited through Max's line. The subtitle cleared at 18:24:23.740 and the scanner read the map at 18:24:24.183. |
+| Dorm hall, `profile-probe-world-e2-1a-corridor-ld-20261123-184312` | Kate's board showed “Will bang for God” with the prior episode's slate fact set. Erase at 18:45:57 cleared the writing. The changed caption resolved at 18:46:10 and rewind restored the original at 18:46:14. |
+| Diner, `profile-probe-world-e2-2a-diner-ld-20261123-181115` | The seated officer and fisherman had separate Looks at 18:12:10 and 18:12:18. The breakfast target was unavailable at 18:12:57. Its caption uses the plate to which the actor is bound. |
+| Junkyard, `profile-probe-world-e2-3a-junkyard-ld-20261123-184751` | At 18:52:14, Look at `Graffiti02_22` faced the block wall beside the dartboard and the words “Eat shit and live!” The separate inscription under the window took Write at 18:52:26. At 18:52:40 its fact was active and the caption included “Max was here.” |
+| Railroad, `profile-probe-world-e2-3b-railroad-ld-20261123-184035` | The cable drum, crowbar, fuse box and hatchet took separate Looks between 18:41:15 and 18:41:40. |
+
+Use the room's mesh or texture when the checkpoint hides an actor or an
+opening scene still controls the camera. The bathroom, classroom and diner
+have multiple targets with the same scanner label. For a new capture, match
+the full instance name and the active Look fact before revising its caption.

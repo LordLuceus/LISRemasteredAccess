@@ -2,4 +2,5 @@
 -- Each catalogue provides fixed room rows and register(register, fixed).
 return {
     (require("descriptions.episode1_world_objects")),
+    (require("descriptions.episode2_world_objects")),
 }

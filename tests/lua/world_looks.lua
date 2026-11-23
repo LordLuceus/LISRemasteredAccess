@@ -159,43 +159,158 @@ local ok,err=pcall(function()
     assert(#case_lines==1 and case_lines[1]:find("skull patch",1,true))
     catalogue_checks=catalogue_checks+2
 
+    -- Both dorm slates use today's drawing fact. Max's insult also depends
+    -- on yesterday's photograph choice, including when Home is used first.
+    local dorm="E2_1A_Corridor_"
+    local slates={
+        {"KateSlate_4", dorm.."KateSlate_", "Will bang for God", "wiped"},
+        {"MaxSlate_2", dorm.."MaxSlate_", "Max Selfie", "Surveillance cam ON"},
+    }
+    for _,slate in ipairs(slates) do
+        local selected={sublevel=dorm.."LD",id="PersistentLevel.LiSInteractionActor_"..slate[1]}
+        local changed=slate[2].."Interact01_Triggered"
+        states[changed]=nil
+        assert(looks.describe(selected,controller)==nil)
+        states[changed]=false
+        if slate[1]=="KateSlate_4" then
+            states.E1_3C_MIN_KateSlate=nil
+            assert(looks.describe(selected,controller)==nil)
+            states.E1_3C_MIN_KateSlate=false
+            assert(looks.describe(selected,controller):find("Will bang 4 Jesus",1,true))
+            states.E1_3C_MIN_KateSlate=true
+            catalogue_checks=catalogue_checks+2
+        else
+            states.E1_3C_MIN_VicPhoto=false
+            assert(looks.describe(selected,controller)==nil)
+            states.E1_3C_MIN_VicPhoto=true
+        end
+        local initial=looks.describe(selected,controller)
+        assert(initial:find(slate[3],1,true))
+        states[changed]=true
+        assert(looks.describe(selected,controller):find(slate[4],1,true))
+        states[changed]=false
+        assert(looks.describe(selected,controller)==initial)
+        catalogue_checks=catalogue_checks+4
+    end
+    catalogue_checks=catalogue_checks+1
+
+    -- A rewind while Max is speaking must cancel the erased-slate caption.
+    world.GetFName=function()return {ToString=function()return "E2_1A" end} end
+    local kate=dorm.."KateSlate_"
+    local quiet=false
+    local tick=looks.new(function()return quiet end)
+    local spoken={}
+    local function sample_slate()
+        tick(controller,true,function(line)spoken[#spoken+1]=line end)
+    end
+    states.E1_3C_MIN_KateSlate=true
+    states[kate.."Interact01_Triggered"]=true
+    states[kate.."Look01_Triggered"]=false
+    states[kate.."Look02_Triggered"]=false
+    sample_slate()
+    states[kate.."Look02_Triggered"]=true
+    sample_slate()
+    assert(#spoken==0)
+    states[kate.."Interact01_Triggered"]=false
+    states[kate.."Look02_Triggered"]=false
+    quiet=true
+    sample_slate()
+    assert(#spoken==0)
+    states[kate.."Look01_Triggered"]=true
+    sample_slate()
+    assert(#spoken==1 and spoken[1]:find("Will bang for God",1,true))
+    catalogue_checks=catalogue_checks+3
+
+    local changing_objects={
+        {"E2_3A_Junkyard_LD","Graffiti07_27","E2_3A_Junkyard_Graffiti07_Interact01_Triggered","Two lines","Max was here"},
+        {"E2_3A_Junkyard_LD","CHChloe_0","E2_3A_Junkyard_LD_AfterEllipse","beanie","couch"},
+        {"E2_2A_DinerPark_LD","FrankRVWindow_17","E1_3D_MIN_DirtyRV","film of dust","I'm so dirty"},
+    }
+    for _,object in ipairs(changing_objects) do
+        local room,actor,state=table.unpack(object)
+        local selected={sublevel=room,id="PersistentLevel.LiSInteractionActor_"..actor}
+        states[state]=nil
+        assert(looks.describe(selected,controller)==nil)
+        states[state]=false
+        local before=looks.describe(selected,controller)
+        assert(before:find(object[4],1,true))
+        states[state]=true
+        assert(looks.describe(selected,controller):find(object[5],1,true))
+        states[state]=false
+        assert(looks.describe(selected,controller)==before)
+        catalogue_checks=catalogue_checks+4
+    end
+
+    -- Count each scanner instance, including aliases, against the shipped maps.
+    local episode2=require("descriptions.episode2_world_objects")
+    local totals={}
+    local function count(room,facts)
+        local total=totals[room] or {0,0}
+        total[1]=total[1]+1
+        total[2]=total[2]+#facts
+        totals[room]=total
+    end
+    episode2.register(function(room,actor,entry) count(room,entry.facts) end)
+    for room,entries in pairs(episode2.fixed) do
+        for _,row in ipairs(entries) do
+            count(room,row[2])
+            for _ in ipairs(row[4] or {}) do count(room,row[2]) end
+        end
+    end
+    local expected={
+        E2_1A_Bathroom_LD={5,12}, E2_1A_Corridor_LD={11,16}, E2_1A_DanaRoom_LD={7,8},
+        E2_1A_KateRoom_LD={5,6}, E2_1A_MaxRoom_LD={12,13}, E2_1B_CampusB_LD={12,14},
+        E2_2A_DinerPark_LD={9,10}, E2_2A_Diner_LD={16,17}, E2_3A_Junkyard_LD={15,17},
+        E2_3B_Railroad_LD={9,11}, E2_4A_CampusA_LD={1,1}, E2_4B_ArtClass_LD={12,14},
+        E2_4B_Corridor_LD={22,22}, E2_4B_SciClass_LD={7,10}, E2_4C_CampusB_LD2={1,1},
+    }
+    for room,total in pairs(expected) do
+        assert(totals[room] and totals[room][1]==total[1] and totals[room][2]==total[2],room)
+        totals[room]=nil
+        catalogue_checks=catalogue_checks+1
+    end
+    assert(next(totals)==nil)
+    catalogue_checks=catalogue_checks+1
+
     -- Each exact scanner instance and each Look branch must reach the same
     -- caption. Prime completed facts on entry to simulate a loaded save.
-    for room,entries in pairs(require("descriptions.episode1_world_objects").fixed) do
-        local level=room:match("^(E1_%d%u)_")
-        world.GetFName=function()return {ToString=function()return level end} end
-        local seen={}
-        for _,row in ipairs(entries) do
-            local selected={sublevel=room,id="PersistentLevel."..row[1]}
-            assert(not seen[row[1]],"duplicate scanner instance "..selected.id)
-            seen[row[1]]=true
-            assert(looks.describe(selected,controller)==row[3],selected.id)
-            local poll_fixed,request_fixed=looks.new(function()return true end)
-            local spoken={}
-            local function sample()
-                poll_fixed(controller,true,function(line)spoken[#spoken+1]=line end)
-            end
-            for _,fact in ipairs(row[2]) do states[fact]=true end
-            sample()
-            assert(#spoken==0,"loading completed Looks in "..room)
-            for index,fact in ipairs(row[2]) do
-                states[fact]=false;sample()
-                states[fact]=true;sample()
-                assert(#spoken==index and spoken[index]==row[3],fact)
-            end
-            for _,alias in ipairs(row[4] or {}) do
-                assert(not seen[alias],"duplicate scanner instance "..alias)
-                seen[alias]=true
-                selected.id="PersistentLevel."..alias
+    for _,catalogue in ipairs(require("descriptions.world_catalogues")) do
+        for room,entries in pairs(catalogue.fixed) do
+            local level=room:match("^(E%d+_%d+%u)_")
+            world.GetFName=function()return {ToString=function()return level end} end
+            local seen={}
+            for _,row in ipairs(entries) do
+                local selected={sublevel=room,id="PersistentLevel."..row[1]}
+                assert(not seen[row[1]],"duplicate scanner instance "..selected.id)
+                seen[row[1]]=true
                 assert(looks.describe(selected,controller)==row[3],selected.id)
-                states[row[2][1]]=false;sample()
-                local manual_id
-                request_fixed(selected,controller,function(id)manual_id=id end)
-                states[row[2][1]]=true;sample()
-                assert(manual_id==selected.id and #spoken==#row[2],"Home during Look on "..selected.id)
-                catalogue_checks=catalogue_checks+3
+                local poll_fixed,request_fixed=looks.new(function()return true end)
+                local spoken={}
+                local function sample()
+                    poll_fixed(controller,true,function(line)spoken[#spoken+1]=line end)
+                end
+                for _,fact in ipairs(row[2]) do states[fact]=true end
+                sample()
+                assert(#spoken==0,"loading completed Looks in "..room)
+                for index,fact in ipairs(row[2]) do
+                    states[fact]=false;sample()
+                    states[fact]=true;sample()
+                    assert(#spoken==index and spoken[index]==row[3],fact)
+                end
+                for _,alias in ipairs(row[4] or {}) do
+                    assert(not seen[alias],"duplicate scanner instance "..alias)
+                    seen[alias]=true
+                    selected.id="PersistentLevel."..alias
+                    assert(looks.describe(selected,controller)==row[3],selected.id)
+                    states[row[2][1]]=false;sample()
+                    local manual_id
+                    request_fixed(selected,controller,function(id)manual_id=id end)
+                    states[row[2][1]]=true;sample()
+                    assert(manual_id==selected.id and #spoken==#row[2],"Home during Look on "..selected.id)
+                    catalogue_checks=catalogue_checks+3
+                end
+                catalogue_checks=catalogue_checks+3+#row[2]
             end
-            catalogue_checks=catalogue_checks+3+#row[2]
         end
     end
 end)

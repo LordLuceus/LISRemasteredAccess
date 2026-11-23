@@ -4,6 +4,8 @@ Player-facing changes, newest first.
 
 ## In development — 2026-11-23
 
+- Added English descriptions for Episode 2 world objects. Use Look to hear them
+  after dialogue, or select an object and press Home or D-pad up to reread it.
 - Added English descriptions for Episode 2 close-ups, including Kate's two
   marked Bible passages and the items Chloe asks Max to remember at the diner.
 - The dorm bathroom entrance, labelled "Showers", now stays in the scanner

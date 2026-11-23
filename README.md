@@ -399,7 +399,9 @@ Look and hear Max's thoughts.
 For supported objects that stay in the world when you choose **Look**, Home
 or D-pad up also reads an English description. These cover Episode 1 objects
 and characters across the school, campus, dorms, parking lot, Chloe's house
-and lighthouse. The first use of each in-world Look branch adds its description
+and lighthouse. Episode 2 covers the dorms, campus, diner, junkyard, railroad
+and school. The dorm slates and junkyard inscriptions reflect what has been
+written or erased. The first use of each in-world Look branch adds its description
 once playing dialogue has finished. Loading a save with completed Looks does
 not announce them again; select an object and use Home or D-pad up to reread it.
 Manual readouts and repeat also wait for playing dialogue, even with subtitles off.

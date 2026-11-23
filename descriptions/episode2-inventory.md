@@ -2,9 +2,9 @@
 
 [Authoring index](README.md)
 
-Offline census made on 2026-11-23 against the installed Steam remaster, with
-source baseline `e97ea7d`. These are authoring candidates, **not a claim of
-complete runtime coverage or completed descriptions**. No game was launched.
+The original offline census used the installed Steam remaster and source
+baseline `e97ea7d` on 2026-11-23. The coverage notes below include subsequent
+authoring and disposable-profile checks.
 
 ## Workload
 
@@ -33,6 +33,22 @@ newspaper. Max's laptop has a conditional profile page tied to the Episode 1
 Victoria picture choice. English voice delays use the picture actions' cue
 timers and English audio-event durations. In-game page transitions, conditional
 playback and narration timing still need live checks.
+
+The English world catalogue covers all 144 authored targets and 172 Look branches;
+these counts do not establish that every target is available to the player.
+Two junkyard bottles share one Look fact, so the catalogue binds 171 distinct
+facts. Each bottle can be selected separately for a manual read. The art
+classroom's Everyday Heroes poster has a literal space before `_Look01` in
+its fact name. Keep that space when matching the shipped action.
+[Episode 2 catalogue](../src/descriptions/episode2_world_objects.lua)
+
+The diner target named `Diary_5` binds to the plated breakfast mesh, but was
+unavailable at the sampled chapter start. The authored roof target
+`LiSInteractionActor_LD2_1` attaches to Kate's character; it is not selectable
+in the scanner, which is unavailable during the roof dialogue. Its catalogue
+entry is not evidence of usable manual narration. Coverage of conditional Looks
+uses game assets and action definitions alongside the live checks described in
+the [world object guide](world-objects.md#episode-2-captures).
 
 Separate Episode 2 descriptions include the journal's 10 paired photos
 (20 captions) and two junkyard shooting-miss beats.
