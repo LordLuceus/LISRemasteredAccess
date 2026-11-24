@@ -761,13 +761,20 @@ python tests/test_release_package.py
 
 ## Localisation and key names
 
-The game's own labels are already translated by the game. The mod's own
-announcements live in `src/lang/en.lua`. To translate them,
-copy it to `src/lang/<code>.lua` (for example `fr.lua`, or `pt_br.lua` for pt-BR)
-and translate the values, keeping the keys and `{placeholders}`. The mod follows
-the game's language setting: it tries the exact language, then the base
-language, then English, so a partial translation still works. A missing
-English string is spoken as a marked placeholder and logged, never guessed.
+The game's own labels are already translated by the game. The mod's own text
+is organised under [`src/lang/en/`](src/lang/en/): `interface/` groups announcements
+by feature, and `scenes/episode1/` and `scenes/episode2/` group scene descriptions
+by location. [`src/lang/en.lua`](src/lang/en.lua) is the small index that loads
+those files, not the place to edit their text.
+
+The [language authoring guide](descriptions/languages.md) explains how to edit
+descriptions and create a complete or partial translation. Keep string keys and
+`{placeholders}` unchanged. The mod follows the game's language setting: it
+chooses an exact language catalogue, its base language if unavailable, or English.
+Missing keys in the chosen catalogue fall back to English. A key missing even
+from English is spoken as a marked placeholder and logged, never guessed.
+This file organisation does not enable other languages for English-only scene
+narration; those descriptions still need language-specific playback verification.
 
 Key names in announcements are filled in when spoken, for the input device the
 game says is in use: a connected but unused controller still gives keyboard

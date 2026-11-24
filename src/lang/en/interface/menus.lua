@@ -1,0 +1,27 @@
+-- English interface: menus.
+-- Stable keys; preserve placeholders when editing or translating.
+return {
+    consent_checked="checked",
+    consent_unchecked="not checked",
+    consent_available="available",
+    consent_unavailable="unavailable",
+    consent_link_unavailable="Could not open that document.",
+    consent_document_open="Close the current document before opening another.",
+    consent_document_unreadable="The in-game legal document viewer is not narrated yet.",
+    consent_help_keys="Enter or Space checks the next unchecked item: Privacy Policy, then Terms of Service. Once both are checked, it confirms. These native presses check items; they do not toggle them off. 1 opens the Terms of Service. 2 opens the Privacy Policy. Home rereads the dialog.",
+    consent_help_pad="A checks the next unchecked item: Privacy Policy, then Terms of Service. Once both are checked, A confirms. These native presses check items; they do not toggle them off. X opens the Terms of Service. Y opens the Privacy Policy. Hold the left stick and press D-pad right to repeat the last announcement.",
+    menu="Main menu. Alt F4 exits the game.",
+    menu_unlabelled="Unlabelled option",
+    percent="{value} percent",
+    dialog_confirm_cancel="{confirm_key} to confirm, {back_key} to cancel",
+    dialog_confirm="{confirm_key} to confirm",
+    gamma_title="Gamma",
+    stats_major="Major choices",
+    stats_minor="Minor choices",
+    stats_world="World stats",
+    stats_friends="Friends stats",
+    stats_percent="{value} percent",
+    stats_yours="your choice.",
+    stats_item="{text} {index} of {count}",
+    stats_loading="The choices are still loading.",
+}

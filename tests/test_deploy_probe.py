@@ -99,6 +99,19 @@ class DeployTests(unittest.TestCase):
         self.git.return_value = 'src/cutscenes/tracks/en/episode01/future.mp4.ad.srt\0'
         self.fails_unchanged()
 
+    def test_nested_language_modules_are_deployed_verbatim(self):
+        modules = {
+            'lang/en.lua': b'return require("lang.catalog").load("en", {"interface.menus"})',
+            'lang/catalog.lua': b'return {}',
+            'lang/en/interface/menus.lua': b'return {menu="Main menu"}',
+            'lang/en/scenes/episode2/s02_diner.lua': b'return {scene_test="A diner."}',
+        }
+        for name, content in modules.items():
+            self.put(self.root / 'src' / name, content)
+        self.deploy()
+        for name, content in modules.items():
+            self.assertEqual((self.game / D.SCRIPTS / name).read_bytes(), content)
+
     def test_empty_required_track(self):
         (self.root / next(iter(D.REQUIRED_TRACKS))).write_bytes(b'')
         self.fails_unchanged()

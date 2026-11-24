@@ -1,5 +1,6 @@
 -- Mod announcement text. The game's own labels arrive already translated; this
--- only covers text the mod itself adds. Catalogs are lang/<code>.lua files (lang/pt_br.lua for pt-BR).
+-- only covers text the mod itself adds. lang/<code>.lua returns a flat table
+-- directly or uses lang.catalog to merge lang/<code>/ modules (pt_br for pt-BR).
 -- Lookup: exact game language (e.g. pt-br), then its base (pt), then English.
 -- A key missing even from English is a bug: it is logged and spoken as a
 -- clearly marked placeholder, never silently replaced with other text.

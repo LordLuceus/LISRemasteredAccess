@@ -1,0 +1,27 @@
+-- English scenes: episode1: s03 campus.
+-- Stable keys; preserve placeholders when editing or translating.
+return {
+    scene_e1_3a_campusa_insertion_campusareveal_1="Paths cross a broad lawn in front of Blackwell Academy. Students gather around the fountain.",
+    scene_e1_3a_campusa_danieldraws_1="Daniel sketches Max in his notebook.",
+    scene_e1_3a_campusa_fountain_zenstart_1="Max sits at the edge of the fountain.",
+    scene_e1_3a_campusa_dronecontrol_zenstart_1="Brooke hands Max the drone controller.",
+    scene_e1_3a_campusa_dronecontrol_zenend_1="Max gives the controller back to Brooke.",
+    scene_e1_3a_campusa_satue_collectible_1="Max frames the statue against the academy building.",
+    scene_e1_3a_campusa_evanphotobook_interact01_1="Evan's photo book opens.",
+    scene_e1_3a_campusa_chtrevor_fail_1="Trevor falls off his skateboard.",
+    scene_e1_3a_campusa_ld3_parkingtransition_1="Max crosses the campus toward the parking lot.",
+    scene_e1_3a_campusa_chgrant_sign_1="Max signs Ms. Grant's petition.",
+    scene_e1_3a_campusa_chtrevor_successmax_1="Trevor lands the noseslide.",
+    scene_e1_3a_campusa_trevorfail_collectible_1="Max photographs Trevor on the ground beside his skateboard.",
+    scene_e1_3a_campusa_dronecontrol_zenloop_1="The view banks past the statue and sweeps toward Blackwell's front steps.",
+    scene_e1_3a_campusa_dronecontrol_zenloop_2="The drone rises alongside the tall classroom windows.",
+    scene_e1_3a_campusa_dronecontrol_zenloop_3="Below, students cluster with their skateboards beside the road.",
+    scene_e1_3a_campusa_fountain_zenend_1="Max gets up from the fountain.",
+    scene_e1_3a_campusa_tree_zenend_1="Max stands up beneath the tree.",
+    scene_e1_3a_campusa_dronesearch_1="B four hundred.",
+    scene_e1_3a_campusa_mpapile_maxinteracts_1="Flyers lie scattered on the ground.",
+    scene_e1_3a_campusa_fountain_zenloop_1="Beyond the fountain, a \"Go Bigfoots\" banner hangs over the school doors.",
+    scene_e1_3a_campusa_fountain_zenloop_2="Max gazes across the lawn.",
+    scene_e1_3a_campusa_tree_zenloop_1="An American flag stirs above the branches.",
+    scene_e1_3a_campusa_tree_zenloop_2="Max rests against the trunk, her brow furrowed.",
+}
