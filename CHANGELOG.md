@@ -2,6 +2,10 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-24
+
+- Clarified the Episode 1 description when Max takes the printout in Victoria's room.
+
 ## In development — 2026-11-23
 
 - Added English descriptions for Episode 2 world objects. Use Look to hear them

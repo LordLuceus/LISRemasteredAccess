@@ -252,7 +252,7 @@ return {
     scene_e1_3c_maxroom_guitar_zenstart_1="Max settles down with her guitar.",
     scene_e1_3c_maxroom_mirror_photo_1="Max points her instant camera at her reflection.",
     scene_e1_3c_vicroom_laptop_interact02_1="Across the room, a page slides out of the printer.",
-    scene_e1_3c_vicroom_mail_take_1="Max reaches.",
+    scene_e1_3c_vicroom_mail_take_1="Max takes the printout.",
     scene_e1_3c_vicroom_photos_photo_1="Victoria's rearranged photos form a hand with its middle finger raised. Max takes a picture.",
     scene_e1_3d_campuspark_parkingreveal01_rtc_1="Blackwell's brick buildings rise above rows of parked cars.",
     scene_e1_3d_campuspark_parkingreveal01_rtc_2="Max descends the steps to the lot. A blue pickup stands at the foot of the stairs.",
