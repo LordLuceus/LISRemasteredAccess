@@ -4,6 +4,12 @@ Start here when adding, reviewing or reorganizing descriptions. This is a
 **source-checkout developer guide**, not another player manual. The player's
 [README](../README.md) documents controls and currently supported content.
 
+For an episode-wide request, start with [Coverage and quality](coverage.md).
+"Describe the episode's scenes" means communicating its meaningful visual events,
+including conversations, choices and room context, unless the requester explicitly
+narrows that scope. The categories below identify implementation routes, not a
+ceiling on what to describe. A first batch of working cues is not completion.
+
 ## Choose the category by what the game does
 
 1. **Close-up picture:** the native picture viewer displays a texture, often
@@ -15,6 +21,11 @@ Start here when adding, reviewing or reorganizing descriptions. This is a
    Follow [Movies](movies.md).
 4. **In-engine scene:** a Matinee camera sequence, conversation, transition or
    short environmental beat plays in the engine. Follow [Scenes](scenes.md).
+5. **Dialogue-choice framing:** the camera holds while the player chooses a
+   reply. Describing that shot is separate from reading the answer options.
+   Follow [Choice framing](scenes.md#dialogue-choice-framing).
+6. **Room context:** establish the setting when the player enters a playable
+   location. Follow [Room descriptions](scenes.md#room-context).
 
 Classify **each action branch**, not just each object. A first Look can use a
 camera, a later Look can remain in the world, and another action can open a
@@ -22,8 +33,9 @@ picture. Do not create competing descriptions for the same moment.
 
 [Journal photos](journal-photos.md) use a separate image catalogue, not the
 close-up viewer. [Room/scanner descriptions](../src/descriptions/episode1_rooms.lua)
-are another existing source: reuse their wording when a world Look describes
-the same object, rather than inventing conflicting versions.
+also provide established wording when a world Look describes the same object.
+Reuse it rather than inventing conflicting versions, but still inventory the
+new episode's rooms and the events inside them.
 
 ## Authoring locations
 
@@ -32,7 +44,9 @@ the same object, rather than inventing conflicting versions.
 | Close-ups | `descriptions/episodeN.language.json` | `scripts/compile_descriptions.py` builds `src/descriptions/data.lua` |
 | World Looks | `src/descriptions/episodeN_world_objects.lua` for fixed and changing-state definitions | `src/descriptions/world_catalogues.lua` registers catalogues; `world_looks.lua` handles state and speech |
 | Movies | `src/cutscenes/tracks/language/episodeNN/movie.mp4.ad.srt`; dialogue intervals in `src/cutscenes/tracks/dialogue.lua` | `src/cutscenes/tracks.lua` loads content; `runtime.lua` owns playback |
-| In-engine scenes | `src/cutscenes/episode1.lua`: `timelines`, `groups`, `actions`; timed text in `src/lang/en.lua` | `src/cutscenes/registry.lua`, `scene.lua`, `scene_policy.lua`, `actions.lua` |
+| Timed in-engine scenes and action beats | `src/lang/en/scenes/episode1/` contains keyed text by location; `src/cutscenes/episode1.lua` contains timings, groups and inline action text | `src/lang/en.lua` indexes text; `src/cutscenes/registry.lua`, `scene.lua`, `scene_policy.lua`, `actions.lua` handle playback |
+| Dialogue-choice framing | `src/lang/en/scenes/episode1/choices.lua`; answer-set/world registrations in `src/cutscenes/dialogue.lua` | `src/main.lua` uses `dialogue_scene.key` and maintains the choice narration state |
+| Room context | `src/descriptions/episode1_rooms.lua`, keyed by scanner room identity | Room-change handling in `src/main.lua` currently imports that catalogue directly |
 | Journal photos | `descriptions/journal_photos.en.json`; slot identities in `journal_photo_slots.json` | Separate generated catalogues and `src/hud/journal_photos.lua` |
 
 `N`, `NN` and `language` are naming conventions, not literal filenames. Current
@@ -41,6 +55,11 @@ Episode 2. The [Episode 2 inventory](episode2-inventory.md) records the measured
 workload and verification coverage for close-ups and world Looks.
 Registration instructions are in each category guide; creating a file does not
 necessarily register it.
+
+The existing Episode 2 shooting-miss lines remain in
+`src/lang/en/scenes/episode2/s03_junkyard.lua`. They are not a completed Episode 2
+scene catalogue. See [Language files](languages.md) for hand editing, adding
+location modules and complete or partial translations.
 
 ## Rules shared by every category
 
@@ -53,7 +72,9 @@ dependencies and research caches.
   and alternate branches. See [how to use the wiki](evidence.md#wiki-reference)
   alongside remaster evidence; it is useful across all description categories.
 - Describe observed frames or exported artwork. Asset names and scripts can
-  identify a subject or branch but are not evidence of what is visible.
+  identify a subject or branch but are not evidence of what is visible. Review
+  motion and scene context too: a still may identify a pose without explaining
+  the interaction. Use evidence to describe who does what, not merely scenery.
 - Respect what the player knows **at that moment**. A canonical name is still a
   spoiler before introduction. Preserve accepted anonymous descriptions, such
   as the man and dog in Episode 1's ending. Do not rewrite accepted neighbouring
@@ -64,7 +85,8 @@ dependencies and research caches.
   visually. Give them the proposed text and any uncertainty to judge.
 - Keep narration concise and leave room for game dialogue. Verify timing
   against actual playback and the selected language, not animation names or
-  wall time. A missing subtitle alone does not establish silence.
+  wall time. A missing subtitle alone does not establish silence. Concision
+  removes redundant words, not important participants, actions or consequences.
 - Keep extracted game assets, captures, saves, private paths and drafts under
   ignored `artifacts/`. Track reviewed prose, identifiers, hashes, tooling and
   small reports. Remove regenerable bulk when no longer needed, preserving
@@ -100,6 +122,11 @@ Preservation fixtures pin accepted content and compiled policy data. Do not
 regenerate them merely to make a refactor pass. Review intentional prose/timing
 changes before updating their expectations. Update the player README/changelog
 for player-facing changes; internal relocation is not a new narration feature.
+
+Passing these checks establishes implementation properties, not narrative
+completeness. Reconcile the episode against the
+[completion standard](coverage.md#when-the-request-is-complete) before reporting
+it finished; report unresolved scenes or branches as remaining work.
 
 Report the branch, tests, outstanding live checks and whether anything was
 installed or packaged. A clean worktree is not integration into the primary

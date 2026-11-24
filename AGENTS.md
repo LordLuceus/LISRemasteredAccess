@@ -3,10 +3,12 @@
 ## Project structure
 
 For any description work, read [Description authoring](descriptions/README.md)
-first. It maps close-ups, world Looks, movies, in-engine scenes and journal photos
-to their sources, registries, timing rules and checks. Do not infer a workflow
-from an episode filename or rely on private agent memory. The classroom is a
-linked group in the Episode 1 scene catalogue, not a separate content system.
+first, including its [coverage and quality standard](descriptions/coverage.md).
+An episode-wide scene request includes meaningful events, choice framing and room
+context, not just Matinee registrations. The guide maps existing mechanisms; it
+does not limit the requested scope to its examples. Follow the actual consumers
+when extending another episode. The classroom is a linked group in the Episode 1
+scene catalogue, not a separate content system.
 
 UE4SS loads the mod through `src/main.lua`. Keep feature logic in the corresponding Lua directory, such as `src/scanner/`, `src/rewind/`, or `src/cutscenes/`. Put shared speech and input handling in `src/core/` and localized interface strings in `src/lang/`.
 

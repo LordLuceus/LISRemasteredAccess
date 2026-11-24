@@ -2,15 +2,24 @@
 
 [Authoring index](README.md) · [Movies](movies.md) · [World objects](world-objects.md)
 
-## One episode catalogue, three timing forms
+## Choose the mechanism after identifying the event
 
-All currently authored in-engine definitions live in
-[`episode1.lua`](../src/cutscenes/episode1.lua), not in a separate classroom file.
-The forms below preserve genuinely different timing needs:
+Start with the episode's narrative inventory and the
+[coverage standard](coverage.md), not a list of Matinee names. Timed scenes and
+action beats live in [`episode1.lua`](../src/cutscenes/episode1.lua); choice
+framing and room context use the separate mechanisms below. The classroom is
+part of that episode catalogue, not a separate content system.
+
+## Timed scenes and action beats
+
+The episode catalogue's three forms preserve different timing needs:
 
 - **`timelines`** maps exact Matinee actor names to `length`, narration `windows`
   and optional `loop`/`after_first_loop` fields. Each window is
-  `{start, finish, localization_key}`; text lives in `src/lang/en.lua`.
+  `{start, finish, localization_key}`. Edit the corresponding key under
+  [`src/lang/en/scenes/episode1/`](../src/lang/en/scenes/episode1/), grouped by
+  location. Add another episode's modules through the small
+  [language index](../src/lang/en.lua); see [Language files](languages.md).
 - **`groups`** holds linked multi-actor policies with `level`, `order` and
   `stages`. A stage has its exact actor, length, explicit protected dialogue
   intervals and cue records `{start, finish, key}`. `groups.classroom` includes
@@ -25,6 +34,43 @@ the continuation and Jefferson's lesson can run concurrently, and a readout can
 survive the relevant segment transition. The lesson is **not** a substitute
 clock. Its explicit Max speech bounds intentionally permit some lecture overlap.
 That requires a different data shape, not a different content file or reader.
+
+## Dialogue-choice framing
+
+[`cutscenes/dialogue.lua`](../src/cutscenes/dialogue.lua) registers the visual
+context of reply prompts. This is not the dialogue-option reader. The current
+Episode 1 text is in [choices.lua](../src/lang/en/scenes/episode1/choices.lua).
+[`main.lua`](../src/main.lua) calls `dialogue_scene.key` and handles queued choice
+narration, repetition and cancellation when the prompt changes.
+
+Each registration binds a world and one or more complete English answer sets to
+a text key. Answer order is sorted because it can change on rewind; the same
+labels in a different world must not identify the wrong scene. Capture the real
+prompt and visual context, including conditional alternatives. Never invent an
+answer set to make a fixture pass or describe the outcome before it is chosen.
+The current lookup is English-only.
+
+For another episode, add its verified registrations and text keys to this route
+(or a deliberately tested generalisation of it). Adding only Matinee windows
+does not cover these stationary choice shots. Exercise the registered lookup
+and its `main.lua` consumer, with reordered answers, wrong-world decoys, changing
+prompts, rewind and repeat. Existing choice checks are in
+[`tests/lua/run.lua`](../tests/lua/run.lua).
+
+## Room context
+
+[`descriptions/episode1_rooms.lua`](../src/descriptions/episode1_rooms.lua) provides
+setting text for scanner room identities. The room-change block in
+[`main.lua`](../src/main.lua) currently imports that table directly. It waits for
+a stable playable-room reading and avoids competing with scenes, movies and
+choices; preserve those boundaries. Room names alone are not setting descriptions.
+
+Inventory the new episode's playable locations and meaningful changed settings.
+Creating an `episode2_rooms.lua` file alone will not load it: explicitly extend
+the consumer or introduce a shared catalogue loader with preservation tests.
+Verify actual scanner room identities and entry behaviour; a volume or authored
+actor existing in a map does not prove that the player can enter or select it.
+Reuse accepted setting details without repeating them before every object.
 
 ## Register another episode
 
@@ -57,12 +103,20 @@ rescale or regenerate timings merely to simplify a refactor.
    and duration. A camera-track count is not a count of long story scenes or
    proof every branch is reachable. The [Episode2 census](episode2-inventory.md)
    states its scope and exclusions.
+   Reconcile that technical inventory with the transcript, scene order, choices,
+   rooms and optional branches. Events may span multiple actors or happen outside
+   a camera sequence; a single actor may contain several important events.
 2. Use actual frames/captures to identify the visual event. Animation starts can
    precede the visible action substantially; the classroom paper throw was an
    example. Verify the event, not just a plausible animation name.
 3. Determine dialogue intervals from shipped voice metadata/audio and observed
    playback in the target language. Choose a gap long enough for the narration.
    State which exceptions are intentional and already accepted.
+   Episode 1 has accepted brief overlap with other characters where necessary,
+   while protecting Max's lines, as well as the classroom's explicit policy.
+   Do not silently turn "prefer gaps" into "omit the event". Use an applicable
+   accepted policy; if a new exception is needed, ask rather than weakening the
+   runtime guards or leaving the missing event unreported.
 4. Add actor definitions and text keys without changing existing ones. Keep
    alternate branches separate and preserve anonymous identities until their
    introduction. Never leak a future choice outcome through an earlier caption.
@@ -89,3 +143,5 @@ levels and shared group identity. Keep those independent of the refactored
 compiler. Exercise first entry, continuation, later return, competing actors,
 rewind, pauses, menus, focus changes, stale repeats and both input devices.
 Adding Episode 2 must leave unregistered actors rejected and Episode 1 unchanged.
+These tests do not determine whether a scene's prose explains its important events.
+Apply the [editorial and completion checks](coverage.md) separately.

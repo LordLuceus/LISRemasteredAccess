@@ -1,7 +1,8 @@
 """Keep source-only authoring instructions discoverable without private memory.
 
-This gate checks local link targets and movie metadata preservation, not whether
-prose accurately describes every runtime rule or an image has been reviewed.
+This gate checks local link targets, discovery of the distinct scene mechanisms,
+and movie metadata preservation. It cannot certify narrative quality, complete
+episode coverage, accurate prose about every runtime rule, or visual review.
 """
 from pathlib import Path
 import re
@@ -10,7 +11,8 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 GUIDES = ('closeups.md', 'world-objects.md', 'movies.md', 'scenes.md',
-          'journal-photos.md', 'episode2-inventory.md', 'evidence.md')
+          'journal-photos.md', 'episode2-inventory.md', 'evidence.md', 'languages.md',
+          'coverage.md')
 
 
 def check_local_links(path, text):
@@ -19,11 +21,27 @@ def check_local_links(path, text):
         if url.scheme or url.netloc or not url.path:
             continue
         resolved = (path.parent / unquote(url.path)).resolve()
-        if not resolved.is_relative_to(ROOT) or not resolved.is_file():
+        if not resolved.is_relative_to(ROOT) or not (resolved.is_file() or resolved.is_dir()):
             raise ValueError(f'{path.name}: missing local link {target}')
 
 
+def check_scene_routes(index):
+    # These are separate consumers, not interchangeable episode catalogue forms.
+    for target in ('src/cutscenes/registry.lua', 'src/cutscenes/dialogue.lua',
+                   'src/descriptions/episode1_rooms.lua', '(coverage.md)', '(languages.md)'):
+        if target not in index:
+            raise ValueError('Authoring index omits route or standard: ' + target)
+
+
 class DescriptionAuthoring(unittest.TestCase):
+    def test_authoring_index_maps_all_existing_scene_routes(self):
+        index = (ROOT/'descriptions/README.md').read_text(encoding='utf-8')
+        check_scene_routes(index)
+        for target in ('src/cutscenes/dialogue.lua', 'src/descriptions/episode1_rooms.lua',
+                       '(coverage.md)'):
+            with self.subTest(target=target), self.assertRaisesRegex(ValueError, 'omits route'):
+                check_scene_routes(index.replace(target, 'missing-route'))
+
     def test_agent_entry_point_and_every_category_are_linked(self):
         self.assertIn('(descriptions/README.md)', (ROOT/'AGENTS.md').read_text(encoding='utf-8'))
         index = (ROOT/'descriptions/README.md').read_text(encoding='utf-8')
@@ -42,8 +60,10 @@ class DescriptionAuthoring(unittest.TestCase):
     def test_link_gate_rejects_missing_and_escaping_targets(self):
         page = ROOT/'descriptions/README.md'
         check_local_links(page, '[existing](closeups.md)')
+        check_local_links(page, '[language folder](../src/lang/en/scenes/episode2/)')
         check_local_links(page, '[external](https://example.com/guide)')
-        for target in ('missing-authoring-guide.md', '../../outside.md'):
+        for target in ('missing-authoring-guide.md', '../src/lang/missing-language/',
+                       '../../outside.md', '../../'):
             with self.subTest(target=target), self.assertRaisesRegex(ValueError, 'missing local link'):
                 check_local_links(page, '[broken]('+target+')')
 

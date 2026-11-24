@@ -49,8 +49,14 @@ or deployment. Restart after editing cached tracks.
    movie audio can be driven separately; silence in an MP4 is not proof that the
    game is silent there. Record source identity, language, cue times and review
    notes privately. No full movie copies belong in the repository or package.
+   Watch the complete event sequence, not just sample frames. Reconcile each
+   montage's participants, interactions and changes with its story context and
+   the [coverage ledger](coverage.md); shared clips can share verified text.
 3. Write concise descriptions in actual gaps, respecting who has been introduced.
    Review the text and how long it takes to speak, including rereading.
+   Preserve the important action and known participants, not merely posture or
+   scenery. A valid SRT for every movie is not evidence that every important
+   event in those movies has been described.
 4. Add SRT and dialogue metadata. Exercise parsing, malformed input, language/path
    selection, cache/restart, override precedence and speech protection offline.
 5. With separate launch permission, test through the **real story action** using

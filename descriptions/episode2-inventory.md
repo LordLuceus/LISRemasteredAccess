@@ -8,6 +8,14 @@ authoring and disposable-profile checks.
 
 ## Workload
 
+The previous uncommitted Episode 2 movie/in-engine draft was withdrawn after
+review found substantial gaps and weak descriptions. It is not the starting
+standard or evidence of completed scene coverage. The committed close-ups,
+world-object descriptions, journal photos and shooting-miss descriptions remain.
+The next scene pass should follow [Coverage and quality](coverage.md), including
+choice framing and room context. Existing private captures can aid research,
+but do not inherit the rejected draft's completeness or quality claims.
+
 | Category | Count | Meaning |
 | --- | --- | --- |
 | Close-up pictures | 95 | Unique Episode02 ShowPicture texture-package paths; pages/state variants, not 95 interactions or pixel-unique images |
