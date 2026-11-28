@@ -30,6 +30,16 @@ BINDINGS = {
 REQUIRED_TRACKS = {
     'src/cutscenes/tracks/en/episode01/bik_e1_6a_dialend.mp4.ad.srt',
     'src/cutscenes/tracks/en/episode01/bik_e1_7a_snowing.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_3a_vision.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_3b_vision.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipse1.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipse2a.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipse2b.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipse3.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipsekatealive.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_e2_7a_eclipsekatedead.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_previously_e2.mp4.ad.srt',
+    'src/cutscenes/tracks/en/episode02/bik_teaser_e2.mp4.ad.srt',
 }
 
 

@@ -302,9 +302,12 @@ replace narration, and a later timed description can replace an older readout.
 Description speech stops when the movie disappears, pauses, or the game loses
 focus. Returning does not play missed descriptions in a rush. This does not add
 pause or skip controls, or promise that the game itself pauses when unfocused.
-Other episodes, Japanese/platform movie variants,
-recaps and the short next-episode teaser are not currently described.
-English in-engine descriptions cover the classroom introductions and selected scenes throughout Episode 1.
+Episode 2 adds English tracks for the two storm visions and both eclipse endings.
+English in-engine narration covers the Episode 1 classroom and selected scenes in both episodes.
+In Episode 2, visual context follows the spoken answers at dialogue choices.
+Entering a playable room gives its layout. The diner prediction plays at the
+speed of the current demonstration, including after rewind. See the
+[Episode 2 scene coverage](descriptions/episode2-coverage.md) for branches and verification status.
 
 **Integration status:** the native playback clock, all three descriptions in the
 first movie and keyboard rereading have been exercised in-game. The first movie
@@ -317,7 +320,8 @@ offline coverage only. The native clock reader requires the supported game build
 Bundled tracks are plain UTF-8 SRT files under
 `ue4ss/Mods/LISRemasteredAccess/Scripts/cutscenes/tracks/en/episode01/`:
 `bik_e1_6a_dialend.mp4.ad.srt` and `bik_e1_7a_snowing.mp4.ad.srt`.
-To override one, copy it to the same language/episode path under
+Episode 2 tracks are in the adjacent `episode02/` folder.
+To override a track, copy it to the same language/episode path under
 `Scripts/cutscenes/overrides/` instead. An empty override disables that movie's
 descriptions. Overrides are not owned or replaced by the deployment script.
 Restart the game after editing a track.

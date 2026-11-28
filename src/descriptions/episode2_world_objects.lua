@@ -10,12 +10,6 @@ M.fixed = {
             "Kate's brown hair is tied in a high bun. Her pale sleep shirt has a small floral motif."},
         {"LiSInteractionActor_TamponDispenser_4", {"E2_1A_Bathroom_TamponDispenser_Look01_Triggered"},
             "A metal dispenser is mounted on the wall. Coin slots and turning knobs sit above a narrow delivery tray."},
-        {"LiSInteractionActor_faucet1_0", {"E2_1A_Bathroom_faucet1_Look01_Triggered", "E2_1A_Bathroom_faucet1_Look02_Triggered", "E2_1A_Bathroom_faucet1_Look03_Triggered"},
-            washbasin},
-        {"LiSInteractionActor_faucet2_0", {"E2_1A_Bathroom_faucet2_Look01_Triggered", "E2_1A_Bathroom_faucet2_Look02_Triggered", "E2_1A_Bathroom_faucet2_Look03_Triggered"},
-            washbasin},
-        {"LiSInteractionActor_faucet3_2", {"E2_1A_Bathroom_faucet3_Look01_Triggered", "E2_1A_Bathroom_faucet3_Look02_Triggered", "E2_1A_Bathroom_faucet3_Look03_Triggered"},
-            washbasin},
     },
     E2_1A_Corridor_LD = {
         {"LiSInteractionActor_BlackwellMap_5", {"E2_1A_Corridor_BlackwellMap_Look01_Triggered"},
@@ -38,6 +32,12 @@ M.fixed = {
             "The gray trash can has a round opening at the top. A small symbol on the side shows a figure dropping litter."},
     },
     E2_1A_DanaRoom_LD = {
+        {"LiSInteractionActor_HalloweenStuff_1", {"E2_1A_DanaRoom_HalloweenStuff_Look01_Triggered"},
+            "An open cardboard box holds two white skulls, an orange mask and a fluffy white garland."},
+        {"LiSInteractionActor_Makeup_3", {"E2_1A_DanaRoom_Makeup_Look01_Triggered"},
+            "Brushes, compacts and little jars crowd Dana's dressing table."},
+        {"LiSInteractionActor_Rollers_5", {"E2_1A_DanaRoom_Rollers_Look01_Triggered"},
+            "A pair of high-sided skating boots has a single line of wheels under each sole."},
         {"LiSInteractionActor_BigfootBanner_1", {"E2_1A_DanaRoom_BigfootBanner_Look01_Triggered"},
             [[A red banner reads "Go Bigfoots," flanked by "Runners up '04 '11" and "Champions '07 '08."]]},
         {"LiSInteractionActor_Birth_5", {"E2_1A_DanaRoom_Birth_control_Look01_Triggered"},
@@ -54,6 +54,12 @@ M.fixed = {
             "A gray jacket lies in a heap, one sleeve folded across the rest."},
     },
     E2_1A_KateRoom_LD = {
+        {"LiSInteractionActor_Violin_3", {"E2_1A_KateRoom_Violin_Look01_Triggered"},
+            "A violin rests inside an open, pink-lined case."},
+        {"LiSInteractionActor_MessyClothes_17", {"E2_1A_KateRoom_MessyClothes_Look01_Triggered"},
+            "Clothes lie in a heap among the books and papers in Kate's room."},
+        {"LiSInteractionActor_Rabbit_2", {"E2_1A_KateRoom_Rabbit_Look01_Triggered"},
+            "Kate's white rabbit crouches inside a wire cage, ears upright."},
         {"LiSInteractionActor_CHKate_1", {"E2_1A_KateRoom_CHKate_Look01_Triggered", "E2_1A_KateRoom_CHKate_Look02_Triggered"},
             "Kate's brown hair is drawn up into a bun. She wears pale pajamas."},
         {"LiSInteractionActor_Mirror_13", {"E2_1A_KateRoom_Mirror_Look01_Triggered"},
@@ -66,19 +72,23 @@ M.fixed = {
             "The blinds are drawn across the windows, shutting out most of the daylight."},
     },
     E2_1A_MaxRoom_LD = {
+        {"LiSInteractionActor_PhotoWall_20", {"E2_1A_MaxRoom_PhotoWall_Look01_Triggered"},
+            "Paper lanterns hang across rows of snapshots."},
+        {"LiSInteractionActor_BathroomStuff_1", {"E2_1A_MaxRoom_BathroomStuff_Look01_Triggered"},
+            "Max's toiletries sit together in a small shower bag."},
+        {"LiSInteractionActor_Books_3", {"E2_1A_MaxRoom_Books_Look01_Triggered"},
+            "Papers and books about time are piled among Max's research notes."},
+        {"LiSInteractionActor_DVDs_6", {"E2_1A_MaxRoom_DVDs_Look01_Triggered"},
+            "DVD cases lie in a loose stack on the seat of Max's couch."},
         {"LiSInteractionActor_Artbooks_11", {"E2_1A_MaxRoom_Artbooks_Look01_Triggered"},
             "The art books have brightly colored spines. One bears the photographer's name Doisneau."},
         {"LiSInteractionActor_Book_3", {"E2_1A_MaxRoom_Book_Look01_Triggered"},
             "The cover of Kate's book shows two figures huddled beneath a bright blue umbrella."},
-        {"LiSInteractionActor_Camera_1", {"E2_1A_MaxRoom_Camera_Look01_Triggered"},
-            "Max's boxy instant camera has a pale front panel above a thick dark base, with a narrow slot for the print."},
-        {"LiSInteractionActor_Clothes_1", {"E2_1A_MaxRoom_Clothes_Look01_Triggered", "E2_1A_MaxRoom_Clothes_Look02_Triggered"},
-            "Pink and red tops hang together in the open closet, beside a stack of pale drawers."},
         {"LiSInteractionActor_Guitar_1", {"E2_1A_MaxRoom_Guitar_Look01_Triggered"},
             "White flowers decorate the wooden body of Max's acoustic guitar. A dark red pickguard curves around the sound hole."},
         {"LiSInteractionActor_MaxLaptop_0", {"E2_1A_MaxRoom_MaxLaptop_Look01_Triggered"},
             "A silver laptop sits open on the wooden desk beneath the window."},
-        {"LiSInteractionActor_Plant_2", {"E2_1A_MaxRoom_Plant_Look02_Triggered"},
+        {"LiSInteractionActor_Plant_2", {"E2_1A_MaxRoom_Plant_Look01_Triggered", "E2_1A_MaxRoom_Plant_Look02_Triggered"},
             "Small green leaves spread above a blue pot marked \"Lisa.\" A tiny panda sits beside the plant."},
         {"LiSInteractionActor_RoomSacked_3", {"E2_1A_MaxRoom_RoomSacked_Look01_Triggered"},
             "DVD cases and other belongings are scattered beside Max's bed."},
@@ -92,6 +102,10 @@ M.fixed = {
             "Max's pale comforter is patterned with pink squares and patches of black-and-white zebra stripes."},
     },
     E2_1B_CampusB_LD = {
+        {"LiSInteractionActor_BrokenWindow_3", {"E2_1B_CampusB_BrokenWindow_Look01_Triggered"},
+            "Cardboard covers the lower windowpane."},
+        {"LiSInteractionActor_Box_5", {"E2_1B_CampusB_Box_Look01_Triggered"},
+            "A fashion magazine sticks out of a crate marked \"Sammy's Stuff.\""},
         {"LiSInteractionActor_Birds_1", {"E2_1B_CampusB_Birds_Look01_Triggered"},
             "Small black-and-white birds crowd onto the bench beside Samuel. Crumbs are scattered across the red wooden slats."},
         {"LiSInteractionActor_CHSamuel_0", {"E2_1B_CampusB_CHSamuel_Look01_Triggered"},
@@ -108,8 +122,6 @@ M.fixed = {
             "A dark plaque on a pale stone base names the Prescott Dormitory. It credits Sean Prescott and the Prescott Foundation and gives the year 1998."},
         {"LiSInteractionActor_Scaffolding_1", {"E2_1B_CampusB_Scaffolding_Look01_Triggered"},
             "Dismantled metal poles lie stacked lengthwise on wooden boards. Lidded paint cans stand beside the stack."},
-        {"LiSInteractionActor_Squirrel_1", {"E2_1B_CampusB_Squirrel_Look01_Triggered"},
-            "A small squirrel crouches over the food on the grass, its bushy tail curled behind it."},
         {"LiSInteractionActor_Toolsl_6", {"E2_1B_CampusB_Tools_Look01_Triggered"},
             "Pairs of pliers and small circular blades hang on a board above a red-headed hatchet."},
         {"LiSInteractionActor_Totem_1", {"E2_1B_CampusB_Totem_Look01_Triggered"},
@@ -136,6 +148,18 @@ M.fixed = {
             [[Behind the glass of the blue newspaper box, the Independent's headline reads "Weather service baffled by snow."]]},
     },
     E2_2A_Diner_LD = {
+        {"LiSInteractionActor_TShirt_1", {"E2_2A_Diner_TShirt_Look01_Triggered"},
+            "A white whale decorates a blue diner T-shirt."},
+        {"LiSInteractionActor_PostCardRack_14", {"E2_2A_Diner_PostCardRack_Look01_Triggered"},
+            "Postcards overlap in wire pockets on a revolving rack."},
+        {"LiSInteractionActor_Jukebox_1", {"E2_2A_Diner_Jukebox_Look01_Triggered"},
+            "Rows of song titles fill the red jukebox."},
+        {"LiSInteractionActor_ConterFood_0", {"E2_2A_Diner_ConterFood_Look01_Triggered"},
+            "A curved glass display case lets customers see the food at the counter."},
+        {"LiSInteractionActor_Graffiti00_5", {"E2_2A_Diner_Graffiti00_Look01_Triggered"},
+            "White letters scratched across the mirror read \"Fire walk with me.\""},
+        {"LiSInteractionActor_Window_1", {"E2_2A_Diner_Window_Look01_Triggered"},
+            "Across the bay the lighthouse stands above a dark line of trees."},
         {"LiSInteractionActor_CHAdultFem02_0", {"E2_2A_Diner_CHAdultFem02_Look01_Triggered"},
             "The woman's pale top is patterned with little clusters of flowers. She wears blue trousers."},
         {"LiSInteractionActor_CHAdultMal_3", {"E2_2A_Diner_CHAdultMal_Look01_Triggered"},
@@ -170,6 +194,36 @@ M.fixed = {
             "A whale breaks the surface with one long flipper outstretched. Smaller pictures around it show whales diving and spouting."},
     },
     E2_3A_Junkyard_LD = {
+        {"LiSInteractionActor_Syringes_3", {"E2_3A_Junkyard_Syringes_Look01_Triggered"},
+            "Discarded syringes litter the dirt."},
+        {"LiSInteractionActor_SchoolBusCarcass_7", {"E2_3A_Junkyard_SchoolBus_Look01_Triggered"},
+            "The old yellow bus sits nose-deep in weeds."},
+        {"LiSInteractionActor_PieceRachelClothing_2", {"E2_3A_Junkyard_PieceRachelClothing_Look01_Triggered"},
+            "A scrap of patterned fabric hangs from the cabinet."},
+        {"LiSInteractionActor_OldWashingMachine_14", {"E2_3A_Junkyard_OldWashingMachine_Look01_Triggered"},
+            "Rust streaks a front-loading washing machine."},
+        {"LiSInteractionActor_OldSmallBoat_0", {"E2_3A_Junkyard_OldSmallBoat_Look01_Triggered"},
+            "A ladder hangs over the side of a battered blue boat."},
+        {"LiSInteractionActor_Makeup_18", {"E2_3A_Junkyard_Makeup_Look01_Triggered"},
+            "An open eyeshadow palette sits beside a brush."},
+        {"LiSInteractionActor_Graffiti05_24", {"E2_3A_Junkyard_Graffiti05_Look01_Triggered"},
+            "The wall reads, \"Fuck you. Yes, you.\""},
+        {"LiSInteractionActor_CarWreck03_8", {"E2_3A_Junkyard_CarWreck03_Look01_Triggered"},
+            "Tall weeds surround a rusted green car."},
+        {"LiSInteractionActor_CarWreck02_12", {"E2_3A_Junkyard_CarWreck02_Look01_Triggered"},
+            "A rust-brown fender rises out of the scrap."},
+        {"LiSInteractionActor_CarWreck01_10", {"E2_3A_Junkyard_CarWreck01_Look01_Triggered"},
+            "Weeds grow around the crumpled front of a rusted car."},
+        {"LiSInteractionActor_Object01_2", {"E2_3A_Junkyard_Object01_Look01_Triggered"},
+            "A discarded baby doll lies alone among the junk."},
+        {"LiSInteractionActor_Object02_5", {"E2_3A_Junkyard_Object02_Look01_Triggered"},
+            "A battered camera lies among the other discarded things."},
+        {"LiSInteractionActor_Object05_9", {"E2_3A_Junkyard_Object05_Look01_Triggered"},
+            "Spent shotgun shells are scattered in the dirt."},
+        {"LiSInteractionActor_Sign01_0", {"E2_3A_Junkyard_Sign01_Look01_Triggered"},
+            "A red crab tops the weathered Pacific Steve's Famous Crab sign. A yellow sign below offers the building for lease.", {"LiSInteractionActor_Sign01_5"}},
+        {"LiSInteractionActor_WoodenPlank_1", {"E2_3A_Junkyard_WoodenPlank_Look01_Triggered"},
+            "A long loose board lies across a heap of scrap beside the stranded boat."},
         {"LiSInteractionActor_Bottle01_0", {"E2_3A_Junkyard_Bottle01_Look01_Triggered"},
             "A green beer bottle stands high on the old refrigerator, its narrow neck sticking up above the edge."},
         {"LiSInteractionActor_Bottle02_5", {"E2_3A_Junkyard_Bottle02_Look01_Triggered"},
@@ -200,12 +254,8 @@ M.fixed = {
             "Chloe sits low on the tracks with one boot caught against the rail."},
         {"LiSInteractionActor_CableDrum_2", {"E2_3B_Railroad_CableDrum_Look01_Triggered"},
             "The large wooden drum has round plank ends bound with metal rims."},
-        {"LiSInteractionActor_Cables_0", {"E2_3B_Railroad_Cables_Look01_Triggered", "E2_3B_Railroad_Cables_Look02_Triggered"},
-            "Yellow, red and green wires run across the dark interior of the fuse box."},
         {"LiSInteractionActor_CrowBar_0", {"E2_3B_Railroad_CrowBar_Look01_Triggered"},
             "Chips in the yellow paint expose the metal along the curved bar."},
-        {"LiSInteractionActor_FuseBox_0", {"E2_3B_Railroad_FuseBox_Look01_Triggered"},
-            "The fuse box is pale green metal. Rust marks the edges of the door and its little warning plate."},
         {"LiSInteractionActor_Hatchet_11", {"E2_3B_Railroad_Hatchet_Look01_Triggered"},
             "The hatchet has a red head with a bare metal cutting edge and a wood-grained handle."},
         {"LiSInteractionActor_Pliers_1", {"E2_3B_Railroad_Pliers_Look01_Triggered"},
@@ -313,11 +363,14 @@ M.fixed = {
     },
 }
 
-local function changing(register, room, actor, facts, state, before, after, required)
+local function changing(register, room, actor, facts, state, before, after, required, action_key)
+    if action_key then table.insert(facts, state) end
     register(room, actor, {
         facts = facts,
+        actions = action_key and {[state] = {key = action_key, supersedes_reread = true}},
         description = function(read)
             if required and read(required) ~= true then return nil end
+            if not after then return before end
             local value = read(state)
             if value == true then return after end
             if value == false then return before end
@@ -326,6 +379,63 @@ local function changing(register, room, actor, facts, state, before, after, requ
 end
 
 function M.register(register)
+    for index, actor in ipairs({"faucet1_0", "faucet2_0", "faucet3_2"}) do
+        local faucet = "E2_1A_Bathroom_faucet"..index.."_"
+        changing(register, "E2_1A_Bathroom_LD", "LiSInteractionActor_"..actor,
+            {faucet.."Look01_Triggered", faucet.."Look02_Triggered", faucet.."Look03_Triggered"},
+            faucet.."Interact01_Triggered", washbasin, nil, nil, "scene_e2_wash_face")
+    end
+
+    changing(register, "E2_3B_Railroad_LD", "LiSInteractionActor_FuseBox_0",
+        {"E2_3B_Railroad_FuseBox_Look01_Triggered"}, "E2_3B_Railroad_FuseBox_Interact01_Triggered",
+        "The fuse box is pale green metal. Rust marks the edges of the door and its little warning plate.",
+        "The metal door stands open, exposing two rows of terminals.", nil, "scene_e2_railroad_fuse_open")
+
+    changing(register, "E2_1A_MaxRoom_LD", "LiSInteractionActor_Camera_1",
+        {"E2_1A_MaxRoom_Camera_Look01_Triggered"}, "E2_1A_MaxRoom_Camera_Photo01_Triggered",
+        "Max's boxy instant camera has a pale front panel above a thick dark base, with a narrow slot for the print.",
+        nil, nil, "scene_e2_morning_selfie")
+
+    changing(register, "E2_1A_Bathroom_LD", "LiSInteractionActor_Kate_2",
+        {"E2_1A_Bathroom_kate_video_link_Look01_Triggered"}, "E2_1A_Bathroom_kate_video_link_Interact01_Triggered",
+        "Written across the bathroom mirror in lipstick: HTTP://KATESVID.COM",
+        "The link has been wiped off the mirror.",
+        nil, "scene_e2_1a_bathroom_kate_video_link_interact01_1")
+
+    changing(register, "E2_1A_MaxRoom_LD", "LiSInteractionActor_Clothes_1",
+        {"E2_1A_MaxRoom_Clothes_Look01_Triggered", "E2_1A_MaxRoom_Clothes_Look02_Triggered"}, "E2_1A_MaxRoom_Clothes_Interact01_Triggered",
+        "Pink and red tops hang together in the open closet, beside a stack of pale drawers.", nil,
+        nil, "scene_e2_1a_maxroom_clothes_interact01_1")
+
+    changing(register, "E2_1B_CampusB_LD", "LiSInteractionActor_Squirrel_1",
+        {"E2_1B_CampusB_Squirrel_Look01_Triggered"}, "E2_1B_CampusB_Squirrel_Photo01_Triggered",
+        "A small squirrel crouches over the food, its bushy tail curled behind it.",
+        "The squirrel holds a piece of doughnut on the red bench.",
+        nil, "scene_e2_1b_campusb_squirrel_photo_1")
+
+    changing(register, "E2_4B_ArtClass_LD", "LiSInteractionActor_NoteBook_4",
+        {}, "E2_4B_ArtClass_NoteBook_Interact01_Triggered", nil,
+        "A blue ink drawing fills the notebook page.", nil, "scene_e2_class_drawing")
+
+    local signal = "E2_3B_Railroad_LD_ActivateLight"
+    local burned = "E2_3B_Railroad_LD_BurnedCables"
+    local released = "E2_3B_Railroad_LD_ReleasedLock"
+    register("E2_3B_Railroad_LD", "LiSInteractionActor_Cables_0", {
+        facts = {"E2_3B_Railroad_Cables_Look01_Triggered", "E2_3B_Railroad_Cables_Look02_Triggered",
+            signal, burned, released},
+        actions = {
+            [signal] = {key = "scene_e2_wire_signal", supersedes_reread = true},
+            [burned] = {key = "scene_e2_wire_burn", supersedes_reread = true},
+            [released] = {key = "scene_e2_wire_release", supersedes_reread = true},
+        },
+        description = function(read)
+            if read(released) then return "The lock on the track switch is open." end
+            if read(burned) then return "The wiring in the fuse box has burned out." end
+            if read(signal) then return "The track switch is still locked." end
+            return "Yellow, red and green wires run across the dark interior of the fuse box."
+        end,
+    })
+
     local corridor = "E2_1A_Corridor_LD"
     local kate = "E2_1A_Corridor_KateSlate_"
     register(corridor, "LiSInteractionActor_KateSlate_4", {
@@ -354,13 +464,14 @@ function M.register(register)
     changing(register, "E2_3A_Junkyard_LD", "LiSInteractionActor_Graffiti07_27",
         {junkyard.."Graffiti07_Look01_Triggered"}, junkyard.."Graffiti07_Interact01_Triggered",
         [[Two lines read "Chloe was here" and "Rachel was here."]],
-        [[The wall reads "Chloe was here" and "Rachel was here." Underneath, Max has added "Max was here."]])
+        [[The wall reads "Chloe was here" and "Rachel was here." Underneath, Max has added "Max was here."]],
+        nil, "scene_e2_junkyard_write_name")
 
     changing(register, "E2_3A_Junkyard_LD", "LiSInteractionActor_CHChloe_0",
         {junkyard.."CHChloe_Look01_Triggered", junkyard.."CHChloe_Look02_Triggered"},
         junkyard.."LD_AfterEllipse",
         "Blue hair spills from beneath Chloe's dark beanie. Her jacket hangs open over a white tank top printed with a horned animal skull.",
-        "Chloe lies back on the outdoor couch, holding a revolver up above her face.")
+        "Chloe lies back on the rusty car hood, holding a revolver above her face.")
 
     changing(register, "E2_2A_DinerPark_LD", "LiSInteractionActor_FrankRVWindow_17",
         {"E2_2A_DinerPark_FrankRVWindow_Look01_Triggered"}, "E1_3D_MIN_DirtyRV",

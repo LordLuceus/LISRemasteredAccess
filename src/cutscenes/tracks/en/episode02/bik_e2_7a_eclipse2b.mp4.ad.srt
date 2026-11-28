@@ -1,0 +1,7 @@
+1
+00:00:02,000 --> 00:00:03,000
+Candles glow outside the dorm.
+
+2
+00:00:08,000 --> 00:00:09,000
+Flowers and handwritten messages surround a photograph of Kate.

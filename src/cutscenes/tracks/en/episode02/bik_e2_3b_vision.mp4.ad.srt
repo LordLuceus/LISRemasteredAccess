@@ -1,0 +1,7 @@
+1
+00:00:01,000 --> 00:00:02,000
+The lighthouse beam sweeps through the storm.
+
+2
+00:00:07,000 --> 00:00:08,000
+Debris spirals around a funnel stretching from the clouds to the bay.

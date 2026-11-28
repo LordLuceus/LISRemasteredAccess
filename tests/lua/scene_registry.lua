@@ -15,13 +15,20 @@ end
 equal(episode.timelines,baseline.timelines,'timelines')
 equal(episode.groups,baseline.groups,'groups')
 equal(episode.actions,baseline.actions,'actions')
-equal(registry.ids,baseline.compiled,'compiled')
-equal(registry.levels,baseline.levels,'levels')
+local first_ids,first_levels={},{}
+for name,data in pairs(registry.ids)do
+    if name:match('^E1_')then first_ids[name]=data end
+end
+for name,data in pairs(registry.levels)do
+    if name:match('^E1_')then first_levels[name]=data end
+end
+equal(first_ids,baseline.compiled,'compiled')
+equal(first_levels,baseline.levels,'levels')
 assert(registry.startup==episode.groups.classroom)
 for _,stage in pairs(episode.groups.classroom.stages)do
     assert(registry.ids[stage.actor].data==registry.startup,'linked stages share one policy')
 end
-assert(not registry.levels.E2_1A and not next(Registry.new({}).levels))
+assert(registry.levels.E2_1A and not next(Registry.new({}).levels))
 local function fname(name)return {ToString=function()return name end}end
 local world_name='E1_6B'
 local world={IsValid=function()return true end,GetAddress=function()return 1 end,
@@ -63,7 +70,7 @@ end
 focused,menu,choice,timed,movie,language=true,false,false,false,false,'en'
 world_name='E2_1A';actor_name='E2_1A_CliffFuture_LD_Doe_RunToTheLightHouse'
 local n=#heard;tick();assert(#heard==n,'unregistered Episode 2 action rejected')
-assert(require('cutscenes.scene').sample(controller,{all=FindAllOf})==nil,'unregistered Episode 2 world rejected')
+assert(not next(require('cutscenes.scene').sample(controller,{all=FindAllOf}).stages),'unregistered Episode 2 actor rejected')
 assert(not require('cutscenes.scene').belongs(actor,world,actor_name),'unregistered identity rejected even in same world')
 -- A registered world does not license arbitrary actors or two unrelated readers.
 world_name='E1_2A'
@@ -79,6 +86,44 @@ assert(sample(controller,{all=function()return {first,second}end})==nil,'unrelat
 local unknown=segment('E1_2A_ArtClass_LD_Unregistered',13)
 local frame=assert(sample(controller,{all=function()return {unknown}end}))
 assert(not next(frame.stages),'unregistered actor in registered world rejected')
+-- Check the normal matcher with reordered answers, including fact-dependent
+-- sets. A shared signature must not identify a speaker the HUD cannot identify.
+local dialogue = require("cutscenes.dialogue")
+local english = require("lang.en")
+require("cutscenes.episode2_choices")(function(level, key, ...)
+    for _, answers in ipairs({...}) do
+        local options = {}
+        for i = #answers, 1, -1 do options[#options + 1] = {text=answers[i]} end
+        world_name = level
+        equal(dialogue.key(function() return controller end, options), key, "Episode 2 prompt")
+        assert(type(english[key]) == "string" and english[key] ~= "")
+        world_name = "E3_1A"
+        equal(dialogue.key(function() return controller end, options), nil, "other episode")
+    end
+end)
+for name, timeline in pairs(require("cutscenes.episode2").timelines) do
+    for _, window in ipairs(timeline.windows) do
+        assert(english[window[3]], name .. " has missing narration")
+    end
+end
+local demo = require("cutscenes.episode2").timelines
+local first_view = demo.E2_2A_Diner_LD_Puzzle02_PredictionSequence.windows
+local replay = demo.E2_2A_Diner_LD_Puzzle02_PredictionSequenceRTC.windows
+for i, event in ipairs({"mug", "radio", "partner", "scuffle", "roach"}) do
+    equal(first_view[i][3], "scene_e2_diner_" .. event, "first demonstration")
+    equal(replay[i + 1][3], first_view[i][3], "prediction replay")
+    assert(first_view[i][1] ~= replay[i + 1][1], "distinct native clocks")
+end
+-- The instant-camera shot starts on the cut out of the railroad conversation.
+local camera_shot = demo.E2_3B_Railroad_LD_Insertion_ChloeTrapped_Part01.windows[1]
+equal(camera_shot[3], "scene_e2_3b_railroad_insertion_chloetrapped_part01_1", "railroad camera shot")
+assert(camera_shot[1] < 1 and camera_shot[2] < 3.663, "camera cue before Max speaks")
+-- Pushing after removing the wedge plays Interact01. Pushing against the
+-- wedge plays Interact02, although both native actions are labelled Push.
+equal(demo.E2_3B_Railroad_LD_CableDrum_Interact01.windows[1][3],
+    "scene_e2_3b_railroad_cabledrum_interact01_1", "rolling drum")
+equal(demo.E2_3B_Railroad_LD_CableDrum_Interact02.windows[1][3],
+    "scene_e2_3b_railroad_cabledrum_interact02_1", "blocked drum")
 FindAllOf=old_find
 print('Scene registry: '..count..' exhaustive content/policy comparisons passed')
 return count

@@ -6,6 +6,12 @@ Player-facing changes, newest first.
 
 - Corrected three Episode 2 journal photo descriptions: the locked rabbit sketch no longer claims to show a bird, Chloe lies on a rusty car hood rather than a couch, and the doe's photograph now makes clear that the clearing appears empty.
 
+## In development — 2026-11-25
+
+- Added English scene, room and choice descriptions for Episode 2, including both diner demonstrations, the railroad rescue, the rooftop outcomes and the eclipse endings. Camera Looks wait for Max's comments to finish. The classroom window scene and Chloe's junkyard photograph now describe David photographing Kate and Chloe posing on a rusty car hood.
+
+  Written details include the actual video address on the bathroom mirror, Max's warning and hideout graffiti, both inscriptions when her room is vandalized, and Chloe's complete text messages in the ending. The ending also identifies Joyce and David's location outside Chloe's house.
+
 ## In development — 2026-11-24
 
 - Clarified the Episode 1 description when Max takes the printout in Victoria's room.

@@ -835,14 +835,17 @@ local function main_step()
                 if r~=room_last then room_last=r;room_pending=1
                 elseif room_pending then
                     room_pending=room_pending+1
-                    if room_pending>=2 then
+                    local episode2_setting=game_language=="en" and require("descriptions.episode2_rooms")[r]
+                    local narration_busy=scene_descriptions.active or cutscenes.active or choices.options()
+                    if room_pending>=2 and (not episode2_setting or (not narration_busy
+                        and require("dialogue.playback").quiet()==true)) then
                         room_pending=nil
                         if r~=room_spoken then
                             room_spoken=r
                             local name=rooms.room_name(r)
-                            local setting=game_language=="en" and require("descriptions.episode1_rooms")[r]
-                            if setting and not scene_descriptions.active and not cutscenes.active and not choices.options() then
-                                say(setting)
+                            local setting=game_language=="en" and (episode2_setting or require("descriptions.episode1_rooms")[r])
+                            if setting and not narration_busy then
+                                say(setting,not episode2_setting)
                                 log("room described="..r)
                             elseif name and room_announced_once then
                                 say(l10n.text("room_changed",{name=name}))

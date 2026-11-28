@@ -8,16 +8,15 @@ end
 local catalog = require("lang.catalog")
 local baseline = require("language_catalogue_baseline")
 local english = require("lang.en")
-local old_count, new_count = 0, 0
+local old_count = 0
 for key, value in pairs(baseline) do
     old_count = old_count + 1
     check("original bytes: " .. key, english[key] == value)
 end
 for key in pairs(english) do
-    new_count = new_count + 1
-    check("no extra key: " .. key, baseline[key] ~= nil)
+    check("known key or Episode 2 addition: " .. key, baseline[key] ~= nil or key:match("^scene_e2_"))
 end
-check("frozen original count", old_count == 546 and new_count == 546)
+check("frozen original count", old_count == 546)
 
 -- Execute the actual index with only its merger intercepted, capturing its
 -- manifest without duplicating that manifest in a second authoring location.

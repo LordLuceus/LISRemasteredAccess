@@ -54,6 +54,16 @@ silver car." Do not invent dialogue, motives or emotions, and do not reveal an
 identity before its introduction. Review a sequence, not just an isolated frame:
 movement and interaction can be the entire point.
 
+Read visible writing verbatim: messages, signs, graffiti and URLs need their
+actual content, not a paraphrase or merely a label such as "a link to the video".
+Verify the wording against shipped text and readable frames or textures. Keep
+the surrounding description separate from the quotation and preserve the
+author's wording and punctuation. Do not guess at illegible text.
+
+Establish where a new scene takes place before referring to a doorway, window
+or other camera-relative detail. The listener does not already have the shot's
+visual context; identify the setting rather than describing only the framing.
+
 In a prediction puzzle, narrate the observable chain of events the player is
 meant to notice. A caption about someone approaching a table does not cover a
 later dropped glass or another character leaving. Describe events when they
@@ -74,6 +84,11 @@ overlap precedents; do not silently make them stricter or expand them universall
 If an important event cannot fit safely, investigate a suitable established
 mechanism or report the specific timing blocker instead of replacing the event
 with a trivial detail that happens to fit.
+
+Judge narration duration against actual play and the player's speech settings.
+A slow default-voice benchmark alone is not a reason to rewrite accepted prose
+or block a landing. Keep successful playtest results authoritative and revisit
+timing when a player reports a problem, rather than optimising speculatively.
 
 Cross-reference the wiki for participants, event order and branches. Verify the
 remaster's actual visuals and timing. Neither a plausible asset name nor a wiki

@@ -46,20 +46,10 @@ new episode's rooms and the events inside them.
 | Movies | `src/cutscenes/tracks/language/episodeNN/movie.mp4.ad.srt`; dialogue intervals in `src/cutscenes/tracks/dialogue.lua` | `src/cutscenes/tracks.lua` loads content; `runtime.lua` owns playback |
 | Timed in-engine scenes and action beats | `src/lang/en/scenes/episode1/` contains keyed text by location; `src/cutscenes/episode1.lua` contains timings, groups and inline action text | `src/lang/en.lua` indexes text; `src/cutscenes/registry.lua`, `scene.lua`, `scene_policy.lua`, `actions.lua` handle playback |
 | Dialogue-choice framing | `src/lang/en/scenes/episode1/choices.lua`; answer-set/world registrations in `src/cutscenes/dialogue.lua` | `src/main.lua` uses `dialogue_scene.key` and maintains the choice narration state |
-| Room context | `src/descriptions/episode1_rooms.lua`, keyed by scanner room identity | Room-change handling in `src/main.lua` currently imports that catalogue directly |
+| Room context | `src/descriptions/episode1_rooms.lua` and `episode2_rooms.lua`, keyed by scanner room identity | Room-change handling in `src/main.lua` reads the matching episode setting |
 | Journal photos | `descriptions/journal_photos.en.json`; slot identities in `journal_photo_slots.json` | Separate generated catalogues and `src/hud/journal_photos.lua` |
 
-`N`, `NN` and `language` are naming conventions, not literal filenames. Current
-general authored content is Episode 1, with close-ups and world Looks also available for
-Episode 2. The [Episode 2 inventory](episode2-inventory.md) records the measured
-workload and verification coverage for close-ups and world Looks.
-Registration instructions are in each category guide; creating a file does not
-necessarily register it.
-
-The existing Episode 2 shooting-miss lines remain in
-`src/lang/en/scenes/episode2/s03_junkyard.lua`. They are not a completed Episode 2
-scene catalogue. See [Language files](languages.md) for hand editing, adding
-location modules and complete or partial translations.
+`N`, `NN` and `language` are naming conventions, not literal filenames. Episode 2 has English scene and choice framing, room settings, movie tracks, close-ups and world Looks. See the [scene coverage ledger](episode2-coverage.md) for branch and playback status and the [inventory](episode2-inventory.md) for the measured workload. The individual guides describe the reader registrations. [Language files](languages.md) explains location modules and translations.
 
 ## Rules shared by every category
 

@@ -221,9 +221,39 @@ local ok,err=pcall(function()
     assert(#spoken==1 and spoken[1]:find("Will bang for God",1,true))
     catalogue_checks=catalogue_checks+3
 
+    local wipe = "E2_1A_Bathroom_kate_video_link_Interact01_Triggered"
+    local wiped_line = require("lang.en").scene_e2_1a_bathroom_kate_video_link_interact01_1
+    -- Transcribed from TX_LinkKateVideo_Lipstick, not a summary of the graffiti.
+    assert(require("lang.en").scene_e2_1a_bathroom_takeshower_4:find("HTTP://KATESVID.COM",1,true))
+    local captions = require("lang.en")
+    assert(captions.scene_e2_1a_corridor_maxslate_interact01_1:find("WARNING Surveillance cam ON",1,true))
+    assert(captions.scene_e2_junkyard_write_name:find("Max was here",1,true))
+    local vandalism = captions.scene_e2_1a_corridor_find_room_sacked_both_1
+    assert(vandalism:find("Crappy artist, filthy whore",1,true) and vandalism:find("Nobody messes with me, bitch",1,true))
+    catalogue_checks=catalogue_checks+4
+    local silent = false
+    local heard_wipe = {}
+    local poll_wipe = looks.new(function() return silent end)
+    local function sample_wipe()
+        poll_wipe(controller,true,function(line) heard_wipe[#heard_wipe+1] = line end)
+    end
+    states[wipe]=true; sample_wipe()
+    silent=true; sample_wipe()
+    assert(#heard_wipe==0,"loading the erased mirror stays quiet")
+    states[wipe]=false; sample_wipe()
+    silent=false; states[wipe]=true; sample_wipe()
+    states[wipe]=false; silent=true; sample_wipe()
+    assert(#heard_wipe==0,"rewinding the wipe cancels its caption")
+    silent=false; states[wipe]=true; sample_wipe()
+    assert(#heard_wipe==0,"Max's comment has priority")
+    silent=true; sample_wipe(); sample_wipe()
+    assert(#heard_wipe==1 and heard_wipe[1]==wiped_line,"the wipe plays once after speech")
+    catalogue_checks=catalogue_checks+4
+
     local changing_objects={
+        {"E2_1A_Bathroom_LD","Kate_2","E2_1A_Bathroom_kate_video_link_Interact01_Triggered","HTTP://KATESVID.COM","wiped"},
         {"E2_3A_Junkyard_LD","Graffiti07_27","E2_3A_Junkyard_Graffiti07_Interact01_Triggered","Two lines","Max was here"},
-        {"E2_3A_Junkyard_LD","CHChloe_0","E2_3A_Junkyard_LD_AfterEllipse","beanie","couch"},
+        {"E2_3A_Junkyard_LD","CHChloe_0","E2_3A_Junkyard_LD_AfterEllipse","beanie","car hood"},
         {"E2_2A_DinerPark_LD","FrankRVWindow_17","E1_3D_MIN_DirtyRV","film of dust","I'm so dirty"},
     }
     for _,object in ipairs(changing_objects) do
@@ -240,6 +270,29 @@ local ok,err=pcall(function()
         assert(looks.describe(selected,controller)==before)
         catalogue_checks=catalogue_checks+4
     end
+
+    -- Only disclose a wire outcome after its own fact rises. Rewind makes
+    -- the neutral description available again before the next choice.
+    local cable={sublevel="E2_3B_Railroad_LD",id="PersistentLevel.LiSInteractionActor_Cables_0"}
+    world.GetFName=function()return {ToString=function()return "E2_3B" end} end
+    local poll_cables=looks.new(function()return true end)
+    local results={}
+    local function sample_cables()
+        poll_cables(controller,true,function(line) results[#results+1]=line end)
+    end
+    local neutral=looks.describe(cable,controller)
+    assert(neutral:find("wires",1,true))
+    for i,branch in ipairs({{"ActivateLight","signal"},{"BurnedCables","burn"},{"ReleasedLock","release"}}) do
+        local fact="E2_3B_Railroad_LD_"..branch[1]
+        states[fact]=false; sample_cables()
+        states[fact]=true; sample_cables(); sample_cables()
+        assert(#results==i and results[i]==require("lang.en")["scene_e2_wire_"..branch[2]])
+        assert(looks.describe(cable,controller)~=neutral)
+        states[fact]=false; sample_cables()
+        assert(looks.describe(cable,controller)==neutral)
+        catalogue_checks=catalogue_checks+3
+    end
+    catalogue_checks=catalogue_checks+1
 
     -- Count each scanner instance, including aliases, against the shipped maps.
     local episode2=require("descriptions.episode2_world_objects")
@@ -258,10 +311,10 @@ local ok,err=pcall(function()
         end
     end
     local expected={
-        E2_1A_Bathroom_LD={5,12}, E2_1A_Corridor_LD={11,16}, E2_1A_DanaRoom_LD={7,8},
-        E2_1A_KateRoom_LD={5,6}, E2_1A_MaxRoom_LD={12,13}, E2_1B_CampusB_LD={12,14},
-        E2_2A_DinerPark_LD={9,10}, E2_2A_Diner_LD={16,17}, E2_3A_Junkyard_LD={15,17},
-        E2_3B_Railroad_LD={9,11}, E2_4A_CampusA_LD={1,1}, E2_4B_ArtClass_LD={12,14},
+        E2_1A_Bathroom_LD={6,17}, E2_1A_Corridor_LD={11,16}, E2_1A_DanaRoom_LD={10,11},
+        E2_1A_KateRoom_LD={8,9}, E2_1A_MaxRoom_LD={16,20}, E2_1B_CampusB_LD={14,17},
+        E2_2A_DinerPark_LD={9,10}, E2_2A_Diner_LD={22,23}, E2_3A_Junkyard_LD={31,34},
+        E2_3B_Railroad_LD={9,15}, E2_4A_CampusA_LD={1,1}, E2_4B_ArtClass_LD={13,15},
         E2_4B_Corridor_LD={22,22}, E2_4B_SciClass_LD={7,10}, E2_4C_CampusB_LD2={1,1},
     }
     for room,total in pairs(expected) do

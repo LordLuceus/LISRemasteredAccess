@@ -70,5 +70,10 @@ for _,name in ipairs({'BIK_E1_6A_DialEnd','BIK_E1_7A_Snowing'})do
     local value,why=bundled:load('./Movies/Episode01/'..name..'.mp4','en')
     check(value and #value.cues>0,why or 'actual shipped SRT parsed by runtime')
 end
+local recap = assert(bundled:load('./Movies/Episode02/BIK_Previously_E2.mp4', 'en'))
+check(Tracks.in_dialogue(recap, 40), 'recap voices protected')
+for _, cue in ipairs(recap.cues) do
+    check(not Tracks.in_dialogue(recap, cue.start), 'recap description begins between voices')
+end
 print('Cutscene parser/scheduler: '..count..' checks passed')
 return count

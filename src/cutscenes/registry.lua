@@ -38,5 +38,6 @@ function M.new(episodes,startup)
     return result
 end
 local episode1=require('cutscenes.episode1')
-M.default=M.new({episode1},episode1.groups.classroom)
+local episode2=require('cutscenes.episode2')
+M.default=M.new({episode1,episode2},episode1.groups.classroom)
 return M

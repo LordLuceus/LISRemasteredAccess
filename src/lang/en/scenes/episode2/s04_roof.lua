@@ -1,0 +1,16 @@
+return {
+    scene_e2_4c_campusb_ld2_kateisalive_rtc_1 = "Max reaches up. Kate takes her hand and falls into her arms.",
+    scene_e2_4c_campusb_ld2_kateisalive_rtc_2 = "They kneel together. Max holds Kate as she buries her face in her hands.",
+    scene_e2_4c_campusb_ld2_kateisdead_rtc_1 = "Kate falls past the brick wall of the dorm.",
+    scene_e2_4c_campusb_ld2_roofarrival_rtc_1 = "Kate balances on the narrow rim of the roof.",
+    scene_e2_4c_campusb_ld2_roofarrival_rtc_2 = "A bird hangs in midair, wings spread. Then the rain starts falling again.",
+    scene_e2_4c_campusb_freeze_rtc_1 = "The students stand motionless, their faces turned toward the roof.",
+    scene_e2_4c_campusb_freeze_rtc_2 = "Kate stands on the ledge.",
+    scene_e2_4c_campusb_insertion_1 = "Max follows the students into the courtyard. They look up.",
+    scene_e2_4c_campusb_maxfaint_rtc_1 = "Max clutches her forehead.",
+    scene_e2_roof_max_alone = "Max stands alone by the roof gate.",
+    scene_e2_4c_campusb_maxfall_1 = "Max doubles over. Blood runs from her nose.",
+    scene_e2_roof_freeze = "Max reaches out. Even the rain stops falling.",
+    scene_e2_roof_powers_fail = "Max wipes blood from her nose. She stretches out her hand, but the rain keeps falling.",
+    scene_e2_4c_campusb_katejump_rtc_1 = "Kate jumps.",
+}

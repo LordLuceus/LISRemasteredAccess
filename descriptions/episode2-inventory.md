@@ -6,6 +6,8 @@ The original offline census used the installed Steam remaster and source
 baseline `e97ea7d` on 2026-11-23. The coverage notes below include subsequent
 authoring and disposable-profile checks.
 
+The [scene coverage ledger](episode2-coverage.md) records the current scene, choice, room and movie authoring.
+
 ## Workload
 
 The previous uncommitted Episode 2 movie/in-engine draft was withdrawn after
@@ -57,6 +59,8 @@ in the scanner, which is unavailable during the roof dialogue. Its catalogue
 entry is not evidence of usable manual narration. Coverage of conditional Looks
 uses game assets and action definitions alongside the live checks described in
 the [world object guide](world-objects.md#episode-2-captures).
+
+The scene pass also routes 36 camera-Look branches through the quiet world reader, including the first Look at Lisa and two copies of the discarded restaurant sign. This adds 35 target instances to that reader. Its original world-Look census above still describes only the 172 ordinary Look branches.
 
 Separate Episode 2 descriptions include the journal's 10 paired photos
 (20 captions) and two junkyard shooting-miss beats.

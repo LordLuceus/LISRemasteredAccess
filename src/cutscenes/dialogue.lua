@@ -119,6 +119,8 @@ register("E1_6A", "scene_choice_cliff_escape",
 register("E1_6A", "scene_choice_cliff_police",
     {"He's still dangerous.", "Let's call the police."})
 
+require("cutscenes.episode2_choices")(register)
+
 function M.key(controller, options)
     if not options then return nil end
     local labels = {}
