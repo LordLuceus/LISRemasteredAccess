@@ -2,6 +2,10 @@
 
 Player-facing changes, newest first.
 
+## In development — 2026-11-28
+
+- Corrected three Episode 2 journal photo descriptions: the locked rabbit sketch no longer claims to show a bird, Chloe lies on a rusty car hood rather than a couch, and the doe's photograph now makes clear that the clearing appears empty.
+
 ## In development — 2026-11-24
 
 - Clarified the Episode 1 description when Max takes the printout in Victoria's room.
