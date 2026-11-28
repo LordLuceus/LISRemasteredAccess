@@ -144,7 +144,7 @@ return {
     {
         asset="/Game/Packages/Gameplay/Collectible/E2/TX_Collectible_E2/TX_E2_1A_KateRoom_Rabbit_Locked.TX_E2_1A_KateRoom_Rabbit_Locked",
         language="en",
-        text="A sketch of a bird resting low behind a grid of cage bars, with its small head pointing to the right.",
+        text="Behind a grid of cage bars, a low oval shape rests on the floor. Short strokes shade its underside.",
         image_sha256="8deb8e92567ec2d1b73b00ed0514206bf1256af89378dd2c4571da1717756676",
         status="reviewed",
     },
@@ -221,7 +221,7 @@ return {
     {
         asset="/Game/Packages/Gameplay/Collectible/E2/TX_Collectible_E2/TX_E2_3A_Junkyard_CHChloe_Unlocked.TX_E2_3A_Junkyard_CHChloe_Unlocked",
         language="en",
-        text="A blue-haired young woman in a beanie lies back on an outdoor couch, holding a handgun upright above her face. Trees, scrap, and a tilted sign stand behind her.",
+        text="A blue-haired young woman in a beanie lies back on a rusty red car hood, holding a handgun upright above her face. Trees, scrap, and a tilted sign stand behind her.",
         image_sha256="c558a325a27022eed46df3c9dead7381bb2cf6ba6e9d43770e7a8248a196c4f6",
         status="reviewed",
     },
@@ -235,7 +235,7 @@ return {
     {
         asset="/Game/Packages/Gameplay/Collectible/E2/TX_Collectible_E2/TX_E2_3A_Junkyard_Doe_Unlocked.TX_E2_3A_Junkyard_Doe_Unlocked",
         language="en",
-        text="Tall golden grasses and small yellow flowers grow among rocks beneath trees. Dark undergrowth fills the shaded background, with a large angular stone at the right.",
+        text="The clearing where the doe stood appears empty in the photograph. Golden grass and small yellow flowers grow between rocks beneath the trees.",
         image_sha256="20ff4616c9f8f82e8145b105313a4aae365fe9120c30dd03d082fe6ec1faf331",
         status="reviewed",
     },
